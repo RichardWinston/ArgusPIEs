@@ -1,0 +1,169 @@
+# 
+# MF_DefineVariables.met
+# --------------------------
+# Define Variables
+# --------------------------
+# 
+# Variables used in more than one package
+Define Variable: PIEVersionOK [Boolean]
+Define Variable: ContinueSimulation [Boolean]
+Define Variable: Dummy [Real]
+Define Variable: LayIndex [Integer]
+Define Variable: DivIndex [Integer]
+Define Variable: ElevationList [Integer]
+Define Variable: ThicknessList [Integer]
+Define Variable: ProgressMax [Integer]
+Define Variable: ConfiningBedList [Integer]
+Define Variable: ConfiningBed [Integer]
+Define Variable: LastBedIndex [Integer]
+# Define total number of model layers
+Define Variable: NumLay [Integer]
+# Define dummy variables for looping and checking
+# 
+# 
+# Variables used only outside of packages
+Define Variable: ShowWarnings [Boolean]
+# 
+Set Variable: NumLay:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	Set Variable: NumLay:= NumLay+MODFLOW_SIMUL(LayIndex)*MODFLOW_NDIV(LayIndex)
+End loop
+Set Variable: ProgressMax:= 2*(NumLay+1)
+# 
+# Variables used only outside of packages
+Set Variable: ShowWarnings:= @cbShowWarnings@
+# 
+# 
+# 
+# MF_InitializeMODFLOW_ProgressBar.met
+# 
+Set Variable: PIEVersionOK:= MODFLOW_ProgressBarCheckVersion(1, 2, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Alert: "Error: MODFLOW Progress Bar PIE is not installed!"
+	If: !PIEVersionOK
+		Alert: "Error: MODFLOW Progress Bar PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it."
+	End if
+End if
+# Initialize progress bar
+Evaluate expression: MODFLOW_ProgressBarInitialize(ProgressMax, 1)
+Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error and warning messages")
+# 
+# 
+Set Variable: PIEVersionOK:= MODFLOW_L_CheckVersion(1, 9, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW List PIE is not installed!")
+Else
+	If: !PIEVersionOK
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW List PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it.")
+	End if
+End if
+# 
+# MF_CacheData.met
+# Create lists
+Set Variable: ElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY()+1)
+Set Variable: ThicknessList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: ConfiningBedList:= MODFLOW_L_CreateNewList()
+# 
+# set list items
+If: ContinueSimulation
+	# Set top elevations
+	Loop for: Variable LayIndex from: 1 to: 1 step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Top Elevations of Unit " + LayIndex)
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Redirect output to: Dummy
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(ElevationList, Column(), Row(), LayIndex, Elev Top Unit[LayIndex]) [G0]
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End if
+	End loop
+	# Set Bottom elevations and layer thicknesses
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Bottom Elevations of Unit " + LayIndex)
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Redirect output to: Dummy
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(ElevationList, Column(), Row(), LayIndex+1, Elev Bot Unit[LayIndex]) [G0]
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Layer Thicknesses of Unit " + LayIndex)
+				If: ContinueSimulation
+					If: MODFLOW_SIMUL(LayIndex)
+						Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), LayIndex+1))/MODFLOW_NDIV(LayIndex)) [G0]
+					Else
+						Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), LayIndex+1))) [G0]
+					End if
+				End if
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End if
+	End loop
+	Set Variable: LastBedIndex:= -1
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		If: MODFLOW_SIMUL(LayIndex)!=0
+			Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+				Set Variable: LastBedIndex:= MODFLOW_L_AddToList(ConfiningBedList,0)
+			End loop
+		Else
+			If: LastBedIndex>-1
+				Evaluate expression: MODFLOW_L_SetListItem(ConfiningBedList, LastBedIndex, 1)
+			End if
+		End if
+	End loop
+End if
+# 
+# MF_BCF.met
+# ----------------------------------------------------
+# Block-Centered Flow Package:
+# ----------------------------------------------------
+If: ContinueSimulation
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Printing Elevations")
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.elev
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Item 1")
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			Start a new line
+				Loop for: Variable LayIndex from: 0 to: MODFLOW_L_GetListSize(ConfiningBedList)-1 step: 1
+					Set Variable: ConfiningBed:= MODFLOW_L_GetFromList(ConfiningBedList, LayIndex)
+					Export expression: ConfiningBed; [I0]
+				End loop
+			End line
+			Start a new line
+				Export expression: "INTERNAL 1.0 (FREE)" [G0]
+				Export expression: 12 [I5]
+			End line
+			# Export matrix: MODFLOW FD Grid.Elev Top Unit[LayIndex]-(DivIndex-1)*(MODFLOW FD Grid.Thickness Unit[LayIndex]/MODFLOW_NDIV(LayIndex)) [G0]
+			Export matrix: MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), 1) [G0]
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					If: MODFLOW_SIMUL(LayIndex)=0
+						Start a new line
+							Export expression: "INTERNAL 1.0 (FREE)" [G0]
+							Export expression: 12 [I5]
+						End line
+						Export matrix: MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), LayIndex) [G0]
+					Else
+						# Data item 6
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# Data items 7 and 8
+							If: ContinueSimulation
+								# Data item 9
+								# YBI: note that the next matrix is different for each sub division!
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								Export matrix: MODFLOW_L_GetFromOneBased3DList(ElevationList, Column(), Row(), LayIndex)-DivIndex*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+							End if
+						End loop
+					End if
+				End if
+			End loop
+		End file
+	End if
+End if
+Evaluate expression: MODFLOW_ProgressBarFree()
+If: (MODFLOW_L_GetErrorCount()>0)&ShowWarnings
+	Alert: "Error: There were errors in the List PIE."
+End if
+Evaluate expression: MODFLOW_L_FreeAllLists()
+

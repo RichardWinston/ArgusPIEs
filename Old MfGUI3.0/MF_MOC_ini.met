@@ -1,0 +1,72 @@
+# 
+# MF_MOC_ini.met
+# ----------------------
+# MOC3D Initialization
+# ----------------------
+# Calculate layers in subgrid
+If: ContinueSimulation
+	Set Variable: n:= 1
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		If: LayIndex=FirstMoc3DUnit
+			Set Variable: FirstLay:= n
+		End if
+		If: LayIndex=LastMoc3DUnit
+			Set Variable: LastLay:= n+MODFLOW_NDIV(LayIndex)-1
+		End if
+		Set Variable: n:= n+MODFLOW_NDIV(LayIndex)
+	End loop
+	# Set the number of columns in the subgrid for looping on matrix export
+End if
+If: (TransportFlag=1) & (Transport>0) & ContinueSimulation
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating concentrations at specified head boundaries")
+	# MOC3D Concentration associated with constant-head cells calculation
+	# Need even if ExportTRANS=0!!
+	# Evaluate expression: MODFLOW_MOC_StartZones()
+	Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+		# Set Variable: ContinueSimulation:=  MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+			Redirect output to: Dummy
+				Export matrix: If(MODFLOW FD Grid.IBOUND Unit[LayIndex]<0, MODFLOW_L_AddToList(ConcentrationList, Interpolate(Prescribed Head Unit[LayIndex].Concentration)), 0) [G0]
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End if
+	End loop
+	Evaluate expression: MODFLOW_L_SortList(ConcentrationList)
+	Evaluate expression: MODFLOW_L_EliminateDuplicates(ConcentrationList)
+	# MOC3D NUMOBS calculation
+	If: ContinueSimulation&(ExportOBS!=0)
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating MOC3D observations")
+		Set Variable: MOC_NUMOBS:= 0
+		Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+			# Set Variable: ContinueSimulation:=  MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation
+				If: LayIndex=FirstMoc3DUnit
+					Set Variable: M:= 0
+				Else
+					Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+				End if
+			End if
+			If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)&!IsLayerEmpty(MOC3D Observation Wells.Elevation1)
+				Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+					Loop for: Blocks
+						Loop for: Objects in layer: MOC3D Observation Wells
+							Loop for: Variable ObservationIndex from: 1 to: 5 step: 1
+								Set Variable: WD:= MOC3D Observation Wells.Elevation[ObservationIndex]
+								If: WD!=$N/A
+									Set Variable: TempValue2:= Elevation Top Unit[LayIndex]
+									Set Variable: TempValue3:= (TempValue2-Elevation Bottom Unit[LayIndex])/MODFLOW_NDIV(LayIndex)
+									Set Variable: TML:= TempValue2-(DivIndex-1)*TempValue3
+									Set Variable: BML:= TempValue2-DivIndex*TempValue3
+									If: TML>WD & BML<=WD
+										Set Variable: MOC_NUMOBS:= MOC_NUMOBS+1
+									End if
+								End if
+							End loop
+						End loop
+					End loop
+				End loop
+			End if
+		End loop
+	End if
+End if
+

@@ -1,0 +1,88 @@
+# 
+# MF_SOL.met
+# ----------------------------------------------------
+# Successive Overrelaxation Solver
+# ----------------------------------------------------
+If: ContinueSimulation&(SolverChoice=3)&ExportSOL
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Successive Overrelaxation Solver")
+	Redirect output to: @adeFileName@.sor
+		Start a new line
+			Export expression: SOR_MXITER [I10]
+		End line
+		Start a new line
+			# Begin change, RBW, Format changed from [E13.5] to [G13]
+			Export expression: SOR_ACCL [G13]
+			Export expression: SOR_HCLOSE [G13]
+			# end change, RBW
+			Export expression: SOR_IPRSOR [I10]
+		End line
+	End file
+End if
+# ----------------------------------------------------
+# Strongly-implicit procedure Solver
+# ----------------------------------------------------
+If: ContinueSimulation&(SolverChoice=0)&ExportSOL
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Strongly-implicit procedure Solver")
+	Redirect output to: @adeFileName@.sip
+		Start a new line
+			Export expression: SIP_MXITER [I10]
+			Export expression: SIP_NPARM [I10]
+		End line
+		Start a new line
+			# Begin change, RBW, Format changed from [E13.5] to [G13]
+			Export expression: SIP_ACCL [G13]
+			Export expression: SIP_HCLOSE [G13]
+			# end change, RBW
+			Export expression: SIP_IPCALC [I10]
+			Export expression: SIP_WSEED [G10]
+			Export expression: SIP_IPRSIP [I10]
+		End line
+	End file
+End if
+# ----------------------------------------------------
+# Preconditioned-Conjugate Gradient Solver
+# ----------------------------------------------------
+If: ContinueSimulation&(SolverChoice=2)&ExportSOL
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Preconditioned-Conjugate Gradient Solver")
+	Redirect output to: @adeFileName@.pcg
+		Start a new line
+			Export expression: PCG_MXITER [I10]
+			Export expression: PCG_ITER1 [I10]
+			Export expression: PCG_NPCOND [I10]
+		End line
+		Start a new line
+			# Begin change, RBW, Format changed from [F10.4] to [G10]
+			Export expression: PCG_HCLOSE [G10]
+			Export expression: PCG_RCLOSE [G10]
+			Export expression: PCG_RELAX [G10]
+			# end change, RBW
+			Export expression: PCG_NBPOL [I10]
+			Export expression: PCG_IPRPCG [I10]
+			Export expression: PCG_MUTPCG [I10]
+			Export expression: PCG_DAMP [G10]
+		End line
+	End file
+End if
+# ----------------------------------------------------
+# Direct solution with D4 ordering Solver
+# ----------------------------------------------------
+If: ContinueSimulation&(SolverChoice=1)&ExportSOL
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Direct solution with D4 ordering Solver")
+	Redirect output to: @adeFileName@.de4
+		Start a new line
+			Export expression: DE4_ITMX [I10]
+			Export expression: DE4_MXUP [I10]
+			Export expression: DE4_MXLOW [I10]
+			Export expression: DE4_MXBW [I10]
+		End line
+		Start a new line
+			Export expression: DE4_IFREQ [I10]
+			Export expression: DE4_MUTD4 [I10]
+			# Begin change, RBW, Format changed from [F10.4] to [G10]
+			Export expression: DE4_ACCL [G10]
+			Export expression: DE4_HCLOSE [G10]
+			# end change, RBW
+			Export expression: DE4_IPRD4 [I10]
+		End line
+	End file
+End if

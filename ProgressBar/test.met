@@ -1,0 +1,52 @@
+# 
+Define Variable: OK [Boolean]
+Set Variable: OK:= ProgressBarCheckVersion(1,3,0,0)
+# 
+# Check if the PIE is installed.
+If: IsNAN(OK)
+	Set Variable: OK:= 0
+	Alert: "Aborting: You either have an outdated version of the Progress Bar PIE or else you don't have the Progress Bar PIE installed."
+Else
+	# Check if the PIE is up-to-date.
+	If: OK=0
+		Alert: "Aborting: You have an outdated version of the Progress Bar PIE."
+	End if
+End if
+If: OK
+	# Initialize the progress bar. Set the maximum for the
+	# progress bar to the number of blocks.
+	Evaluate expression: ProgressBarInitialize(NumBlocks(), 1)
+	# 
+	# Set the message shown in the progress bar
+	Set Variable: OK:= ProgressBarSetMessage("Exporting Blocks")
+	# 
+	# Check if the user has pressed the Cancel button.
+	If: OK
+		Redirect output to: $BaseName$
+			Loop for: Blocks
+				# 
+				# Advance the progress bar by one. At the end of the
+				# loop over blocks this function will have been called 
+				# NumBlocks() times.
+				Set Variable: OK:= ProgressBarAdvance()
+				# 
+				# Check if the user has pressed the Cancel button.
+				If: OK
+					# make a test such as a test for an error condition
+					If: Column()=Row()
+						# 
+						# If the test suceeds, add a message to the progress bar memo
+						Evaluate expression: ProgressBarAddLine("Column: " + Column() + " = Row: " + Row())
+					End if
+				End if
+			End loop
+		End file
+		# 
+		# save the messages in the progress bar memo to a file
+		Evaluate expression: ProgressBarSaveToFile("AFile")
+	End if
+	# 
+	# get rid of the progress bar
+	Evaluate expression: ProgressBarFree()
+End if
+

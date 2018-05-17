@@ -1,0 +1,7 @@
+# 
+If: IsOK("Is this OK?")
+	Alert: "It's OK"
+Else
+	Alert: "It's not OK"
+End if
+

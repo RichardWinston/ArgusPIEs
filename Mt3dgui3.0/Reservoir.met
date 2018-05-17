@@ -1,0 +1,116 @@
+# 
+Define Variable: LayIndex [Integer]
+Define Variable: DumCol [Integer]
+Define Variable: DumRow [Integer]
+Define Variable: NumLay [Integer]
+Define Variable: PeriodIndex [Integer]
+# 
+Define Variable: NRES [Integer]
+Define Variable: IRESCB [Integer]
+Define Variable: NRESOP [Integer]
+Define Variable: IRESPT [Integer]
+Define Variable: NPTS [Integer]
+Define Variable: ReservoirLayer3DList [Integer]
+Define Variable: DirectlySpecifyResLayer [Boolean]
+Define Variable: ReservoirList [Integer]
+Define Variable: ReservoirStartingStageList [Integer]
+Define Variable: ReservoirEndingStageList [Integer]
+Define Variable: ReservoirIndex [Integer]
+Redirect output to: $BaseName$
+	Set Variable: ReservoirList:= MODFLOW_L_CreateNewList()
+	Loop for: Objects in layer: Resevoir
+		Evaluate expression: MODFLOW_L_AddToList(ReservoirList, Resevoir Number)
+		If: Resevoir Number<=0
+			# Show Error message here
+		End if
+	End loop
+	Evaluate expression: MODFLOW_L_SortList(ReservoirList)
+	Evaluate expression: MODFLOW_L_EliminateDuplicates(ReservoirList)
+	Set Variable: NRES:= MODFLOW_L_GetListSize(ReservoirList)
+	Start a new line
+		Export expression: NRES [I10]
+		Export expression: IRESCB [I10]
+		Export expression: NRESOP [I10]
+		Export expression: IRESPT [I10]
+		Export expression: NPTS [I10]
+	End line
+	Start a new line
+		Export expression: "INTERNAL 1.0 (FREE)" [G0]
+		Export expression: 1 [I5]
+	End line
+	Export matrix: Resevoir.Resevoir Number [G0]
+	If: NRESOP=2
+		Start a new line
+			Export expression: "INTERNAL 1.0 (FREE)" [G0]
+			Export expression: 1 [I5]
+		End line
+		If: DirectlySpecifyResLayer
+			Export matrix: Resevoir.MODFLOW Layer [G0]
+		Else
+			Set Variable: ReservoirLayer3DList:= MODFLOW_L_CreateNew3DList(NumColumns(),NumRows(),1)
+			Loop for: Blocks
+				Set Variable: DumCol:= Column()
+				Set Variable: DumRow:= Row()
+				If: Resevoir.Resevoir Number>0
+					If: Resevoir.Elevation>Elevation Top Unit1
+						Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ReservoirLayer3DList, DumCol,DumRow,1,1)
+					Else
+						If: Resevoir.Elevation<Elevation Bottom Unit[MODFLOW_NLAY()]
+							Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ReservoirLayer3DList, DumCol,DumRow,1,NumLay)
+						Else
+							Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+								If: MODFLOW_SIMUL(LayIndex)
+									If: (Resevoir.Elevation<=Elevation Top Unit[LayIndex])&(Resevoir.Elevation>Elevation Bottom Unit[LayIndex])
+										Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ReservoirLayer3DList, DumCol,DumRow,1,MODFLOW_Layer(LayIndex, Elevation Top Unit[LayIndex], Elevation Bottom Unit[LayIndex], Resevoir.Elevation))
+									End if
+								End if
+							End loop
+						End if
+					End if
+				End if
+			End loop
+			Export matrix: MODFLOW_L_GetFromOneBased3DList(ReservoirLayer3DList,Column(),Row(),1) [I5]
+			Evaluate expression: MODFLOW_L_FreeA3dList(ReservoirLayer3DList)
+		End if
+	End if
+	Start a new line
+		Export expression: "INTERNAL 1.0 (FREE)" [G0]
+		Export expression: 1 [I5]
+	End line
+	Export matrix: Resevoir.Elevation [G0]
+	Start a new line
+		Export expression: "INTERNAL 1.0 (FREE)" [G0]
+		Export expression: 1 [I5]
+	End line
+	Export matrix: Resevoir.Hydaulic conductivity [G0]
+	Start a new line
+		Export expression: "INTERNAL 1.0 (FREE)" [G0]
+		Export expression: 1 [I5]
+	End line
+	Export matrix: Resevoir.Bed Thickness [G0]
+	Set Variable: ReservoirStartingStageList:= MODFLOW_L_CreateNew3DList(NRES,MODFLOW_NPER(),1)
+	Set Variable: ReservoirEndingStageList:= MODFLOW_L_CreateNew3DList(NRES,MODFLOW_NPER(),1)
+	Loop for: Objects in layer: Resevoir
+		Set Variable: ReservoirIndex:= MODFLOW_L_IndexOf(ReservoirList,Resevoir Number) + 1
+		Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+			Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ReservoirStartingStageList, ReservoirIndex,PeriodIndex,1,Starting Stage[PeriodIndex])
+			Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ReservoirEndingStageList, ReservoirIndex,PeriodIndex,1,Ending Stage[PeriodIndex])
+		End loop
+	End loop
+	Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+		Loop for: Variable ReservoirIndex from: 1 to: NRES step: 1
+			Start a new line
+				Export expression: MODFLOW_L_GetFromOneBased3DList(ReservoirStartingStageList,ReservoirIndex,PeriodIndex,1); [G10]
+				Export expression: MODFLOW_L_GetFromOneBased3DList(ReservoirEndingStageList,ReservoirIndex,PeriodIndex,1); [G9]
+			End line
+		End loop
+	End loop
+	Evaluate expression: MODFLOW_L_FreeA3DList(ReservoirEndingStageList)
+	Evaluate expression: MODFLOW_L_FreeA3DList(ReservoirStartingStageList)
+	Evaluate expression: MODFLOW_L_FreeAList(ReservoirList)
+End file
+If: MODFLOW_L_GetErrorCount()!=0
+	Alert: "PROBLEM IN LIST PIE"
+End if
+Evaluate expression: MODFLOW_L_FreeAllLists()
+

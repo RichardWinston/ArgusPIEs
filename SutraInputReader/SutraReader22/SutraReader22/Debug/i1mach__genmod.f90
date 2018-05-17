@@ -1,0 +1,9 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:08 2011
+        MODULE I1MACH__genmod
+          INTERFACE 
+            FUNCTION I1MACH(I) RESULT(I1MACH_0)
+              INTEGER(KIND=4) :: I
+              INTEGER(KIND=4) :: I1MACH_0
+            END FUNCTION I1MACH
+          END INTERFACE 
+        END MODULE I1MACH__genmod

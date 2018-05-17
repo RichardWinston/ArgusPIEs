@@ -1,0 +1,60 @@
+Define Variable: ListIndex [Integer]
+# 
+# Lake Variables
+Define Variable: UnitTop [Real]
+Define Variable: UnitBottom [Real]
+Define Variable: LakebedTop [Real]
+Define Variable: LakebedBottom [Real]
+Define Variable: LocalKz [Real]
+Define Variable: CrossSectionalArea [Real]
+Define Variable: LocalBottom [Real]
+Define Variable: FoundLakeCell [Boolean]
+Define Variable: FoundLakeBottomCell3DList [Real]
+Define Variable: MasterLakeList [Integer]
+Define Variable: MasterLakeListSize [Integer]
+Define Variable: LakeColumnListsStart [Integer]
+Define Variable: LakeRowListsStart [Integer]
+Define Variable: LakeLayerListStart [Integer]
+Define Variable: LakeNodeTypeListStart [Integer]
+Define Variable: LakeTopElevListStart [Integer]
+Define Variable: LakeBotElevListStart [Integer]
+Define Variable: LakeAreaListStart [Integer]
+Define Variable: LakeHydCondListStart [Integer]
+Define Variable: LakeNumber [Integer]
+Define Variable: LakeIndex [Integer]
+Define Variable: MaxInflowSegments [Integer]
+Define Variable: MaxOutflowSegments [Integer]
+Define Variable: NSTRIN [Integer]
+Define Variable: NSTROUT [Integer]
+Define Variable: NRATEQ [Integer]
+Define Variable: NODES [Integer]
+Define Variable: NLAKES [Integer]
+Define Variable: MaxRateEq [Integer]
+Define Variable: RateEqIndex [Integer]
+Define Variable: NSUBSTEPS [Integer]
+Define Variable: ILKCBC [Integer]
+Define Variable: ILKOUT [Integer]
+Define Variable: SteadyLake [Integer]
+Define Variable: LakeChoice [Boolean]
+Define Variable: LakeBotCondChoice [Integer]
+Define Variable: LakeSideCondChoice [Integer]
+# Index1, Column
+# Index2, Row
+# Index3, 1=top, 2=bottom
+Define Variable: LakeElevations3DList [Integer]
+Define Variable: ExportLAK [Boolean]
+# 
+# Seepage Variables
+Define Variable: SeepageChoice [Boolean]
+Define Variable: ExportSPG [Boolean]
+Define Variable: SteadySeepage [Boolean]
+Define Variable: MaxSeepages [Integer]
+Define Variable: CurrentSeepageCount [Integer]
+Define Variable: err_spg_3 [Integer]
+Define Variable: err_spg_4 [Integer]
+Define Variable: ISPGCB [Integer]
+# 
+# MT3D Variables
+Define Variable: MT3D_FlowFile [Boolean]
+
+

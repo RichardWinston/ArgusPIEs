@@ -1,0 +1,410 @@
+# ----------------------------------------------------
+# Lake Package version 2.2:
+# ----------------------------------------------------
+If: LakeChoice&ExportLAK
+	Evaluate expression: MODFLOW_ProgressBarSetMessage("Lake Package")
+	Set Variable: LakeElevations3DList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), 2)
+	Set Variable: MasterLakeList:= MODFLOW_L_CreateNewList()
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		If: MODFLOW_SIMUL(LayIndex)
+			Loop for: Objects in layer: Lake Unit[LayIndex]
+				Evaluate expression: MODFLOW_L_AddToList(MasterLakeList,Lake Unit[LayIndex].Lake Number)
+			End loop
+		End if
+	End loop
+	Evaluate expression: MODFLOW_L_SortList(MasterLakeList)
+	Evaluate expression: MODFLOW_L_EliminateDuplicates(MasterLakeList)
+	Set Variable: MasterLakeListSize:= MODFLOW_L_GetListSize(MasterLakeList)
+	Set Variable: LakeColumnListsStart:= MasterLakeList + 1
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Set Variable: LakeRowListsStart:= MODFLOW_L_CreateNewList() + 1
+	End loop
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Set Variable: LakeLayerListStart:= MODFLOW_L_CreateNewList() + 1
+	End loop
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Set Variable: LakeTopElevListStart:= MODFLOW_L_CreateNewList() + 1
+	End loop
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Set Variable: LakeBotElevListStart:= MODFLOW_L_CreateNewList() + 1
+	End loop
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Set Variable: LakeAreaListStart:= MODFLOW_L_CreateNewList() + 1
+	End loop
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Set Variable: LakeHydCondListStart:= MODFLOW_L_CreateNewList() + 1
+	End loop
+	Loop for: Variable ListIndex from: 1 to: MasterLakeListSize step: 1
+		Evaluate expression: MODFLOW_L_CreateNewList()
+	End loop
+	Set Variable: FoundLakeBottomCell3DList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), 1)
+	Set Variable: ModflowLayer:= 0
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Evaluate expression: MODFLOW_ProgressBarAdvance()
+		If: MODFLOW_SIMUL(LayIndex)
+			Loop for: Blocks
+				Evaluate expression: MODFLOW_L_SetOneBased3DListItem(LakeElevations3DList, Column(), Row(), 1, Lakebed Top Unit[LayIndex])
+				Evaluate expression: MODFLOW_L_SetOneBased3DListItem(LakeElevations3DList, Column(), Row(), 2, Lakebed Bottom Unit[LayIndex])
+			End loop
+			Set Variable: ModflowLayer:= ModflowLayer + MODFLOW_NDIV(LayIndex)
+			Loop for: Blocks
+				Set Variable: LakeNumber:= Lake To Right Unit[LayIndex]
+				Set Variable: LocalKz:= Kx Unit[LayIndex]
+				If: LakeNumber
+					Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,LakeNumber)
+					Set Variable: UnitTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)
+					Set Variable: UnitBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+					Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: LayerTop:= UnitTop - (DivIndex - 1) * LayerThickness
+						Set Variable: LakebedTop:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column() + 1, Row(), 1)
+						If: LakebedTop<=LayerTop
+							Set Variable: LayerBottom:= UnitTop - DivIndex * LayerThickness
+							Set Variable: LakebedBottom:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column() + 1, Row(), 2)
+							If: LayerBottom<LakebedTop
+								Set Variable: LocalBottom:= LakebedTop
+							Else
+								Set Variable: LocalBottom:= LayerBottom
+							End if
+							Set Variable: CrossSectionalArea:= (LayerTop - LocalBottom) * NthBlockSideLength(0)
+							Evaluate expression: MODFLOW_L_AddToList(LakeRowListsStart + LakeIndex,Row())
+							Evaluate expression: MODFLOW_L_AddToList(LakeColumnListsStart + LakeIndex,Column())
+							Evaluate expression: MODFLOW_L_AddToList(LakeLayerListStart + LakeIndex,ModflowLayer - MODFLOW_NDIV(LayIndex) + DivIndex)
+							Evaluate expression: MODFLOW_L_AddToList(LakeTopElevListStart + LakeIndex,LakebedTop)
+							Evaluate expression: MODFLOW_L_AddToList(LakeBotElevListStart + LakeIndex,LakebedBottom)
+							# Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] * (LakebedTop - LakebedBottom) / (NthBlockSideLength(1) / 2))
+							If: LakeSideCondChoice=0
+								Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity / (LakebedTop - LakebedBottom)*CrossSectionalArea)
+							Else
+								If: LakeSideCondChoice=1
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] * MODFLOW_TRPY(LayIndex) / (NthBlockSideLength(1) / 2)*CrossSectionalArea)
+								Else
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,(1 / ((LakebedTop - LakebedBottom) / Lake Unit[LayIndex].Lakebed hydraulic conductivity + (NthBlockSideLength(1) / 2) / (Kx Unit[LayIndex] * MODFLOW_TRPY(LayIndex))))*CrossSectionalArea )
+								End if
+							End if
+							Evaluate expression: MODFLOW_L_AddToList(LakeAreaListStart + LakeIndex,CrossSectionalArea)
+						End if
+					End loop
+				End if
+				Set Variable: LakeNumber:= Lake To Left Unit[LayIndex]
+				If: LakeNumber
+					Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,LakeNumber)
+					Set Variable: UnitTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)
+					Set Variable: UnitBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+					Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: LayerTop:= UnitTop - (DivIndex - 1) * LayerThickness
+						Set Variable: LakebedTop:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column()-1,Row(), 1)
+						If: LakebedTop<=LayerTop
+							Set Variable: LayerBottom:= UnitTop - DivIndex * LayerThickness
+							Set Variable: LakebedBottom:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column()-1,Row(), 2)
+							If: LayerBottom<LakebedTop
+								Set Variable: LocalBottom:= LakebedTop
+							Else
+								Set Variable: LocalBottom:= LayerBottom
+							End if
+							Set Variable: CrossSectionalArea:= (LayerTop - LocalBottom) * NthBlockSideLength(0)
+							Evaluate expression: MODFLOW_L_AddToList(LakeRowListsStart + LakeIndex,Row())
+							Evaluate expression: MODFLOW_L_AddToList(LakeColumnListsStart + LakeIndex,Column())
+							Evaluate expression: MODFLOW_L_AddToList(LakeLayerListStart + LakeIndex,ModflowLayer - MODFLOW_NDIV(LayIndex) + DivIndex)
+							Evaluate expression: MODFLOW_L_AddToList(LakeTopElevListStart + LakeIndex,LakebedTop)
+							Evaluate expression: MODFLOW_L_AddToList(LakeBotElevListStart + LakeIndex,LakebedBottom)
+							# Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] * (LakebedTop - LakebedBottom) / (NthBlockSideLength(1) / 2))
+							If: LakeSideCondChoice=0
+								Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity / (LakebedTop - LakebedBottom)*CrossSectionalArea)
+							Else
+								If: LakeSideCondChoice=1
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] / (NthBlockSideLength(1) / 2)*CrossSectionalArea)
+								Else
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,(1 / ((LakebedTop - LakebedBottom) / Lake Unit[LayIndex].Lakebed hydraulic conductivity + (NthBlockSideLength(1) / 2) / Kx Unit[LayIndex]))*CrossSectionalArea )
+								End if
+							End if
+							Evaluate expression: MODFLOW_L_AddToList(LakeAreaListStart + LakeIndex,CrossSectionalArea)
+						End if
+					End loop
+				End if
+				Set Variable: LakeNumber:= Lake To North Unit[LayIndex]
+				If: LakeNumber
+					Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,LakeNumber)
+					Set Variable: UnitTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)
+					Set Variable: UnitBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+					Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: LayerTop:= UnitTop - (DivIndex - 1) * LayerThickness
+						Set Variable: LakebedTop:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column(),Row() + 1, 1)
+						If: LakebedTop<=LayerTop
+							Set Variable: LayerBottom:= UnitTop - DivIndex * LayerThickness
+							Set Variable: LakebedBottom:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column(),Row() + 1, 2)
+							If: LayerBottom<LakebedTop
+								Set Variable: LocalBottom:= LakebedTop
+							Else
+								Set Variable: LocalBottom:= LayerBottom
+							End if
+							Set Variable: CrossSectionalArea:= (LayerTop - LocalBottom) * NthBlockSideLength(1)
+							Evaluate expression: MODFLOW_L_AddToList(LakeRowListsStart + LakeIndex,Row())
+							Evaluate expression: MODFLOW_L_AddToList(LakeColumnListsStart + LakeIndex,Column())
+							Evaluate expression: MODFLOW_L_AddToList(LakeLayerListStart + LakeIndex,ModflowLayer - MODFLOW_NDIV(LayIndex) + DivIndex)
+							Evaluate expression: MODFLOW_L_AddToList(LakeTopElevListStart + LakeIndex,LakebedTop)
+							Evaluate expression: MODFLOW_L_AddToList(LakeBotElevListStart + LakeIndex,LakebedBottom)
+							# Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] * (LakebedTop - LakebedBottom) / (NthBlockSideLength(0) / 2))
+							If: LakeSideCondChoice=0
+								Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity / (LakebedTop - LakebedBottom)*CrossSectionalArea)
+							Else
+								If: LakeSideCondChoice=1
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] / (NthBlockSideLength(0) / 2)*CrossSectionalArea)
+								Else
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,(1 / ((LakebedTop - LakebedBottom) / Lake Unit[LayIndex].Lakebed hydraulic conductivity + (NthBlockSideLength(0) / 2) / Kx Unit[LayIndex]))*CrossSectionalArea )
+								End if
+							End if
+							Evaluate expression: MODFLOW_L_AddToList(LakeAreaListStart + LakeIndex,CrossSectionalArea)
+						End if
+					End loop
+				End if
+				Set Variable: LakeNumber:= Lake To South Unit[LayIndex]
+				If: LakeNumber
+					Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,LakeNumber)
+					Set Variable: UnitTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)
+					Set Variable: UnitBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+					Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: LayerTop:= UnitTop - (DivIndex - 1) * LayerThickness
+						Set Variable: LakebedTop:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column(),Row() - 1, 1)
+						If: LakebedTop<=LayerTop
+							Set Variable: LayerBottom:= UnitTop - DivIndex * LayerThickness
+							Set Variable: LakebedBottom:= MODFLOW_L_GetFromOneBased3DList(LakeElevations3DList, Column(),Row() - 1, 2)
+							If: LayerBottom<LakebedTop
+								Set Variable: LocalBottom:= LakebedTop
+							Else
+								Set Variable: LocalBottom:= LayerBottom
+							End if
+							Set Variable: CrossSectionalArea:= (LayerTop - LocalBottom) * NthBlockSideLength(1)
+							Evaluate expression: MODFLOW_L_AddToList(LakeRowListsStart + LakeIndex,Row())
+							Evaluate expression: MODFLOW_L_AddToList(LakeColumnListsStart + LakeIndex,Column())
+							Evaluate expression: MODFLOW_L_AddToList(LakeLayerListStart + LakeIndex,ModflowLayer - MODFLOW_NDIV(LayIndex) + DivIndex)
+							Evaluate expression: MODFLOW_L_AddToList(LakeTopElevListStart + LakeIndex,LakebedTop)
+							Evaluate expression: MODFLOW_L_AddToList(LakeBotElevListStart + LakeIndex,LakebedBottom)
+							# Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] * (LakebedTop - LakebedBottom) / (NthBlockSideLength(0) / 2))
+							If: LakeSideCondChoice=0
+								Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity / (LakebedTop - LakebedBottom)*CrossSectionalArea)
+							Else
+								If: LakeSideCondChoice=1
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Kx Unit[LayIndex] / (NthBlockSideLength(0) / 2)*CrossSectionalArea)
+								Else
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,(1 / ((LakebedTop - LakebedBottom) / Lake Unit[LayIndex].Lakebed hydraulic conductivity + (NthBlockSideLength(0) / 2) / Kx Unit[LayIndex]))*CrossSectionalArea )
+								End if
+							End if
+							Evaluate expression: MODFLOW_L_AddToList(LakeAreaListStart + LakeIndex,CrossSectionalArea)
+						End if
+					End loop
+				End if
+				Set Variable: LakeNumber:= LakeParam Unit[LayIndex]
+				If: LakeNumber
+					Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,LakeNumber)
+					Set Variable: UnitTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)
+					Set Variable: UnitBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+					Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+					Set Variable: FoundLakeCell:= 0
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						If: !FoundLakeCell
+							Set Variable: LayerTop:= UnitTop - (DivIndex - 1) * LayerThickness
+							Set Variable: LakebedTop:= Lakebed Top Unit[LayIndex]
+							Set Variable: LayerBottom:= UnitTop - DivIndex * LayerThickness
+							Set Variable: LakebedBottom:= Lakebed Bottom Unit[LayIndex]
+							If: LayerTop<=LakebedBottom
+								Set Variable: FoundLakeCell:= 1
+								Evaluate expression: MODFLOW_L_SetOneBased3DListItem(FoundLakeBottomCell3DList, Column(), Row(), 1, 1)
+								Evaluate expression: MODFLOW_L_AddToList(LakeRowListsStart + LakeIndex,Row())
+								Evaluate expression: MODFLOW_L_AddToList(LakeColumnListsStart + LakeIndex,Column())
+								Evaluate expression: MODFLOW_L_AddToList(LakeLayerListStart + LakeIndex,ModflowLayer - MODFLOW_NDIV(LayIndex) + DivIndex)
+								Evaluate expression: MODFLOW_L_AddToList(LakeTopElevListStart + LakeIndex,LakebedTop)
+								Evaluate expression: MODFLOW_L_AddToList(LakeBotElevListStart + LakeIndex,LakebedBottom)
+								Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity)
+								If: LakeBotCondChoice=0
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity / (LakebedTop - LakebedBottom)*BlockArea())
+								Else
+									Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,(1 / ((LakebedTop - LakebedBottom) / Lake Unit[LayIndex].Lakebed hydraulic conductivity + (LakebedBottom - LayerBottom) / 2 / LocalKz))*BlockArea())
+								End if
+								Evaluate expression: MODFLOW_L_AddToList(LakeAreaListStart + LakeIndex,BlockArea())
+							End if
+						End if
+					End loop
+				End if
+				Set Variable: LakeNumber:= Lake Above Unit[LayIndex]
+				If: LakeNumber
+					Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,LakeNumber)
+					If: (MODFLOW_L_GetFromOneBased3DList(FoundLakeBottomCell3DList, Column(), Row(), 1)=0)&(LayIndex>1)
+						Set Variable: LakebedTop:= Lakebed Top Unit[LayIndex-1]
+						Set Variable: LakebedBottom:= Lakebed Bottom Unit[LayIndex-1]
+						Evaluate expression: MODFLOW_L_SetOneBased3DListItem(FoundLakeBottomCell3DList, Column(), Row(), 1, 1)
+						Evaluate expression: MODFLOW_L_AddToList(LakeRowListsStart + LakeIndex,Row())
+						Evaluate expression: MODFLOW_L_AddToList(LakeColumnListsStart + LakeIndex,Column())
+						Evaluate expression: MODFLOW_L_AddToList(LakeLayerListStart + LakeIndex,ModflowLayer - MODFLOW_NDIV(LayIndex) + 1)
+						Evaluate expression: MODFLOW_L_AddToList(LakeTopElevListStart + LakeIndex,Lakebed Top Unit[LayIndex-1])
+						Evaluate expression: MODFLOW_L_AddToList(LakeBotElevListStart + LakeIndex,Lakebed Bottom Unit[LayIndex-1])
+						If: LakeBotCondChoice=0
+							Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex-1].Lakebed hydraulic conductivity / (LakebedTop - LakebedBottom)*BlockArea())
+						Else
+							Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,(1 / ((LakebedTop - LakebedBottom) / Lake Unit[LayIndex-1].Lakebed hydraulic conductivity + (LakebedBottom - LayerBottom) / 2 / LocalKz))*BlockArea())
+						End if
+						# Evaluate expression: MODFLOW_L_AddToList(LakeHydCondListStart + LakeIndex,Lake Unit[LayIndex].Lakebed hydraulic conductivity)
+						Evaluate expression: MODFLOW_L_AddToList(LakeAreaListStart + LakeIndex,BlockArea())
+					Else
+						# Error
+					End if
+				End if
+			End loop
+		End if
+	End loop
+	Redirect output to: TempLakePhysical
+	End file
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Evaluate expression: MODFLOW_ProgressBarAdvance()
+		If: MODFLOW_SIMUL(LayIndex)
+			Loop for: Objects in layer: Lake Unit[LayIndex]
+				Set Variable: NSTRIN:= 0
+				Redirect output to: TempLake5
+					If: MaxInflowSegments>0
+						Loop for: Variable SegmentIndex from: 1 to: MaxInflowSegments step: 1
+							If: IsNumber(Input Stream[SegmentIndex])
+								Set Variable: NSTRIN:= NSTRIN + 1
+								Start a new line
+									Export expression: MODFLOW_L_UnsortedIndexOf(StreamSegmentList, Input Stream[SegmentIndex])+1 [I10]
+								End line
+							End if
+						End loop
+					End if
+				End file
+				Set Variable: NSTROUT:= 0
+					If: MaxOutflowSegments>0
+				Loop for: Variable SegmentIndex from: 1 to: MaxOutflowSegments step: 1
+					Redirect output to: TempLake7
+					End file
+					Redirect output to: TempLake6
+					End file
+					If: IsNumber(Output Stream[SegmentIndex])
+						Set Variable: NSTROUT:= NSTROUT + 1
+						Set Variable: NRATEQ:= 0
+						Redirect output to: TempLake7
+							Loop for: Variable RateEqIndex from: 1 to: MaxRateEq step: 1
+								If: IsNumber(Eq Cutoff[SegmentIndex * 10 + RateEqIndex])
+									Set Variable: NRATEQ:= NRATEQ + 1
+									Start a new line
+										Export expression: Eq Cutoff[SegmentIndex * 10 + RateEqIndex] [G10]
+										Export expression: Eq Const[SegmentIndex * 10 + RateEqIndex] [G10]
+										Export expression: Eq Elev[SegmentIndex * 10 + RateEqIndex] [G10]
+										Export expression: Eq exponent[SegmentIndex * 10 + RateEqIndex] [G10]
+									End line
+								End if
+							End loop
+						End file
+						Redirect output to: TempLake6
+							Start a new line
+								Export expression: MODFLOW_L_UnsortedIndexOf(StreamSegmentList, Output Stream[SegmentIndex])+1 [I10]
+								Export expression: NRATEQ [I10]
+							End line
+						End file
+					End if
+					Redirect output to: TempLake8
+						Set Variable: LakeIndex:= MODFLOW_L_IndexOf(MasterLakeList,Lake Unit[LayIndex].Lake Number)
+						Set Variable: NODES:= MODFLOW_L_GetListSize(LakeLayerListStart + LakeIndex)
+						Loop for: Variable CellIndex from: 0 to: NODES-1 step: 1
+							Start a new line
+								Export expression: MODFLOW_L_GetFromList(LakeLayerListStart + LakeIndex, CellIndex) [I10]
+								Export expression: MODFLOW_L_GetFromList(LakeRowListsStart + LakeIndex, CellIndex) [I10]
+								Export expression: MODFLOW_L_GetFromList(LakeColumnListsStart + LakeIndex, CellIndex) [I10]
+								Export expression: MODFLOW_L_GetFromList(LakeTopElevListStart + LakeIndex, CellIndex) [G10]
+								Export expression: MODFLOW_L_GetFromList(LakeBotElevListStart + LakeIndex, CellIndex) [G10]
+								Export expression: MODFLOW_L_GetFromList(LakeAreaListStart + LakeIndex, CellIndex) [G10]
+								Export expression: MODFLOW_L_GetFromList(LakeHydCondListStart + LakeIndex, CellIndex) [G10]
+							End line
+						End loop
+					End file
+				End loop
+				End if
+				Redirect output to: TempLake4
+					Start a new line
+						Export expression: NODES [I10]
+						Export expression: NSTRIN [I10]
+						Export expression: NSTROUT [I10]
+						Export expression: Maximum Lake Stage [G10]
+						Export expression: 1 [I10]
+					End line
+				End file
+				Evaluate expression: MODFLOW_Join_Files("TempLakePhysical", "TempLake4", "TempLakePhysical")
+				Evaluate expression: MODFLOW_Join_Files("TempLakePhysical", "TempLake5", "TempLakePhysical")
+				Evaluate expression: MODFLOW_Join_Files("TempLakePhysical", "TempLake6", "TempLakePhysical")
+				Evaluate expression: MODFLOW_Join_Files("TempLakePhysical", "TempLake7", "TempLakePhysical")
+				Evaluate expression: MODFLOW_Join_Files("TempLakePhysical", "TempLake8", "TempLakePhysical")
+			End loop
+		End if
+	End loop
+	Set Variable: NLAKES:= 0
+	Redirect output to: TempLake3
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			If: MODFLOW_SIMUL(LayIndex)
+				Loop for: Objects in layer: Lake Unit[LayIndex]
+					Set Variable: NLAKES:= NLAKES + 1
+					Start a new line
+						Export expression: Lake Name [G10]
+						Export expression: Simulation mode [I10]
+						Export expression: Starting Stage [G10]
+						Export expression: Max Iterations [I10]
+						Export expression: Stage Convergence Criterion [G10]
+					End line
+				End loop
+			End if
+		End loop
+	End file
+	Redirect output to: @adeFileName@.lak
+		Start a new line
+			Export expression: "/*LAK2.2" [G0]
+		End line
+		Start a new line
+			Export expression: NLAKES [I10]
+			Export expression: ILKCBC [I10]
+			Export expression: ILKOUT [I10]
+			Export expression: 1 [I10]
+			Export expression: NSUBSTEPS [I10]
+		End line
+	End file
+	Evaluate expression: MODFLOW_Join_Files("@adeFileName@.lak", "TempLake3", "@adeFileName@.lak")
+	Evaluate expression: MODFLOW_Join_Files("@adeFileName@.lak", "TempLakePhysical", "@adeFileName@.lak")
+	Redirect output to: TempLake9
+		Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+			Start a new line
+				If: PeriodIndex=1
+					Export expression: 1 [G0]
+				Else
+					Export expression: SteadyLake - 1 [G0]
+				End if
+			End line
+			If: (PeriodIndex=1)|SteadyLake
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)
+						Loop for: Objects in layer: Lake Unit[LayIndex]
+							Start a new line
+								Export expression: Precipitation[PeriodIndex] [G10]
+								Export expression: Evapotranspiration[PeriodIndex] [G10]
+								Export expression: Runoff[PeriodIndex] [G10]
+								Export expression: Dry Recharge[PeriodIndex] [G10]
+								Export expression: Output option[PeriodIndex] [I10]
+								Export expression: Stage[PeriodIndex] [G10]
+							End line
+						End loop
+					End if
+				End loop
+			End if
+		End loop
+	End file
+	Evaluate expression: MODFLOW_Join_Files("@adeFileName@.lak", "TempLake9", "@adeFileName@.lak")
+	Evaluate expression: MODFLOW_Delete_File("TempLake3")
+	Evaluate expression: MODFLOW_Delete_File("TempLake4")
+	Evaluate expression: MODFLOW_Delete_File("TempLake5")
+	Evaluate expression: MODFLOW_Delete_File("TempLake6")
+	Evaluate expression: MODFLOW_Delete_File("TempLake7")
+	Evaluate expression: MODFLOW_Delete_File("TempLake8")
+	Evaluate expression: MODFLOW_Delete_File("TempLake9")
+	Evaluate expression: MODFLOW_Delete_File("TempLakePhysical")
+End if
+# 
+

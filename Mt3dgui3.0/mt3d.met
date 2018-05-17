@@ -1,0 +1,2806 @@
+# 
+Define Variable: TempVar [Integer]
+# Template modified from:
+# MODFLOW Export Template Version 1.4 July 2, 1997
+# 
+# Modifed by Argus Interware, July 21, 1998
+# Changes made by Argus Interware are marked by the initials YBI or RBW.
+# 
+
+# Changes on July 21, 1998
+# Corrections to export of the MT3D Source and Sink mixing package.
+# #
+# Modifed by Argus Interware, Mar. 26, 1998
+# Increased export speed for cases where there are many points on the elevation contours.
+# Added progress bar.
+# 
+# Modifed by Argus Interware, Mar. 10, 1998
+# Changes made by Argus Interware are marked by the initials YBI or RBW.
+# 
+# Changes on Mar. 10, 1998.
+# Corrections to export of the MT3D Source and Sink mixing package.
+# 
+# Changes on Mar. 9, 1998:
+# Additional error checking in drain, river and general-head boundary
+# packages. Fixed GHB, Riv and Well packages to deal with nested closed contours.
+# 
+# Changes on Mar. 6, 1998:
+# Export of Drain Package changed to account for drains, rivers,
+# and general-head boundaries
+# that touch the edge of blocks but do not go inside.
+# Export of the General Head Boundary Package modified to accound
+# for cases where the conductance is set on the layer dialog box.
+# 
+# Changes on Jan. 16, 1998:
+# Export formats of real numbers in solver
+# packages changed to allow more precision.
+# 
+# Modified to Export MT3D Input Files by Richard B. Winston
+# 
+# New Variables, RBW 8/4/98
+Define Variable: ShowWarnings [Boolean]
+# New Variables, RBW 7/22/98
+Define Variable: BoundaryInBlock [Boolean]
+Define Variable: PointsEmpty [Boolean]
+Define Variable: NSS [Integer]
+Define Variable: MXSS [Integer]
+Define Variable: CalcElev [Boolean]
+Define Variable: AreaBoundaryInBlock [Boolean]
+Define Variable: SteadyGHB [Integer]
+Set Variable: SteadyGHB:= @comboGhbSteady@
+Define Variable: SteadyRiver [Integer]
+Set Variable: SteadyRiver:= @comboRivSteady@
+Define Variable: SteadyDrain [Integer]
+Set Variable: SteadyDrain:= @comboDrnSteady@
+Define Variable: SteadyWell [Integer]
+Set Variable: SteadyWell:= @comboWelSteady@
+Define Variable: ThisConductance [Real]
+Define Variable: SegmentLength [Real]
+Define Variable: LayconArray [Integer]
+Define Variable: StepIndex [Integer]
+Define Variable: ConcentrationList [Integer]
+Define Variable: CurrentWellCount [Integer]
+Define Variable: CurrentSpecifiedWellCount [Integer]
+Define Variable: MaxWells [Integer]
+Define Variable: CurrentDrainCount [Integer]
+Define Variable: CurrentSpecifiedDrainCount [Integer]
+Define Variable: MaxDrains [Integer]
+Define Variable: CurrentRiverCount [Integer]
+Define Variable: CurrentSpecifiedRiverCount [Integer]
+Define Variable: MaxRivers [Integer]
+Define Variable: CurrentGHBCount [Integer]
+Define Variable: CurrentSpecifiedGHBCount [Integer]
+Define Variable: MaxGHBs [Integer]
+Define Variable: CurrentConstantHeadCount [Integer]
+Define Variable: CurrentSpecifiedConstantHeadCount [Integer]
+Define Variable: MaxConstantHead [Integer]
+Define Variable: CurrentTimeVaryingConcCount [Integer]
+Define Variable: CurrentSpecifiedTimeVaryingConcCount [Integer]
+Define Variable: MaxTimeVaryingConc [Integer]
+Define Variable: TopElevationList [Integer]
+Define Variable: BottomElevationList [Real]
+Define Variable: ThicknessList [Integer]
+Define Variable: CellThickness [Real]
+Define Variable: LayerThickness [Real]
+Define Variable: LayerTop [Real]
+Define Variable: LayerBottom [Real]
+Define Variable: ThisElevation [Real]
+Define Variable: ProgressMax [Integer]
+Define Variable: ThisBlockArea [Real]
+Define Variable: ThisConcentration [Real]
+Define Variable: PointLayerIsEmpty [Boolean]
+Define Variable: LineLayerIsEmpty [Boolean]
+Define Variable: AreaLayerIsEmpty [Boolean]
+# End New Variables, RBW 7/22/98
+# 
+# Define variable MT3DLayerLines which will hold the
+# number of lines required to hold the
+Define Variable: MT3DLayerLines [Integer]
+# 
+# Define variable MT3DNOBS which will hold the number of observations in MT3D.
+Define Variable: MT3DNOBS [Integer]
+# 
+# Define variable MT3DCH which will hold the number of constant head cells.
+Define Variable: MT3DCH [Integer]
+# 
+# Define Variable MT3DTimVarConc which will be the number of time-varying concentrations
+Define Variable: MT3DTimVarConc [Integer]
+# 
+# Defined Variable LayIndex which will serve as an index to the unit number in the MT3D template
+Define Variable: LayIndex [Integer]
+# 
+# Defined Variable PeriodIndex which will serve as an index to the stress period in the MT3D template
+Define Variable: PeriodIndex [Integer]
+# 
+# Define Variable MT3DConstHead which will serve to indicate whether a cell is a constant head cell with a specified concentration.
+Define Variable: MT3DConstHead [Integer]
+# 
+# Define Variable MT3DCHVal which will hold the concentration in the constant head cell.
+Define Variable: MT3DCHVal [Real]
+# 
+# Define LayerCount which will be the MODFLOW Layer in the MT3D export template
+Define Variable: LayerCount [Integer]
+# 
+# Define DivIndex which wlll be the index to the number of divisions of a unit into MODFLOW layers.
+Define Variable: DivIndex [Integer]
+# 
+# Define Variable LayerBot which is the bottom of the current MODFLOW layer
+Define Variable: LayerBot [Real]
+# 
+# Define root filename for MODFLOW files:
+Define Variable: FileName [String]
+# 
+# Define variable for exporting MODFLOW input files.
+# Define Variable: ExportMODFLOW [Integer]
+# 
+# Define variables for exporting MT3D packages
+Define Variable: ExportMT3D_ADV [Integer]
+Define Variable: ExportMT3D_BTN [Integer]
+Define Variable: ExportMT3D_DSP [Integer]
+Define Variable: ExportMT3D_RCT [Integer]
+Define Variable: ExportMT3D_SSM [Integer]
+# 
+# Set variables for exporting MT3D packages
+Set Variable: ExportMT3D_ADV:= @cbExportMT3DADV@
+Set Variable: ExportMT3D_BTN:= @cbExportMT3DBTN@
+Set Variable: ExportMT3D_DSP:= @cbExportMT3DDSP@
+Set Variable: ExportMT3D_RCT:= @cbExportMT3DRCT@
+Set Variable: ExportMT3D_SSM:= @cbExportMT3DSSM@
+# 
+# Define error flags
+Define Variable: err_riv_3 [Integer]
+Define Variable: err_riv_4 [Integer]
+Define Variable: err_drn_3 [Integer]
+Define Variable: err_drn_4 [Integer]
+# 
+# Initialize Error flags
+Set Variable: err_riv_3:= 0
+Set Variable: err_riv_4:= 0
+Set Variable: err_drn_3:= 0
+Set Variable: err_drn_4:= 0
+# 
+Define Variable: ITMUNI [Integer]
+# 
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: WellChoice [Integer]
+Define Variable: RechargeChoice [Integer]
+Define Variable: DrainChoice [Integer]
+Define Variable: RiverChoice [Integer]
+Define Variable: EvapotranspirationChoice [Integer]
+Define Variable: GeneralHeadChoice [Integer]
+# 
+# Define total number of model layers
+Define Variable: NumLay [Integer]
+# 
+# Define number of geologic units in simulation
+Define Variable: TopSimul [Integer]
+Define Variable: BotSimul [Integer]
+# 
+# Define dummy variables for looping and checking
+Define Variable: i [Integer]
+Define Variable: j [Integer]
+Define Variable: k [Integer]
+Define Variable: n [Integer]
+Define Variable: ocflag [Integer]
+Define Variable: M [Integer]
+Define Variable: TempValue1 [Real]
+Define Variable: TempValue2 [Real]
+Define Variable: TempValue3 [Real]
+Define Variable: TempValue4 [Real]
+Define Variable: WD [Real]
+Define Variable: WT [Real]
+Define Variable: WB [Real]
+Define Variable: TML [Real]
+Define Variable: BML [Real]
+# 
+# added on June 16, 1997
+Define Variable: L [Integer]
+Define Variable: Lay_Flag [Integer]
+Define Variable: Block_Num [Integer]
+Define Variable: Block_Flag [Integer]
+Define Variable: ok [Integer]
+Define Variable: Test [Real]
+# 
+Define Variable: WEL_MXWELL [Integer]
+Define Variable: DumRow [Integer]
+Define Variable: DumCol [Integer]
+Define Variable: DumLay [Integer]
+# RBW New Code 3/26/98
+Define Variable: DumThickness [Real]
+Define Variable: BlockCount [Integer]
+Define Variable: ColumnCount [Integer]
+# RBW End New Code 3/26/98
+# 
+# Define Variable: RunMODFLOW [Integer]
+# 
+# RBW New Code 8/4/99
+Set Variable: ShowWarnings:= @cbShowWarnings@
+# RBW End New Code 8/4/99
+Set Variable: FileName:= "@adeFileName@"
+# 
+# Set Variable: Heading1:= "@HEADING1@"
+# Set Variable: Heading2:= "@HEADING2@"
+# 
+Set Variable: NumLay:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	Set Variable: NumLay:= NumLay+MODFLOW_SIMUL(LayIndex)*MODFLOW_NDIV(LayIndex)
+End loop
+# 
+Set Variable: ITMUNI:= @comboTimeUnits@
+# Set variables for choice of stress packages and output control:
+# 
+Set Variable: WellChoice:= @cbWEL@
+Set Variable: RechargeChoice:= @cbRCH@
+Set Variable: DrainChoice:= @cbDRN@
+Set Variable: RiverChoice:= @cbRIV@
+Set Variable: EvapotranspirationChoice:= @cbEVT@
+Set Variable: GeneralHeadChoice:= @cbGHB@
+# MOC3D
+# 
+Set Variable: TopSimul:= 0
+Set Variable: BotSimul:= 0
+# Stream package variables
+Define Variable: StreamChoice [Boolean]
+Set Variable: StreamChoice:= @cbSTR@&@cbSTRRetain@
+Define Variable: ExportStreams [Boolean]
+Set Variable: ExportStreams:= @cbExpStr@
+Define Variable: ElevationAboveTopError [Boolean]
+Define Variable: ElevationBelowBottomError [Boolean]
+Define Variable: TributaryMaxAllowed [Integer]
+Define Variable: StreamSegmentCount [Integer]
+Define Variable: StreamSegmentList [Integer]
+Define Variable: SortedStreamSegmentList [Integer]
+Define Variable: StreamUnitList [Integer]
+Define Variable: StreamTributaryList [Integer]
+Define Variable: StreamIndex [Integer]
+Define Variable: StreamIndex2 [Real]
+Define Variable: Tributary2DArray [Integer]
+Define Variable: TributaryIndex [Integer]
+Define Variable: TributaryCount [Integer]
+Define Variable: not_ok [Boolean]
+Define Variable: StreamsSteady [Boolean]
+Set Variable: StreamsSteady:= !@comboStreamOption@
+Define Variable: StreamTop [Real]
+Define Variable: DownstreamStreamTop [Real]
+Define Variable: StreamBottom [Real]
+Define Variable: DownstreamStreamBottom [Real]
+Define Variable: StreamStage [Real]
+Define Variable: DownstreamStreamStage [Real]
+Define Variable: StreamConductance [Real]
+Define Variable: Width [Real]
+Define Variable: DownstreamWidth [Real]
+Define Variable: ICALC [Integer]
+Set Variable: ICALC:= @cbStreamCalcFlow@
+Define Variable: UseTributaries [Boolean]
+Set Variable: UseTributaries:= @cbStreamTrib@
+Define Variable: UseDiversions [Boolean]
+Set Variable: UseDiversions:= @cbStreamDiversions@
+Set Variable: StreamSegmentList:= MODFLOW_L_CreateNewList()
+Set Variable: SortedStreamSegmentList:= MODFLOW_L_CreateNewList()
+Set Variable: StreamTributaryList:= MODFLOW_L_CreateNewList()
+Set Variable: TributaryMaxAllowed:= 10
+Set Variable: StreamUnitList:= MODFLOW_L_CreateNewList()
+Define Variable: StreamProperties3DArray [Integer]
+Define Variable: CurrentStream [Integer]
+Define Variable: BlockIndex [Integer]
+Define Variable: BlockListCount [Integer]
+Define Variable: BlockTop [Real]
+Define Variable: BlockBottom [Real]
+Define Variable: StreamUnit [Integer]
+Define Variable: CurrentStreamReachCount [Integer]
+Define Variable: MaxStreamReachCount [Integer]
+Define Variable: ISTCB1 [Integer]
+Set Variable: ISTCB1:= @cbFlowSTR@
+Define Variable: ISTCB2 [Integer]
+Set Variable: ISTCB2:= @cbFlowSTR2@
+Define Variable: NTRIB [Integer]
+Define Variable: NTRIBCurrent [Integer]
+Define Variable: NDIV [Integer]
+# ModelLengthUnits = 0 -> m
+# ModelLengthUnits = 1 -> ft
+Define Variable: ModelLengthUnits [Integer]
+Set Variable: ModelLengthUnits:= @comboModelUnits@
+Define Variable: StreamCONST [Real]
+Set Variable: StreamCONST:= 1
+If: ICALC&StreamChoice
+	If: ITMUNI=0
+		Alert: "Error: You must specify the time unit to calculate the stage height in the stream package. Check the Time Tab of the Edit Project Info Dialog box."
+	End if
+	If: ITMUNI=1
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 1.486
+		Else
+			Set Variable: StreamCONST:= 1
+		End if
+	End if
+	If: ITMUNI=2
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 89.16
+		Else
+			Set Variable: StreamCONST:= 60
+		End if
+	End if
+	If: ITMUNI=3
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 5349.6
+		Else
+			Set Variable: StreamCONST:= 3600
+		End if
+	End if
+	If: ITMUNI=4
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 128390.4
+		Else
+			Set Variable: StreamCONST:= 86400
+		End if
+	End if
+	If: ITMUNI=5
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 46784593
+		Else
+			Set Variable: StreamCONST:= 31447600
+		End if
+	End if
+End if
+Define Variable: FlowIndex [Integer]
+Set Variable: FlowIndex:= 0
+Define Variable: UpstreamStageIndex [Integer]
+Set Variable: UpstreamStageIndex:= 1
+Define Variable: DownstreamStageIndex [Integer]
+Set Variable: DownstreamStageIndex:= 2
+Define Variable: ConductivityIndex [Integer]
+Set Variable: ConductivityIndex:= 3
+Define Variable: UpstreamTopElevIndex [Integer]
+Set Variable: UpstreamTopElevIndex:= 4
+Define Variable: DownstreamTopElevIndex [Integer]
+Set Variable: DownstreamTopElevIndex:= 5
+Define Variable: UpstreamBotElevIndex [Integer]
+Set Variable: UpstreamBotElevIndex:= 6
+Define Variable: DownstreamBotElevIndex [Integer]
+Set Variable: DownstreamBotElevIndex:= 7
+Define Variable: UpstreamWidthIndex [Integer]
+Set Variable: UpstreamWidthIndex:= 8
+Define Variable: DownstreamWidthIndex [Integer]
+Set Variable: DownstreamWidthIndex:= 9
+Define Variable: SlopeIndex [Integer]
+Set Variable: SlopeIndex:= 10
+Define Variable: RoughnessIndex [Integer]
+Set Variable: RoughnessIndex:= 11
+Define Variable: InterpolateStage [Integer]
+Set Variable: InterpolateStage:= 12
+Define Variable: InterpolateTopElev [Integer]
+Set Variable: InterpolateTopElev:= 13
+Define Variable: InterpolateBottomElev [Integer]
+Set Variable: InterpolateBottomElev:= 14
+Define Variable: InterpolateWidth [Integer]
+Set Variable: InterpolateWidth:= 15
+# #
+# Define MT3D Variables
+Define Variable: MT3D_ADV [Boolean]
+Define Variable: MT3D_CHKMAS [Boolean]
+Define Variable: MT3D_CINACT [Real]
+Define Variable: MT3D_DCEPS [Real]
+Define Variable: MT3D_DCHMOC [Real]
+Define Variable: MT3D_DSP [Boolean]
+Define Variable: MT3D_FlowFile [Boolean]
+Define Variable: MT3D_Export [Boolean]
+Define Variable: MT3D_PrintFormat [Integer]
+Define Variable: MT3D_IFMTCN [Integer]
+Define Variable: MT3D_IFMTDP [Integer]
+Define Variable: MT3D_IFMTNP [Integer]
+Define Variable: MT3D_IFMTRF [Integer]
+Define Variable: MT3D_INTERP [Integer]
+Define Variable: MT3D_IREACT [Integer]
+Define Variable: MT3D_ISOTHM [Integer]
+Define Variable: MT3D_ITRACK [Integer]
+Define Variable: MT3D_LUNIT [String]
+Define Variable: MT3D_MIXELM [Integer]
+Define Variable: MT3D96 [Boolean]
+Define Variable: MT3D_Heading1 [String]
+Define Variable: MT3D_Heading2 [String]
+Define Variable: MT3D_LoopLimit [Integer]
+Define Variable: MT3D_InnerLoopLimit [Integer]
+Define Variable: MT3D_MUNIT [String]
+Define Variable: MT3D_MXPART [Integer]
+Define Variable: MT3D_NLSINK [Integer]
+Define Variable: MT3D_NPH [Integer]
+Define Variable: MT3D_NPL [Integer]
+Define Variable: MT3D_NPLANE [Integer]
+Define Variable: MT3D_NPMAX [Integer]
+Define Variable: MT3D_NPMIN [Integer]
+Define Variable: MT3D_NPRS [Integer]
+Define Variable: MT3D_NPSINK [Integer]
+Define Variable: MT3D_PERCEL [Real]
+Define Variable: MT3D_Print [Boolean]
+Define Variable: MT3D_RCT [Boolean]
+Define Variable: MT3D_Run [Boolean]
+Define Variable: MT3D_SAVUCN [Boolean]
+Define Variable: MT3D_SRMULT [Real]
+Define Variable: MT3D_SSM [Boolean]
+# Define Variable: MT3D_TUNIT [String]
+Define Variable: MT3D_WD [Real]
+Define Variable: MT3D_DomainObjects [Real]
+Define Variable: ThisTop [Real]
+Define Variable: ThisBottom [Real]
+Define Variable: MassFraction [Real]
+# 
+# Set MT3D Variables
+Set Variable: MT3D_ADV:= @cbADV@
+Set Variable: MT3D_CHKMAS:= "@cbCheckMass@"
+Set Variable: MT3D_CINACT:= @adeMT3DInactive@
+Set Variable: MT3D_DCEPS:= @adeMT3DNeglSize@
+Set Variable: MT3D_DCHMOC:= @adeMT3DCritRelConcGrad@
+Set Variable: MT3D_DSP:= @cbDSP@
+Set Variable: MT3D_Export:= @rbRunMT3D@|@rbCreateMT3D@
+# Set Variable: MT3D_FlowFile:= @MT3D_FlowFile@
+Set Variable: MT3D_PrintFormat:= -1 * (@comboPrintoutFormat@*2-1)
+Set Variable: MT3D_IFMTCN:= @cbPrintConc@
+Set Variable: MT3D_IFMTDP:= @cbPrintDispCoef@
+Set Variable: MT3D_IFMTNP:= @cbPrintNumParticles@
+Set Variable: MT3D_IFMTRF:= @cbPrintRetardation@
+If: MT3D_IFMTCN
+	Set Variable: MT3D_IFMTCN:= @comboConcentrationFormat@ * MT3D_PrintFormat
+End if
+If: MT3D_IFMTDP
+	Set Variable: MT3D_IFMTDP:= @comboRetardationFormat@ * MT3D_PrintFormat
+End if
+If: MT3D_IFMTNP
+	Set Variable: MT3D_IFMTNP:= @comboDispersionFormat@ * MT3D_PrintFormat
+End if
+If: MT3D_IFMTRF
+	Set Variable: MT3D_IFMTRF:= @comboParticlePrintFormat@ * MT3D_PrintFormat
+End if
+Set Variable: MT3D_INTERP:= 1
+Set Variable: MT3D_IREACT:= @comboMT3DIREACT@
+Set Variable: MT3D_ISOTHM:= @comboMT3DIsotherm@
+Set Variable: MT3D_ITRACK:= @comboMT3DParticleTrackingAlg@ + 1
+Set Variable: MT3D_LUNIT:= "@edMT3DLength@"
+Set Variable: MT3D_MIXELM:= @comboMT3DAdvSolScheme@
+Set Variable: MT3D96:= 0
+Set Variable: MT3D_Heading1:= "@adeMT3DHeading1@"
+Set Variable: MT3D_Heading2:= "@adeMT3DHeading2@"
+Set Variable: MT3D_MUNIT:= "@edMT3DMass@"
+Set Variable: MT3D_MXPART:= @adeMT3DMaxParticleCount@
+Set Variable: MT3D_NLSINK:= @comboMT3DInitPartSinkChoice@
+If: MT3D_NLSINK
+	Set Variable: MT3D_NLSINK:= @adeMT3DSinkParticlePlaneCount@
+End if
+Set Variable: MT3D_NPH:= @adeMT3DInitPartLarge@
+Set Variable: MT3D_NPL:= @adeMT3DInitPartSmall@
+Set Variable: MT3D_NPLANE:= @comboMT3DInitPartPlace@
+If: MT3D_NPLANE
+	Set Variable: MT3D_NPLANE:= @adeMT3DParticlePlaneCount@
+End if
+Set Variable: MT3D_NPMAX:= @adeMT3DMaxPartPerCell@
+Set Variable: MT3D_NPMIN:= @adeMT3DMinPartPerCell@
+Set Variable: MT3D_NPRS:= @comboResultsPrinted@
+If: MT3D_NPRS = 1
+	Set Variable: MT3D_NPRS:= -@adeResultsPrintedN@
+End if
+Set Variable: MT3D_NPSINK:= @adeMT3DSinkParticleCount@
+Set Variable: MT3D_PERCEL:= @adeMT3DMaxParticleMovement@
+Set Variable: MT3D_Print:= @cbPrintLinkFile@
+Set Variable: MT3D_RCT:= @cbRCT@
+Set Variable: MT3D_Run:= @rbRunMT3D@
+Set Variable: MT3D_SAVUCN:= "@cbSaveConcAndDisc@"
+Set Variable: MT3D_SRMULT:= @adeMT3DParticleMult@
+Set Variable: MT3D_SSM:= @cbSSM@
+Set Variable: MT3D_WD:= @adeMT3DConcWeight@
+# 
+Define Variable: MT3D_Path [String]
+Set Variable: MT3D_Path:= "@adeMT3DPath@"
+# 
+# RBW New Code 3/26/98
+Define Variable: MemError [Boolean]
+# Define Variable: UnitIndex [Integer]
+# 
+Define Variable: ProgressBarMessage [String]
+Define Variable: MaxSteps [Integer]
+Define Variable: CurrentSpecifiedBoundaryCountList [Integer]
+Define Variable: CurrentBoundaryCountList [Integer]
+Evaluate expression: MODFLOW_L_Initialize()
+Set Variable: CurrentSpecifiedBoundaryCountList:= MODFLOW_L_CreateNewList()
+Evaluate expression: MODFLOW_L_SetListSize(CurrentSpecifiedBoundaryCountList, MODFLOW_NPER()+1)
+Set Variable: CurrentBoundaryCountList:= MODFLOW_L_CreateNewList()
+Evaluate expression: MODFLOW_L_SetListSize(CurrentBoundaryCountList, MODFLOW_NPER()+1)
+# 
+Set Variable: CalcElev:= 0
+If: MT3D_SSM & ExportMT3D_SSM
+	If: RechargeChoice
+		Set Variable: CalcElev:= 1
+	End if
+	If: EvapotranspirationChoice
+		Set Variable: CalcElev:= 1
+	End if
+	If: RiverChoice
+		Set Variable: CalcElev:= 1
+	End if
+	If: DrainChoice
+		Set Variable: CalcElev:= 1
+	End if
+	If: StreamChoice
+		Set Variable: CalcElev:= 1
+	End if
+End if
+# 
+Set Variable: MaxSteps:= 2 * MODFLOW_NLAY()
+# 
+If: CalcElev
+	Set Variable: MaxSteps:= MaxSteps + 2*MODFLOW_NLAY()
+End if
+If: MT3D_Export
+	If: ExportMT3D_BTN
+		Set Variable: MaxSteps:= MaxSteps + 1 + 5 * MODFLOW_NLAY() + MODFLOW_NPER()
+	End if
+	If: MT3D_ADV & ExportMT3D_ADV
+		Set Variable: MaxSteps:= MaxSteps + 1
+	End if
+	If: MT3D_DSP & ExportMT3D_DSP
+		Set Variable: MaxSteps:= MaxSteps + 1
+	End if
+	If: MT3D_RCT & ExportMT3D_RCT
+		Set Variable: MaxSteps:= MaxSteps + 1
+	End if
+	If: MT3D_SSM & ExportMT3D_SSM
+		Set Variable: MaxSteps:= MaxSteps + MODFLOW_NLAY()
+		If: WellChoice!=0
+			Set Variable: MaxSteps:= MaxSteps + MODFLOW_NLAY()
+		End if
+		If: GeneralHeadChoice!=0
+			Set Variable: MaxSteps:= MaxSteps + MODFLOW_NLAY()
+		End if
+		If: DrainChoice!=0
+			Set Variable: MaxSteps:= MaxSteps + MODFLOW_NLAY()
+		End if
+		If: RiverChoice!=0
+			Set Variable: MaxSteps:= MaxSteps + MODFLOW_NLAY()
+		End if
+		If: @cbMT3D_TVC@
+			Set Variable: MaxSteps:= MaxSteps + MODFLOW_NLAY()
+		End if
+	End if
+End if
+# RBW 3/26/98 end change
+# 
+Set Variable: TopElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: BottomElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: ThicknessList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: KzList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+If: CalcElev
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Evaluate expression: MODFLOW_ProgressBarSetMessage("Evaluating Top Elevations of Unit " + LayIndex)
+		Evaluate expression: MODFLOW_ProgressBarAdvance()
+		Redirect output to: Dummy
+			Export matrix: MODFLOW_L_SetOneBased3DListItem(TopElevationList, Column(), Row(), LayIndex, Elev Top Unit[LayIndex]) [G0]
+		End file
+		Evaluate expression: MODFLOW_Delete_File("Dummy")
+	End loop
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Evaluate expression: MODFLOW_ProgressBarSetMessage("Evaluating Bottom Elevations of Unit " + LayIndex)
+		Evaluate expression: MODFLOW_ProgressBarAdvance()
+		Redirect output to: Dummy
+			Export matrix: MODFLOW_L_SetOneBased3DListItem(BottomElevationList, Column(), Row(), LayIndex, Elev Bot Unit[LayIndex]) [G0]
+			If: MODFLOW_SIMUL(LayIndex)
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex))/MODFLOW_NDIV(LayIndex)) [G0]
+			Else
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex))) [G0]
+			End if
+			Export matrix: If((MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)<=0)&IBOUND Unit[LayIndex], MODFLOW_ProgressBarAddLine("Negative or zero unit thickness at Unit " + LayIndex + "; Column: " + Column() + "; Row: " + Row()), 0) [G0]
+		End file
+		Evaluate expression: MODFLOW_Delete_File("Dummy")
+	End loop
+	Evaluate expression: MODFLOW_ProgressBarSetMessage("Checking for elevation errors")
+	If: MODFLOW_NLAY() > 1
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY()-1 step: 1
+			Redirect output to: Dummy
+				If: MODFLOW_SpecVcont(LayIndex)
+					Export matrix: If(MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)>MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex + 1)&IBOUND Unit[LayIndex]&IBOUND Unit[LayIndex+1], MODFLOW_ProgressBarAddLine("Bottom elevation at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + "is less than the top elevation of the unit beneath it."), 0) [G0]
+				Else
+					Export matrix: If(MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)!=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex + 1)&IBOUND Unit[LayIndex]&IBOUND Unit[LayIndex+1], MODFLOW_ProgressBarAddLine("Bottom elevation at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + "is different from the top elevation of the unit beneath it."), 0) [G0]
+				End if
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End loop
+	End if
+End if
+Set Variable: MemError:= IsNAN(TopElevationList)
+If: MemError
+	Alert: "The 'List.dll' PIE is not installed. You must install it before you can export data from this model."
+End if
+# 
+Evaluate expression: MODFLOW_ProgressBarInitialize(MaxSteps)
+# 
+If: !MemError
+	# RBW End New Code 3/26/98
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		If: MODFLOW_SIMUL(LayIndex)!=0&TopSimul=0
+			Set Variable: TopSimul:= LayIndex
+		End if
+	End loop
+	# 
+	Loop for: Variable LayIndex from: MODFLOW_NLAY() to: 1 step: -1
+		If: MODFLOW_SIMUL(LayIndex)!=0&BotSimul=0
+			Set Variable: BotSimul:= LayIndex
+		End if
+	End loop
+	# 
+	If: TopSimul=0&BotSimul=0
+		Set Variable: err_geo:= 1
+		# Alert: "No geologic units are specified for simulation!"
+	End if
+	# 
+	Set Variable: ok:= 1
+	If: MT3D_Export
+		Set Variable: LayerCount:= 0
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			If: MODFLOW_SIMUL(LayIndex)!=0
+				Set Variable: LayerCount:= LayerCount+MODFLOW_NDIV(LayIndex)
+			End if
+		End loop
+		Set Variable: LayconArray:= MODFLOW_L_CreateNewList()
+		Set Variable: Test:= LayconArray
+		If: IsNAN(Test)
+			Alert: "The List PIE could not be found!"
+			Set Variable: ok:= 0
+		End if
+		Set Variable: MT3D_DomainObjects:= 0
+		Loop for: Objects in layer: MT3D Domain Outline
+			Set Variable: MT3D_DomainObjects:= MT3D_DomainObjects+1
+		End loop
+		If: (MT3D_DomainObjects=0)
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				If: (MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Blocks
+						If: (MODFLOW FD Grid.ICBUND Unit[LayIndex]!=0)
+							Set Variable: MT3D_DomainObjects:= 1
+						End if
+					End loop
+				End if
+			End loop
+		End if
+		If: (MT3D_DomainObjects=0)
+			Alert: "The MT3D Domain Outline has not been set. Creation of data files for MT3D can not continue."
+			Set Variable: ok:= 0
+		End if
+	End if
+	# 
+	# Export MT3D Response File
+	# 
+	If: MT3D_Export&ok
+		# 
+		Redirect output to: @adeFileName@.MTR
+			Start a new line
+				Export expression: FileName + ".MLS" [G0]
+			End line
+			Start a new line
+				Export expression: FileName + ".BTN" [G0]
+			End line
+			If: MT3D_ADV
+				Start a new line
+					Export expression: FileName + ".ADV" [G0]
+				End line
+			End if
+			If: MT3D_DSP
+				Start a new line
+					Export expression: FileName + ".DSP" [G0]
+				End line
+			End if
+			If: MT3D_SSM
+				Start a new line
+					Export expression: FileName + ".SSM" [G0]
+				End line
+			End if
+			If: MT3D_RCT
+				Start a new line
+					Export expression: FileName + ".RCT" [G0]
+				End line
+			End if
+			Start a new line
+				Export expression: FileName + ".FLO" [G0]
+			End line
+			If: MT3D_Print
+				Start a new line
+					Export expression: "Y" [G0]
+				End line
+			Else
+				Start a new line
+					Export expression: "N" [G0]
+				End line
+			End if
+		End file
+		# 
+		# Export Basic Transport Package
+		# 
+		If: ExportMT3D_BTN
+			Redirect output to: @adeFileName@.BTN
+				# 
+				# Export headings (MT3D, Basic transport package, A1 and A2)
+				Start a new line
+					Export expression: MT3D_Heading1 [G0]
+				End line
+				Start a new line
+					Export expression: MT3D_Heading2 [G0]
+				End line
+				# 
+				# Export number of layers, rows columns and stress periods (MT3D, Basic transport package, A3)
+				Start a new line
+					Export expression: NumLay [I10]
+					Export expression: NumRows() [I10]
+					Export expression: NumColumns() [I10]
+					Export expression: MODFLOW_NPER() [I10]
+				End line
+				# 
+				# Export time, length and mass units (MT3D, Basic transport package, A4)
+				Start a new line
+					If: ITMUNI=0
+						Export expression: "X" [G4]
+					Else
+						If: ITMUNI=1
+							Export expression: "s" [G4]
+						Else
+							If: ITMUNI=2
+								Export expression: "min" [G4]
+							Else
+								If: ITMUNI=3
+									Export expression: "hr" [G4]
+								Else
+									If: ITMUNI=4
+										Export expression: "day" [G4]
+									Else
+										Export expression: "yr" [G4]
+									End if
+								End if
+							End if
+						End if
+					End if
+					Export expression: MT3D_LUNIT [G4]
+					Export expression: MT3D_MUNIT [G4]
+				End line
+				# 
+				# Export transport options (MT3D, Basic transport package, A5)
+				Start a new line
+					If: MT3D_ADV
+						Export expression: "T" [G2]
+					Else
+						Export expression: "F" [G2]
+					End if
+					If: MT3D_DSP
+						Export expression: "T" [G2]
+					Else
+						Export expression: "F" [G2]
+					End if
+					If: MT3D_SSM
+						Export expression: "T" [G2]
+					Else
+						Export expression: "F" [G2]
+					End if
+					If: MT3D_RCT
+						Export expression: "T" [G0]
+					Else
+						Export expression: "F" [G0]
+					End if
+				End line
+				# 
+				# Export model layer type code (MT3D, Basic transport package, A6)
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Evaluate expression: MODFLOW_L_AddToList(LayconArray, MODFLOW_LAYCON(LayIndex))
+						End loop
+					End if
+				End loop
+				Set Variable: MT3D_LoopLimit:= Div(LayerCount, 40)
+				If: MT3D_LoopLimit<LayerCount / 40
+					Set Variable: MT3D_LoopLimit:= MT3D_LoopLimit + 1
+				End if
+				Set Variable: MT3D_InnerLoopLimit:= LayerCount
+				Set Variable: k:= 0
+				Loop for: Variable i from: 1 to: MT3D_LoopLimit step: 1
+					Start a new line
+						If: MT3D_InnerLoopLimit<40
+							Loop for: Variable j from: 1 to: MT3D_InnerLoopLimit step: 1
+								Export expression: MODFLOW_L_GetFromList(LayconArray, k) [I2]
+								Set Variable: k:= k+1
+							End loop
+						Else
+							Loop for: Variable j from: 1 to: 40 step: 1
+								Export expression: MODFLOW_L_GetFromList(LayconArray, k) [I2]
+								Set Variable: k:= k + 1
+							End loop
+							Set Variable: MT3D_InnerLoopLimit:= MT3D_InnerLoopLimit - 40
+						End if
+					End line
+				End loop
+				# 
+				# Export cell widths along rows (MT3D, Basic transport package, A7)
+				Start a new line
+					Export expression: 100 [I10]
+					Export expression: 1 [I10]
+					Export expression: "(E13.5)" [G20]
+					Export expression: 0 [I10]
+					Export expression: " DELR" [G0]
+				End line
+				Loop for: Columns
+					If: $Column$<NumColumns()
+						Start a new line
+							Export expression: Abs(NthColumnPos($Column$+1)-NthColumnPos($Column$)) [E13.5]
+						End line
+					End if
+				End loop
+				# 
+				# Export cell widths along columns (MT3D, Basic transport package, A8)
+				Start a new line
+					Export expression: 100 [I10]
+					Export expression: 1 [I10]
+					Export expression: "(E13.5)" [G20]
+					Export expression: 0 [I10]
+					Export expression: " DELC" [G0]
+				End line
+				Loop for: Rows
+					If: $Row$<NumRows()
+						Start a new line
+							Export expression: Abs(NthRowPos($Row$+1)-NthRowPos($Row$)) [E13.5]
+						End line
+					End if
+				End loop
+				# 
+				# Export top elevation of the first (topmost) model layer (MT3D, Basic transport package, A9)
+				Start a new line
+					Export expression: 100 [I10]
+					Export expression: 1 [I10]
+					Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+					Export expression: 0 [I10]
+					Export expression: " Elevation of top of uppermost layer" [G0]
+				End line
+				# RBW New Code 3/26/98
+				Set Variable: ProgressBarMessage:= "MT3D Top Elevation"
+				Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+				Evaluate expression: MODFLOW_ProgressBarAdvance()
+				# RBW End New Code 3/26/98
+				# RBW Old Code 3/26/98
+				# Export matrix: Elev Top Unit1 [E13.6]
+				# RBW End Old Code 3/26/98
+				# RBW New Code 3/26/98
+				Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex) [E13.6]
+				# RBW End New Code 3/26/98
+				# 
+				# Export cell thicknesses (MT3D, Basic transport package, A10)
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					# RBW New Code 3/26/98
+					Set Variable: ProgressBarMessage:= "Layer Thickness" + EndLine() + "Layer: " + LayIndex
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					# RBW End New Code 3/26/98
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# Cell thicknesses
+							Start a new line
+								Set Variable: k:= k+1
+								Export expression: 100 [I10]
+								Export expression: 1 [I10]
+								Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+								Export expression: 0 [I10]
+								Export expression: " Cell Thickness, Layer " [G0]
+								Export expression: k [G0]
+							End line
+							# RBW Old Code 3/26/98
+							# Export matrix: Thickness Unit[LayIndex]/MODFLOW_NDIV(LayIndex) [E13.6]
+							# RBW End Old Code 3/26/98
+							# RBW New Code 3/26/98
+							Export matrix: MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [E13.6]
+							# RBW End New Code 3/26/98
+						End loop
+					End if
+				End loop
+				# 
+				# Export cell porosities (MT3D, Basic transport package, A11)
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					# RBW New Code 3/26/98
+					Set Variable: ProgressBarMessage:= "Porosity" + EndLine() + "Layer: " + LayIndex
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					# RBW End New Code 3/26/98
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# Cell thicknesses
+							Start a new line
+								Set Variable: k:= k+1
+								Export expression: 100 [I10]
+								Export expression: 1 [I10]
+								Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+								Export expression: 0 [I10]
+								Export expression: " Porosity, Layer " [G0]
+								Export expression: k [G0]
+							End line
+							Export matrix: MT3D Porosity Unit[LayIndex] [E13.6]
+						End loop
+					Else
+						# Error message, MT3D does not allow quasi-3D models
+					End if
+				End loop
+				# 
+				# Export ICBUND (MT3D, Basic transport package, A12)
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					# RBW New Code 3/26/98
+					Set Variable: ProgressBarMessage:= "ICBUND" + EndLine() + "Layer: " + LayIndex
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					# RBW End New Code 3/26/98
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# IARRAY reader
+							Start a new line
+								Set Variable: k:= k+1
+								Export expression: 100 [I10]
+								Export expression: 1 [I10]
+								Export expression: " (I3, "+(NumColumns()-1)+"I4)" [G20]
+								Export expression: 0 [I10]
+								Export expression: " ICBUND, Layer " [G0]
+								Export expression: k [G0]
+							End line
+							# ICBUND
+							Export matrix: ICBUND Unit[LayIndex] [I3]
+						End loop
+					End if
+				End loop
+				# 
+				# Export SCONC (MT3D, Basic transport package, A13)
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					# RBW New Code 3/26/98
+					Set Variable: ProgressBarMessage:= "Initial Concentration" + EndLine() + "Layer: " + LayIndex
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					# RBW End New Code 3/26/98
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# RARRAY reader
+							Start a new line
+								Set Variable: k:= k+1
+								Export expression: 100 [I10]
+								Export expression: 1 [I10]
+								Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+								Export expression: 0 [I10]
+								Export expression: " SCONC, Layer " [G0]
+								Export expression: k [G0]
+							End line
+							# SCONC
+							Export matrix: MT3D Initial Concentration Unit[LayIndex] [E13.6]
+						End loop
+					End if
+				End loop
+				# 
+				# Export CINACT (MT3D, Basic transport package, A14)
+				Start a new line
+					Export expression: MT3D_CINACT [G10]
+					Export expression: " CINACT" [G0]
+				End line
+				# 
+				# Export print/save control flags (MT3D, Basic transport package, A15)
+				Start a new line
+					Export expression: MT3D_IFMTCN [I10]
+					Export expression: MT3D_IFMTNP [I10]
+					Export expression: MT3D_IFMTRF [I10]
+					Export expression: MT3D_IFMTDP [I10]
+					If: MT3D_SAVUCN
+						Export expression: "         T" [G0]
+					Else
+						Export expression: "         F" [G0]
+					End if
+					Export expression: "  Print/Save control flags" [G0]
+				End line
+				# 
+				# Export NPRS (MT3D, Basic transport package, A16)
+				Start a new line
+					Export expression: MT3D_NPRS [I10]
+					Export expression: " NPRS" [G0]
+				End line
+				If: MT3D_NPRS>1
+					# 
+					# Export TIMPRS(NPRS) (MT3D, Basic transport package, A17)
+					# 
+					Set Variable: MT3D_LoopLimit:= Div(MT3D_NPRS, 8)
+					If: MT3D_LoopLimit<MT3D_NPRS / 8
+						Set Variable: MT3D_LoopLimit:= MT3D_LoopLimit + 1
+					End if
+					Set Variable: MT3D_InnerLoopLimit:= MT3D_NPRS
+					Set Variable: k:= 1
+					Loop for: Variable i from: 1 to: MT3D_LoopLimit step: 1
+						Start a new line
+							If: MT3D_InnerLoopLimit<8
+								Loop for: Variable j from: 1 to: MT3D_InnerLoopLimit step: 1
+									Export expression: MT3D_TIMPRS(k) [G10]
+									Set Variable: k:= k+1
+								End loop
+							Else
+								Loop for: Variable j from: 1 to: 8 step: 1
+									Export expression: MT3D_TIMPRS(k) [G10]
+									Set Variable: k:= k + 1
+								End loop
+								Set Variable: MT3D_InnerLoopLimit:= MT3D_InnerLoopLimit - 8
+							End if
+						End line
+					End loop
+				End if
+				# 
+				# Export NOBS (MT3D, Basic transport package, A18)
+				# 
+				Set Variable: MT3DNOBS:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Blocks
+							If: MT3D Observation Location Unit[LayIndex]=1
+								Set Variable: MT3DNOBS:= MT3DNOBS+MODFLOW_NDIV(LayIndex)
+							End if
+						End loop
+					End if
+				End loop
+				Start a new line
+					Export expression: MT3DNOBS [I10]
+					Export expression: " NOBS" [G0]
+				End line
+				# Export observation cells (MT3D, Basic transport package, A19)
+				# 
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					# RBW New Code 3/26/98
+					Set Variable: ProgressBarMessage:= "MT3D Observations" + EndLine() + "Layer: " + LayIndex
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					# RBW End New Code 3/26/98
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Set Variable: k:= k+1
+							Loop for: Blocks
+								If: MT3D Observation Location Unit[LayIndex]
+									Start a new line
+										Export expression: k [I10]
+										Export expression: Row() [I10]
+										Export expression: Column() [I10]
+									End line
+								End if
+							End loop
+						End loop
+					End if
+				End loop
+				# 
+				# Export CHKMAS (MT3D, Basic transport package, A20)
+				# 
+				Start a new line
+					If: MT3D_CHKMAS
+						Export expression: "         T" [G10]
+					Else
+						Export expression: "         F" [G10]
+					End if
+					Export expression: " CHKMAS" [G0]
+				End line
+				Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+					# RBW New Code 3/26/98
+					Set Variable: ProgressBarMessage:= "MT3D Basic Package Transient Data" + EndLine() + "Period: " + PeriodIndex
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					# RBW End New Code 3/26/98
+					Start a new line
+						# Export PERLEN, NSTP, TSMULT (MT3D, Basic transport package, A21)
+						Export expression: MODFLOW_PERLEN(PeriodIndex) [G10]
+						Export expression: MODFLOW_NSTP(PeriodIndex) [I10]
+						Export expression: MODFLOW_TSMULT(PeriodIndex) [G10]
+					End line
+					Start a new line
+						# Export DTO, NXSTRN (MT3D, Basic transport package, A23)
+						Export expression: MT3D_DTO(PeriodIndex) [G10]
+						Export expression: MT3D_MXSTRN(PeriodIndex) [I10]
+					End line
+				End loop
+			End file
+		End if
+		# 
+		# MT3D Advection Package
+		# 
+		If: MT3D_ADV & ExportMT3D_ADV
+			# RBW New Code 3/26/98
+			Set Variable: ProgressBarMessage:= "MT3D Advection Package"
+			Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+			Evaluate expression: MODFLOW_ProgressBarAdvance()
+			# RBW End New Code 3/26/98
+			Redirect output to: @adeFileName@.ADV
+				Start a new line
+					# 
+					# Export MIXELM, PERCEL, MXPART, (MT3D, Advection package, B1)
+					# 
+					Export expression: MT3D_MIXELM [I10]
+					Export expression: MT3D_PERCEL [G10]
+					Export expression: MT3D_MXPART [I10]
+					Export expression: "                                         MIXELM, PERCEL, MXPART" [G0]
+				End line
+				# 
+				# Export ITRACK, WD (MT3D, Advection package, B2)
+				# 
+				If: MT3D_MIXELM=1|MT3D_MIXELM=2|MT3D_MIXELM=3
+					Start a new line
+						Export expression: MT3D_ITRACK [I10]
+						Export expression: MT3D_WD [G10]
+						Export expression: "                                                   ITRACK, WD" [G0]
+					End line
+				End if
+				If: MT3D_MIXELM=1|MT3D_MIXELM=3
+					# 
+					# Export DCEPS, NPLANE, NPL, NPH, NPMIN, NPMAX SRMULT, (MT3D, Advection package, B3)
+					# 
+					Start a new line
+						Export expression: MT3D_DCEPS [G10]
+						Export expression: MT3D_NPLANE [I10]
+						Export expression: MT3D_NPL [I10]
+						Export expression: MT3D_NPH [I10]
+						Export expression: MT3D_NPMIN [I10]
+						Export expression: MT3D_NPMAX [I10]
+						Export expression: MT3D_SRMULT [G10]
+						Export expression: " DCEPS, NPLANE, NPL, NPH, NPMIN, NPMAX SRMULT" [G0]
+					End line
+				End if
+				If: MT3D_MIXELM=2|MT3D_MIXELM=3
+					# 
+					# Export INTERP, NLSINK, NPSINK, (MT3D, Advection package, B4)
+					# 
+					Start a new line
+						Export expression: MT3D_INTERP [I10]
+						Export expression: MT3D_NLSINK [I10]
+						Export expression: MT3D_NPSINK [I10]
+						Export expression: "                                         INTERP, NLSINK, NPSINK" [G0]
+					End line
+				End if
+				If: MT3D_MIXELM=3
+					# 
+					# Export DCMOC, (MT3D, Advection package, B5)
+					# 
+					Start a new line
+						Export expression: MT3D_DCHMOC [G10]
+						Export expression: "                                                             DCHMOC" [G0]
+					End line
+				End if
+			End file
+		End if
+		# 
+		# MT3D Dispersion Package
+		# 
+		If: MT3D_DSP & ExportMT3D_DSP
+			# RBW New Code 3/26/98
+			Set Variable: ProgressBarMessage:= "MT3D Dispersion Package"
+			Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+			Evaluate expression: MODFLOW_ProgressBarAdvance()
+			# RBW End New Code 3/26/98
+			Redirect output to: @adeFileName@.DSP
+				# 
+				# Export AL (MT3D, Basic transport package, C1)
+				# 
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# RARRAY reader
+							Start a new line
+								Set Variable: k:= k+1
+								Export expression: 100 [I10]
+								Export expression: 1 [I10]
+								Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+								Export expression: 0 [I10]
+								Export expression: " AL, Layer " [G0]
+								Export expression: k [G0]
+							End line
+							# AL
+							Export matrix: MT3D Longitudinal Dispersivity Unit[LayIndex] [E13.6]
+						End loop
+					End if
+				End loop
+				# 
+				# Export TRPT (MT3D, Basic transport package, C2)
+				# 
+				# RARRAY reader
+				Start a new line
+					Export expression: 100 [I10]
+					Export expression: 1 [I10]
+					Export expression: " (E13.6)" [G20]
+					Export expression: 0 [I10]
+					Export expression: " TRPT" [G0]
+				End line
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# TRPT
+							Start a new line
+								Export expression: MT3D_TRPT(LayIndex) [G13]
+								Set Variable: k:= k+1
+								Export expression: " TRPT, Layer " [G0]
+								Export expression: k [G0]
+							End line
+						End loop
+					End if
+				End loop
+				# 
+				# Export TRPV (MT3D, Basic transport package, C3)
+				# 
+				# RARRAY reader
+				Start a new line
+					Export expression: 100 [I10]
+					Export expression: 1 [I10]
+					Export expression: " (E13.6)" [G20]
+					Export expression: 0 [I10]
+					Export expression: " TRPV" [G0]
+				End line
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# TRPV
+							Start a new line
+								Export expression: MT3D_TRPV(LayIndex) [G13]
+								Set Variable: k:= k+1
+								Export expression: " TRPV, Layer " [G0]
+								Export expression: k [G0]
+							End line
+						End loop
+					End if
+				End loop
+				# 
+				# Export DMCOEF (MT3D, Basic transport package, C4)
+				# 
+				# RARRAY reader
+				Start a new line
+					Export expression: 100 [I10]
+					Export expression: 1 [I10]
+					Export expression: " (E13.6)" [G20]
+					Export expression: 0 [I10]
+					Export expression: " DMCOEF" [G0]
+				End line
+				Set Variable: k:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							# DMCOEF
+							Start a new line
+								Export expression: MT3D_DMCOEF(LayIndex) [G13]
+								Set Variable: k:= k+1
+								Export expression: " DMCOEF, Layer " [G0]
+								Export expression: k [G0]
+							End line
+						End loop
+					End if
+				End loop
+			End file
+		End if
+		# 
+		# MT3D Source and Sink Mixing Package
+		# 
+		If: MT3D_SSM & ExportMT3D_SSM
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Evaluate expression: MODFLOW_Delete_File("TempGHBPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempRivPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempDrainPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempWellPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempStreamPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTempTVConc" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTempConstHead" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTemp36Rech" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTemp36EVT" + PeriodIndex)
+			End loop
+			Redirect output to: @adeFileName@.SSM
+			End file
+			# Set Variable: ok:= 1
+			# 
+			# calculate maximum number of each type of point sources and sinks.
+			# 
+			# 
+			Set Variable: MaxWells:= 0
+			Set Variable: MaxDrains:= 0
+			Set Variable: MaxRivers:= 0
+			Set Variable: MaxGHBs:= 0
+			Set Variable: MaxConstantHead:= 0
+			Set Variable: MaxTimeVaryingConc:= 0
+			If: RechargeChoice
+				Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+					Redirect output to: DispTemp36Rech
+						Start a new line
+							# 
+							# Export INCRCH (MT3D, Sink and Source mixing package, D3)
+							Set Variable: ProgressBarMessage:= "D3"
+							Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+							# 
+							Export expression: 1 [I10]
+							Export expression: "                                                                 Stress Period " [G0]
+							Export expression: PeriodIndex [G0]
+							Export expression: " D3" [G0]
+						End line
+						# 
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " CRCH Layer " [G0]
+							Export expression: LayIndex [G0]
+							Export expression: " Stress Period " [G0]
+							Export expression: PeriodIndex [G0]
+							Export expression: "           D4" [G0]
+						End line
+						Set Variable: ProgressBarMessage:= "D4"
+						Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+						Export matrix: Recharge.MT3D Concentration[PeriodIndex] [G13]
+						# End if
+					End file
+					Evaluate expression: MODFLOW_Rename_File("DispTemp36Rech","DispTemp36Rech" + PeriodIndex)
+				End loop
+			End if
+			If: EvapotranspirationChoice
+				Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+					Redirect output to: DispTemp36EVT
+						Start a new line
+							# 
+							Set Variable: ProgressBarMessage:= "D5"
+							Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+							# Export INCEVT (MT3D, Sink and Source mixing package, D5)
+							# 
+							Export expression: 1 [I10]
+							Export expression: " Stress Period " [G0]
+							Export expression: PeriodIndex [G0]
+							Export expression: "                                                                D5" [G0]
+						End line
+						# 
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " CEVT Layer " [G0]
+							Export expression: LayIndex [G0]
+							Export expression: " Stress Period " [G0]
+							Export expression: PeriodIndex [G0]
+							Export expression: "           D6" [G0]
+						End line
+						Set Variable: ProgressBarMessage:= "D6"
+						Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+						Export matrix: Evapotranspiration.MT3D Concentration[PeriodIndex] [G13]
+						# 
+					End file
+					Evaluate expression: MODFLOW_Rename_File("DispTemp36EVT","DispTemp36EVT" + PeriodIndex)
+				End loop
+			End if
+			Set Variable: CurrentWellCount:= 0
+			Set Variable: CurrentDrainCount:= 0
+			Set Variable: CurrentRiverCount:= 0
+			Set Variable: CurrentGHBCount:= 0
+			Set Variable: CurrentConstantHeadCount:= 0
+			Set Variable: CurrentTimeVaryingConcCount:= 0
+			Set Variable: CurrentSpecifiedWellCount:= 0
+			Set Variable: CurrentSpecifiedDrainCount:= 0
+			Set Variable: CurrentSpecifiedRiverCount:= 0
+			# Set Variable: CurrentSpecifiedGHBCount:= 0
+			Set Variable: CurrentSpecifiedConstantHeadCount:= 0
+			Set Variable: CurrentSpecifiedTimeVaryingConcCount:= 0
+			# ----------------------------------------------------
+			# GHB Package
+			# ----------------------------------------------------
+			If: GeneralHeadChoice!=0
+				Evaluate expression: MODFLOW_ProgressBarSetMessage("General-Head Boundary Package")
+				Set Variable: CurrentGHBCount:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					If: LayIndex=1
+						Set Variable: M:= 0
+					Else
+						Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+					End if
+					# 
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						# 
+						Loop for: Blocks
+							Set Variable: AreaBoundaryInBlock:= 0
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							# 
+							Loop for: Objects in layer: POINT GEN HEAD BOUND UNIT[LayIndex]
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Set Variable: DumLay:= M+DivIndex
+									Set Variable: CurrentGHBCount:= CurrentGHBCount + 1
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyGHB=0)
+											Set Variable: ThisConcentration:= Point Gen Head Bound Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempGHBPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 5 [I10]
+													Export expression: " Point General Head Boundary" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempGHBPer" + PeriodIndex, "TempGHBPer", "TempGHBPer" + PeriodIndex)
+										End if
+									End loop
+								End loop
+							End loop
+							# 
+							If: @cbAltGHB@
+								Set Variable: ThisConductance:= WSumObjectsInBlock(Line Gen Head Bound Unit[LayIndex].Conductance)
+								If: ThisConductance
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										Set Variable: DumLay:= M+DivIndex
+										Set Variable: CurrentGHBCount:= CurrentGHBCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyGHB=0)
+												Set Variable: ThisConcentration:= Line Gen Head Bound Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempGHBPer
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 5 [I10]
+														Export expression: " Line General Head Boundary" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempGHBPer" + PeriodIndex, "TempGHBPer", "TempGHBPer" + PeriodIndex)
+											End if
+										End loop
+									End loop
+								End if
+								If: (Area Gen Head Bound Unit[LayIndex].Conductance!=$N/A)
+									Set Variable: ContourArea:= BlockArea()
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										Set Variable: DumLay:= M+DivIndex
+										Set Variable: CurrentGHBCount:= CurrentGHBCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyGHB=0)
+												Set Variable: ThisConcentration:= Area Gen Head Bound Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempGHBPer
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 5 [I10]
+														Export expression: " Area General Head Boundary" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempGHBPer" + PeriodIndex, "TempGHBPer", "TempGHBPer" + PeriodIndex)
+											End if
+										End loop
+									End loop
+								End if
+							Else
+								Loop for: Objects in layer: LINE GEN HEAD BOUND UNIT[LayIndex]
+									Set Variable: SegmentLength:= ContourIntersectLength()
+									If: SegmentLength>0
+										Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+											Set Variable: DumLay:= M+DivIndex
+											Set Variable: CurrentGHBCount:= CurrentGHBCount + 1
+											Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+												If: !(PeriodIndex>1&SteadyGHB=0)
+													Set Variable: ThisConcentration:= Line Gen Head Bound Unit[LayIndex].MT3D Concentration[PeriodIndex]
+												End if
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+												If: ThisConcentration!=$N/A
+													Redirect output to: TempGHBPer
+														Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+														Start a new line
+															Export expression: DumLay [I10]
+															Export expression: DumRow [I10]
+															Export expression: DumCol [I10]
+															Export expression: ThisConcentration [G10]
+															Export expression: 5 [I10]
+															Export expression: " Line General Head Boundary" [G0]
+														End line
+													End file
+													Evaluate expression: MODFLOW_Join_Files("TempGHBPer" + PeriodIndex, "TempGHBPer", "TempGHBPer" + PeriodIndex)
+												End if
+											End loop
+										End loop
+									End if
+								End loop
+								# 
+								Loop for: Objects in layer: AREA GEN HEAD BOUND UNIT[LayIndex]
+									Set Variable: AreaBoundaryInBlock:= 1
+									Set Variable: ContourArea:= ContourIntersectArea()
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										Set Variable: DumLay:= M+DivIndex
+										Set Variable: CurrentGHBCount:= CurrentGHBCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyGHB=0)
+												Set Variable: ThisConcentration:= Area Gen Head Bound Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempGHBPer
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 5 [I10]
+														Export expression: " Area General Head Boundary" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempGHBPer" + PeriodIndex, "TempGHBPer", "TempGHBPer" + PeriodIndex)
+											End if
+										End loop
+									End loop
+								End loop
+								If: (!AreaBoundaryInBlock)&(Area Gen Head Bound Unit[LayIndex].Conductance!=$N/A)
+									Set Variable: ContourArea:= BlockArea()
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										Set Variable: DumLay:= M+DivIndex
+										Set Variable: CurrentGHBCount:= CurrentGHBCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyGHB=0)
+												Set Variable: ThisConcentration:= Area Gen Head Bound Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempGHBPer
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 5 [I10]
+														Export expression: " Area General Head Boundary" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempGHBPer" + PeriodIndex, "TempGHBPer", "TempGHBPer" + PeriodIndex)
+											End if
+										End loop
+									End loop
+								End if
+							End if
+							# 
+						End loop
+					End if
+				End loop
+			End if
+			# ----------------------------------------------------
+			# River Package
+			# ----------------------------------------------------
+			If: RiverChoice!=0
+				Evaluate expression: MODFLOW_ProgressBarSetMessage("River Package")
+				Set Variable: err_line:= 0
+				Set Variable: err_area1:= 0
+				Set Variable: err_area2:= 0
+				Set Variable: RIV_MXRIVR:= 0
+				Set Variable: CurrentRiverCount:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: LineLayerIsEmpty:= IsLayerEmpty(Line River Unit[LayIndex].Conductance)
+		Set Variable: AreaLayerIsEmpty:= IsLayerEmpty(Area River Unit[LayIndex].Conductance)
+		Set Variable: PointLayerIsEmpty:= IsLayerEmpty(Point River Unit[LayIndex].Conductance)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					If: LayIndex=1
+						Set Variable: M:= 0
+					Else
+						Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+					End if
+					# 
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						# 
+						Loop for: Blocks
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							Set Variable: AreaBoundaryInBlock:= 0
+					If: !PointLayerIsEmpty
+						Loop for: Objects in layer: Point River Unit[LayIndex]
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								Set Variable: DumLay:= M+DivIndex
+								Set Variable: CurrentRiverCount:= CurrentRiverCount + 1
+								Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+									If: !(PeriodIndex>1&SteadyRiver=0)
+										Set Variable: ThisConcentration:= Line River Unit[LayIndex].MT3D Concentration[PeriodIndex]
+									End if
+									Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+									If: ThisConcentration!=$N/A
+										Redirect output to: TempRivPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+											Start a new line
+												Export expression: DumLay [I10]
+												Export expression: DumRow [I10]
+												Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 4 [I10]
+													Export expression: " Point River" [G0]
+											End line
+										End file
+											Evaluate expression: MODFLOW_Join_Files("TempRivPer" + PeriodIndex, "TempRivPer", "TempRivPer" + PeriodIndex)
+									End if
+								End loop
+							End loop
+						End loop
+					End if
+					# 
+							If: @cbAltRiv@
+								If: WSumObjectsInBlock(Line River Unit[LayIndex].Conductance)!=0
+									If: Line River Unit[LayIndex].Bottom>=Line River Unit[LayIndex].Stage Stress1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("Line River Unit" + LayIndex + "Bottom>=Line River Unit" + LayIndex + ".Stage Stress1 at Row: " + DumRow + "; Column: " +DumCol)
+									End if
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: ocflag:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: Line River Unit[LayIndex].Bottom<=(LayerTop-(DivIndex-1)*LayerThickness)&Line River Unit[LayIndex].Bottom>(LayerTop-DivIndex*LayerThickness)
+											Set Variable: ocflag:= DivIndex
+										End if
+									End loop
+									If: ocflag=0
+										Set Variable: ocflag:= 1
+										Set Variable: err_riv_3:= 1
+										Set Variable: DumLay:= M+ocflag
+										Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Line river elevation does not lie within geologic unit: Line river is placed in uppermost model layer in geologic unit.")
+									End if
+									Set Variable: DumLay:= M+ocflag
+									Set Variable: CurrentRiverCount:= CurrentRiverCount + 1
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyRiver=0)
+											Set Variable: ThisConcentration:= Line River Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempRivPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 4 [I10]
+													Export expression: " Line River" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempRivPer" + PeriodIndex, "TempRivPer", "TempRivPer" + PeriodIndex)
+										End if
+									End loop
+								End if
+							Else
+								Loop for: Objects in layer: LINE RIVER UNIT[LayIndex]
+									If: Line River Unit[LayIndex].Bottom>=Line River Unit[LayIndex].Stage Stress1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("Line River Unit" + LayIndex + "Bottom>=Line River Unit" + LayIndex + ".Stage Stress1 at Row: " + DumRow + "; Column: " +DumCol)
+									End if
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: SegmentLength:= ContourIntersectLength()
+									If: SegmentLength>0
+										Set Variable: ocflag:= 0
+										Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+											If: Line River Unit[LayIndex].Bottom<=(LayerTop-(DivIndex-1)*LayerThickness)&Line River Unit[LayIndex].Bottom>(LayerTop-DivIndex*LayerThickness)
+												Set Variable: ocflag:= DivIndex
+											End if
+										End loop
+										If: ocflag=0
+											Set Variable: ocflag:= 1
+											Set Variable: err_riv_3:= 1
+											Set Variable: DumLay:= M+ocflag
+											Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Line river elevation does not lie within geologic unit: Line river is placed in uppermost model layer in geologic unit.")
+										End if
+										Set Variable: DumLay:= M+ocflag
+										Set Variable: CurrentRiverCount:= CurrentRiverCount + 1
+										# Set Variable: SegmentLength:= ContourIntersectLength()
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyRiver=0)
+												Set Variable: ThisConcentration:= Line River Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempRivPer
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 4 [I10]
+														Export expression: " Line River" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempRivPer" + PeriodIndex, "TempRivPer", "TempRivPer" + PeriodIndex)
+											End if
+										End loop
+									End if
+								End loop
+								# 
+								Loop for: Objects in layer: AREA RIVER UNIT[LayIndex]
+									If: Area River Unit[LayIndex].Bottom>=Area River Unit[LayIndex].Stage Stress1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("Area River Unit" + LayIndex + "Bottom>=Area River Unit" + LayIndex + ".Stage Stress1 at Row: " + DumRow + "; Column: " +DumCol)
+									End if
+									Set Variable: AreaBoundaryInBlock:= 1
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: ocflag:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: Area River Unit[LayIndex].Bottom<=(LayerTop-(DivIndex-1)*LayerThickness)&Area River Unit[LayIndex].Bottom>(LayerTop-DivIndex*LayerThickness)
+											Set Variable: ocflag:= DivIndex
+										End if
+									End loop
+									If: ocflag=0
+										Set Variable: ocflag:= 1
+										Set Variable: err_riv_4:= 1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area river elevation does not lie within geologic unit: Area river is placed in uppermost model layer in geologic unit.")
+									End if
+									Set Variable: DumLay:= M+ocflag
+									Set Variable: CurrentRiverCount:= CurrentRiverCount + 1
+									Set Variable: ContourArea:= ContourIntersectArea()
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyRiver=0)
+											Set Variable: ThisConcentration:= Area River Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempRivPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 4 [I10]
+													Export expression: " Area River" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempRivPer" + PeriodIndex, "TempRivPer", "TempRivPer" + PeriodIndex)
+										End if
+									End loop
+								End loop
+							End if
+							If: (!AreaBoundaryInBlock)&(Area River Unit[LayIndex].Conductance!=$N/A)
+								If: Area River Unit[LayIndex].Bottom>=Area River Unit[LayIndex].Stage Stress1
+									Evaluate expression: MODFLOW_ProgressBarAddLine("Area River Unit" + LayIndex + "Bottom>=Area River Unit" + LayIndex + ".Stage Stress1 at Row: " + DumRow + "; Column: " +DumCol)
+								End if
+								Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+								Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+								Set Variable: ocflag:= 0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									If: Area River Unit[LayIndex].Bottom<=(LayerTop-(DivIndex-1)*LayerThickness)&Area River Unit[LayIndex].Bottom>(LayerTop-DivIndex*LayerThickness)
+										Set Variable: ocflag:= DivIndex
+									End if
+								End loop
+								If: ocflag=0
+									Set Variable: ocflag:= 1
+									Set Variable: err_riv_4:= 1
+									# If: err_area1=0
+									# Alert: "Area river elevation does not lie within geologic unit: Area river is placed in uppermost model layer in geologic unit."
+									Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area river elevation does not lie within geologic unit: Area river is placed in uppermost model layer in geologic unit.")
+									# Set Variable: err_area1:=1
+									# End if
+								End if
+								Set Variable: DumLay:= M+ocflag
+								Set Variable: CurrentRiverCount:= CurrentRiverCount + 1
+								Set Variable: ContourArea:= BlockArea()
+								Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+									If: !(PeriodIndex>1&SteadyRiver=0)
+										Set Variable: ThisConcentration:= Area River Unit[LayIndex].MT3D Concentration[PeriodIndex]
+									End if
+									Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+									If: ThisConcentration!=$N/A
+										Redirect output to: TempRivPer
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+											Start a new line
+												Export expression: DumLay [I10]
+												Export expression: DumRow [I10]
+												Export expression: DumCol [I10]
+												Export expression: ThisConcentration [G10]
+												Export expression: 4 [I10]
+												Export expression: " Area River" [G0]
+											End line
+										End file
+										Evaluate expression: MODFLOW_Join_Files("TempRivPer" + PeriodIndex, "TempRivPer", "TempRivPer" + PeriodIndex)
+									End if
+								End loop
+							End if
+							# 
+						End loop
+					End if
+				End loop
+			End if
+			# ----------------------------------------------------
+			# Drain Package
+			# ----------------------------------------------------
+			If: DrainChoice!=0
+				Evaluate expression: MODFLOW_ProgressBarSetMessage("Drain Package")
+				Set Variable: MaxDrains:= 0
+				Set Variable: err_line:= 0
+				Set Variable: err_area1:= 0
+				Set Variable: err_area2:= 0
+				Set Variable: DRN_MXDRN:= 0
+				Set Variable: CurrentDrainCount:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: PointLayerIsEmpty:= IsLayerEmpty(Point Drain Unit[LayIndex].Conductance)
+		Set Variable: LineLayerIsEmpty:= IsLayerEmpty(Line Drain Unit[LayIndex].Conductance)
+		Set Variable: AreaLayerIsEmpty:= IsLayerEmpty(Area Drain Unit[LayIndex].Conductance)
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					If: LayIndex=1
+						Set Variable: M:= 0
+					Else
+						Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+					End if
+					# 
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						# 
+						Loop for: Blocks
+							Set Variable: AreaBoundaryInBlock:= 0
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							# 
+					If: !PointLayerIsEmpty
+						Loop for: Objects in layer: Point Drain Unit[LayIndex]
+									Set Variable: ThisElevation:= Point Drain Unit[LayIndex].Elevation
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerBottom:= LayerTop-LayerThickness
+									If: ShowWarnings&((ThisElevation>LayerTop)|(ThisElevation<LayerBottom))
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Point drain elevation does not lie within geologic unit: Point drain is placed in nearest model layer in geologic unit.")
+									End if
+									Set Variable: DumLay:= MODFLOW_Layer(LayIndex, LayerTop, LayerBottom, ThisElevation)
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+								Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Set Variable: ThisConcentration:= Point Drain Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+										Redirect output to: TempDrainPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+											Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 3 [I10]
+													Export expression: " Point Drain" [G0]
+
+											End line
+										End file
+										Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+									End if
+								End loop
+						End loop
+					End if
+							If: @cbAltDrn@
+								If: WSumObjectsInBlock(Line Drain Unit[LayIndex].Conductance)!=0
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: ocflag:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: Line Drain Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Line Drain Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+											Set Variable: ocflag:= DivIndex
+										End if
+									End loop
+									If: ocflag=0
+										Set Variable: ocflag:= 1
+										Set Variable: err_drn_3:= 1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Line drain elevation does not lie within geologic unit: Line drain is placed in uppermost model layer in geologic unit.")
+									End if
+									Set Variable: DumLay:= M+ocflag
+									# Set Variable: SegmentLength:= ContourIntersectLength()
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Set Variable: ThisConcentration:= Line Drain Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempDrainPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 3 [I10]
+													Export expression: " Line Drain" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+										End if
+									End loop
+									# End if
+								End if
+								# 
+								If: (AREA Drain Unit1.Conductance!=$N/A)
+									Set Variable: ThisConductance:= AREA Drain Unit1.Conductance
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: ocflag:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: Area Drain Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Area Drain Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+											Set Variable: ocflag:= DivIndex
+										End if
+									End loop
+									If: ocflag=0
+										Set Variable: ocflag:= 1
+										Set Variable: err_drn_4:= 1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area drain elevation does not lie within geologic unit: Area drain is placed in uppermost model layer in geologic unit.")
+									End if
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+									Set Variable: ContourArea:= BlockArea()
+									Set Variable: DumLay:= M+ocflag
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Set Variable: ThisConcentration:= Area Drain Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempDrainPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 3 [I10]
+													Export expression: " Area Drain" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+										End if
+									End loop
+								End if
+							Else
+								Loop for: Objects in layer: LINE DRAIN UNIT[LayIndex]
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: SegmentLength:= ContourIntersectLength()
+									If: SegmentLength>0
+										Set Variable: ocflag:= 0
+										Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+											If: Line Drain Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Line Drain Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+												Set Variable: ocflag:= DivIndex
+											End if
+										End loop
+										If: ocflag=0
+											Set Variable: ocflag:= 1
+											Set Variable: err_drn_3:= 1
+											Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Line drain elevation does not lie within geologic unit: Line drain is placed in uppermost model layer in geologic unit.")
+										End if
+										Set Variable: DumLay:= M+ocflag
+										# Set Variable: SegmentLength:= ContourIntersectLength()
+										Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyDrain=0)
+												Set Variable: ThisConcentration:= Line Drain Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempDrainPer
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 3 [I10]
+														Export expression: " Line Drain" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+											End if
+										End loop
+									End if
+								End loop
+								# 
+								Loop for: Objects in layer: AREA DRAIN UNIT[LayIndex]
+									Set Variable: AreaBoundaryInBlock:= 1
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: ocflag:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: Area Drain Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Area Drain Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+											Set Variable: ocflag:= DivIndex
+										End if
+									End loop
+									If: ocflag=0
+										Set Variable: ocflag:= 1
+										Set Variable: err_drn_4:= 1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area drain elevation does not lie within geologic unit: Area drain is placed in uppermost model layer in geologic unit.")
+									End if
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+									Set Variable: ContourArea:= ContourIntersectArea()
+									Set Variable: DumLay:= M+ocflag
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Set Variable: ThisConcentration:= Area Drain Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempDrainPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 3 [I10]
+													Export expression: " Area Drain" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+										End if
+									End loop
+								End loop
+								Set Variable: ThisConductance:= AREA Drain Unit1.Conductance
+								If: (!AreaBoundaryInBlock)&(ThisConductance!=$N/A)
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+									Set Variable: ocflag:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: Area Drain Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Area Drain Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+											Set Variable: ocflag:= DivIndex
+										End if
+									End loop
+									If: ocflag=0
+										Set Variable: ocflag:= 1
+										Set Variable: err_drn_4:= 1
+										Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area drain elevation does not lie within geologic unit: Area drain is placed in uppermost model layer in geologic unit.")
+									End if
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+									Set Variable: ContourArea:= BlockArea()
+									Set Variable: DumLay:= M+ocflag
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Set Variable: ThisConcentration:= Area Drain Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										End if
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+										If: ThisConcentration!=$N/A
+											Redirect output to: TempDrainPer
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisConcentration [G10]
+													Export expression: 3 [I10]
+													Export expression: " Area Drain" [G0]
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+										End if
+									End loop
+								End if
+							End if
+						End loop
+					End if
+				End loop
+			End if
+			# ----------------------------------------------------
+			# Well Package
+			# ----------------------------------------------------
+			If: WellChoice!=0
+				Evaluate expression: MODFLOW_ProgressBarSetMessage("Well Package")
+				Set Variable: MaxWells:= 0
+				Set Variable: CurrentWellCount:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					Evaluate expression: MODFLOW_ProgressBarAdvance()
+					If: LayIndex=1
+						Set Variable: M:= 0
+					Else
+						Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+					End if
+					# 
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						# 
+						Loop for: Blocks
+							# 
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							Loop for: Objects in layer: WELLS UNIT[LayIndex]
+								Set Variable: WT:= Wells Unit[LayIndex].Top Elevation
+								Set Variable: WB:= Wells Unit[LayIndex].Bottom Elevation
+								# YBI: Pre calculate elevation top and thickness
+								Set Variable: TempValue2:= Elevation Top Unit[LayIndex]
+								Set Variable: TempValue4:= Elevation Bottom Unit[LayIndex]
+								If: (WT>TempValue2)|(WT<=TempValue4)
+									Evaluate expression: MODFLOW_ProgressBarAddLine("Top Elevation in a well in Unit: " + LayIndex + "; Row: " + DumRow + "; Column: " + DumCol + " is outside the limits of the unit, it will be treated as if the top of the well screen were at the top of the unit.")
+									Set Variable: WT:= TempValue2
+								End if
+								If: (WB>TempValue2)|(WB<TempValue4)
+									Evaluate expression: MODFLOW_ProgressBarAddLine("Bottom Elevation in a well in Unit: " + LayIndex + "; Row: " + DumRow + "; Column: " + DumCol + " is outside the limits of the unit, it will be treated as if the bottom of the well screen were at the bottom of the unit.")
+									Set Variable: WB:= TempValue4
+								End if
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Set Variable: DumLay:= M+DivIndex
+									Set Variable: TempValue3:= (TempValue2-TempValue4)/MODFLOW_NDIV(LayIndex)
+									Set Variable: TML:= TempValue2-(DivIndex-1)*TempValue3
+									Set Variable: BML:= TempValue2-DivIndex*TempValue3
+									If: ((WT>TML)&(WB>=TML))|WT<=BML
+									Else
+										Set Variable: ocflag:= 0
+										If: (WT<=TML&WT>BML)&(WB<TML&WB>=BML)
+											Set Variable: ocflag:= 1
+											Set Variable: TempValue1:= WT-WB
+										End if
+										If: ocflag=0
+											If: (WT<=TML&WT>BML)&(WB<=BML)
+												Set Variable: ocflag:= 1
+												Set Variable: TempValue1:= WT-BML
+											End if
+										End if
+										If: ocflag=0
+											If: (WT>=TML)&(WB<TML&WB>=BML)
+												Set Variable: ocflag:= 1
+												Set Variable: TempValue1:= TML-WB
+											End if
+										End if
+										If: ocflag=0
+											If: (WT>TML)&(WB<BML)
+												Set Variable: ocflag:= 1
+												Set Variable: TempValue1:= TML-BML
+											End if
+										End if
+										Set Variable: CurrentWellCount:= CurrentWellCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyWell=0)
+												Set Variable: ThisConcentration:= Wells Unit[LayIndex].MT3D Concentration[PeriodIndex]
+											End if
+											Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+											If: ThisConcentration!=$N/A
+												Redirect output to: TempWellPer
+													Set Variable: TempValue2:= TempValue1*Wells Unit[LayIndex].Stress[PeriodIndex]/(WT-WB)
+													Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisConcentration [G10]
+														Export expression: 2 [I10]
+														Export expression: " Well" [G0]
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempWellPer" + PeriodIndex, "TempWellPer", "TempWellPer" + PeriodIndex)
+											End if
+										End loop
+									End if
+								End loop
+							End loop
+						End loop
+					End if
+				End loop
+			End if
+			# 
+			# ----------------------------------------------------
+			# Stream Package
+			# ----------------------------------------------------
+			If: StreamChoice
+				Evaluate expression: MODFLOW_BL_InitializeGridInformation("MODFLOW FD Grid", 0)
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Evaluate expression: MODFLOW_BL_AddVertexLayer("Stream Unit" + LayIndex)
+						Loop for: Objects in layer: Stream Unit[LayIndex]
+							Evaluate expression: MODFLOW_L_AddToList(StreamSegmentList, Segment Number)
+							Evaluate expression: MODFLOW_L_AddToList(SortedStreamSegmentList, Segment Number)
+							Evaluate expression: MODFLOW_L_AddToList(StreamUnitList, LayIndex)
+						End loop
+					End if
+				End loop
+				Evaluate expression: MODFLOW_L_SortList(SortedStreamSegmentList)
+				Evaluate expression: MODFLOW_L_EliminateDuplicates(SortedStreamSegmentList)
+				Set Variable: StreamSegmentCount:= MODFLOW_L_GetListSize(SortedStreamSegmentList)
+				Set Variable: StreamProperties3DArray:= MODFLOW_L_CreateNew3DList(StreamSegmentCount, MODFLOW_NPER()+1, InterpolateWidth+1)
+				# 
+				Set Variable: StreamIndex:= 0
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: MODFLOW_SIMUL(LayIndex)!=0
+						Loop for: Objects in layer: Stream Unit[LayIndex]
+							If: ContourType()=2
+								Evaluate expression: MODFLOW_L_Set3DListItem(Tributary2DArray, StreamIndex, TributaryMaxAllowed+1, 0, 1)
+							End if
+							Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+								Set Variable: ThisConcentration:= MT3D Concentration[PeriodIndex]
+								If: ThisConcentration!=$N/A
+									Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, FlowIndex, MT3D Concentration[PeriodIndex])
+									Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateStage, 1)
+								Else
+									Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateStage, 0)
+								End if
+								# 					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamStageIndex, Upstream Stage[PeriodIndex])
+								# 					If: Downstream Stage[PeriodIndex]!=$N/A
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamStageIndex, Downstream Stage[PeriodIndex])
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateStage, 1)
+								# 					Else
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateStage, 0)
+								# 					End if
+								# 					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, ConductivityIndex, Stream Unit[LayIndex].Streambed hydraulic conductivity)
+								# 					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamTopElevIndex, Upstream top elevation[PeriodIndex])
+								# 					If: Downstream top elevation[PeriodIndex]!=$N/A
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamTopElevIndex, Downstream top elevation[PeriodIndex])
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateTopElev, 1)
+								# 					Else
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateTopElev, 0)
+								# 					End if
+								Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamBotElevIndex, Upstream bottom elevation[PeriodIndex])
+								If: Downstream bottom elevation[PeriodIndex]!=$N/A
+									Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamBotElevIndex, Downstream bottom elevation[PeriodIndex])
+									Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateBottomElev, 1)
+								Else
+									Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateBottomElev, 0)
+								End if
+								# 					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamWidthIndex, Upstream width[PeriodIndex])
+								# 					If: Downstream width[PeriodIndex]!=$N/A
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamWidthIndex, Downstream width[PeriodIndex])
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateWidth, 1)
+								# 					Else
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateWidth, 0)
+								# 					End if
+								# 					If: ICALC
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, SlopeIndex, Slope[PeriodIndex])
+								# 						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, RoughnessIndex, Mannings roughness[PeriodIndex])
+								# 					End if
+							End loop
+							Set Variable: StreamIndex:= StreamIndex+1
+						End loop
+					End if
+				End loop
+				# 
+				# 
+				# Check for close contours or point objects. Display a warning if any are detected.
+				Set Variable: MaxStreamReachCount:= 0
+				Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+					Set Variable: CurrentStreamReachCount:= 0
+					Redirect output to: TempStream3
+						Loop for: Variable StreamIndex from: 0 to: StreamSegmentCount-1 step: 1
+							Set Variable: CurrentStream:= MODFLOW_L_GetFromList(SortedStreamSegmentList, StreamIndex)
+							Set Variable: StreamIndex2:= MODFLOW_L_UnsortedIndexOf(StreamSegmentList, CurrentStream)
+							# StreamIndex2 is now the index of the current stream segment and may be used to retrieve data about the current stream.
+							Set Variable: BlockListCount:= MODFLOW_BL_GetCountOfACellList(StreamIndex2)
+							If: BlockListCount>0
+								Loop for: Variable BlockIndex from: 0 to: BlockListCount-1 step: 1
+									Set Variable: StreamUnit:= MODFLOW_L_GetFromList(StreamUnitList, StreamIndex2)
+									Set Variable: DumRow:= MODFLOW_BL_GetCellRow(StreamIndex2, BlockIndex)
+									Set Variable: DumCol:= MODFLOW_BL_GetCellColumn(StreamIndex2, BlockIndex)
+									Set Variable: BlockBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, StreamUnit)
+									Set Variable: BlockTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, StreamUnit)
+									Set Variable: StreamBottom:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, UpstreamBotElevIndex)
+									If: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateBottomElev)
+										Set Variable: DownstreamStreamBottom:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, DownstreamBotElevIndex)
+										Set Variable: StreamBottom:= StreamBottom - MODFLOW_BL_FractionOfLine(StreamIndex2, BlockIndex) * (StreamBottom - DownstreamStreamBottom)
+									End if
+									Set Variable: CurrentStreamReachCount:= CurrentStreamReachCount + 1
+									Set Variable: ThisConcentration:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateStage)
+									Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+									If: ThisConcentration!=$N/A
+										Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+										Set Variable: ThisConcentration:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, FlowIndex)
+										Start a new line
+											Export expression: MODFLOW_Layer(StreamUnit, BlockTop, BlockBottom, StreamBottom) [I10]
+											Export expression: DumRow [I10]
+											Export expression: DumCol [I10]
+											Export expression: ThisConcentration [G10]
+											Export expression: 4 [I10]
+											Export expression: " Stream" [G0]
+										End line
+									End if
+								End loop
+							End if
+						End loop
+					End file
+					Evaluate expression: MODFLOW_Rename_File(TempStream3, "TempStreamPer" + PeriodIndex)
+				End loop
+			End if
+			# 
+			# --------------------------
+			# Constant Head Cells
+			# --------------------------
+			Set Variable: LayerCount:= 0
+			# 
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				# RBW New Code 3/26/98
+				Set Variable: ProgressBarMessage:= "Source and Sink Mixing: Exporting Constant Head Cells" + EndLine() + " Layer: " + LayIndex + ", Period: " + PeriodIndex
+				Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+				Evaluate expression: MODFLOW_ProgressBarAdvance()
+				If: LayIndex=1
+					Set Variable: M:= 0
+				Else
+					Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+				End if
+				# RBW End New Code 3/26/98
+				If: MODFLOW_SIMUL(LayIndex)!=0
+					# 
+					Loop for: Blocks
+						Set Variable: DumRow:= Row()
+						Set Variable: DumCol:= Column()
+						# 
+						If: IBOUND Unit[LayIndex]=-1
+							Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + MODFLOW_NDIV(LayIndex))
+							Loop for: Objects in layer: Prescribed Head Unit[LayIndex]
+								Set Variable: MT3DConstHead:= 0
+								Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+									Redirect output to: DispTempConstHead
+										Set Variable: MT3DCHVal:= Prescribed Head Unit[LayIndex].MT3D Concentration[PeriodIndex]
+										If: MT3DCHVal!=$N/A
+											Set Variable: MT3DConstHead:= 1
+										End if
+										If: MT3DConstHead=1
+											Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+												Set Variable: LayerCount:= M+DivIndex
+												Set Variable: CurrentConstantHeadCount:= CurrentConstantHeadCount + 1
+												Set Variable: CurrentSpecifiedConstantHeadCount:= CurrentSpecifiedConstantHeadCount + 1
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: LayerCount [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: MT3DCHVal [G10]
+													Export expression: 1 [I10]
+													Export expression: " Constant Head" [G0]
+												End line
+											End loop
+										End if
+									End file
+									Evaluate expression: MODFLOW_Join_Files("DispTempConstHead" + PeriodIndex, "DispTempConstHead", "DispTempConstHead" + PeriodIndex)
+								End loop
+							End loop
+						End if
+						# 
+					End loop
+					# 
+				End if
+			End loop
+			# ----------------------
+			# Export time varying concentrations
+			# ----------------------
+			If: @cbMT3D_TVC@
+			Set Variable: LayerCount:= 0
+			# 
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				# RBW New Code 3/26/98
+				Set Variable: ProgressBarMessage:= "Source and Sink Mixing: Exporting Time Varying Concentration Cells" + EndLine() + "Layer: " + LayIndex
+				Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+				Evaluate expression: MODFLOW_ProgressBarAdvance()
+				# RBW End New Code 3/26/98
+				If: MODFLOW_SIMUL(LayIndex)!=0
+					Set Variable: LayerCount:= LayerCount+MODFLOW_NDIV(LayIndex)
+					Set Variable: PointsEmpty:= IsLayerEmpty(MT3D Point Time Varying Constant Concentration Unit[LayIndex].Top Elevation)
+					Loop for: Blocks
+						Set Variable: DumRow:= Row()
+						Set Variable: DumCol:= Column()
+						If: !PointsEmpty
+						Set Variable: ThisBlockArea:= BlockArea()
+						Set Variable: TopSimul:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+						Set Variable: BotSimul:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex)
+						End if
+						If: ICBUND Unit[LayIndex]!=0
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								If: !PointsEmpty
+								Set Variable: LayerTop:= TopSimul-(TopSimul - BotSimul)/MODFLOW_NDIV(LayIndex)*(DivIndex-1)
+								Set Variable: LayerBot:= TopSimul-(TopSimul - BotSimul)/MODFLOW_NDIV(LayIndex)*DivIndex
+								End if
+								Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+									Redirect output to: DispTempTVConc
+										Set Variable: BoundaryInBlock:= 0
+										If: !PointsEmpty
+										Loop for: Objects in layer: MT3D Point Constant Concentration Unit[LayIndex]
+											If: ContourType()=0&MT3D Point Time Varying Constant Concentration Unit[LayIndex].Top Elevation>LayerBot&MT3D Point Time Varying Constant Concentration Unit[LayIndex].Bottom Elevation<=LayerTop&MT3D Point Time Varying Constant Concentration Unit[LayIndex].Mass[PeriodIndex]!=$N/A
+												If: MT3D Point Time Varying Constant Concentration Unit[LayIndex].Top Elevation>LayerTop
+													Set Variable: ThisTop:= LayerTop
+												Else
+													Set Variable: ThisTop:= MT3D Point Time Varying Constant Concentration Unit[LayIndex].Top Elevation
+												End if
+												If: MT3D Point Time Varying Constant Concentration Unit[LayIndex].Bottom Elevation<LayerBot
+													Set Variable: ThisBottom:= LayerBot
+												Else
+													Set Variable: ThisBottom:= MT3D Point Time Varying Constant Concentration Unit[LayIndex].Bottom Elevation
+												End if
+												Set Variable: MassFraction:= (ThisTop - ThisBottom) / (MT3D Point Time Varying Constant Concentration Unit[LayIndex].Top Elevation - MT3D Point Time Varying Constant Concentration Unit[LayIndex].Bottom Elevation)
+												Set Variable: CurrentTimeVaryingConcCount:= CurrentTimeVaryingConcCount + 1
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+												Set Variable: BoundaryInBlock:= 1
+												Start a new line
+													Export expression: LayerCount-MODFLOW_NDIV(LayIndex)+DivIndex [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: MT3D Point Time Varying Constant Concentration Unit[LayIndex].Mass[PeriodIndex]*(MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex))*ThisBlockArea * MassFraction [G10]
+													Export expression: -1 [I10]
+													Export expression: " Point Time Varying Constant Concentration" [G0]
+												End line
+											End if
+										End loop
+										End if
+										If: BoundaryInBlock=0
+											If: MT3D Area Time Varying Constant Concentration Unit[LayIndex].MT3D Concentration[PeriodIndex]!=$N/A
+												Set Variable: CurrentTimeVaryingConcCount:= CurrentTimeVaryingConcCount + 1
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex) + 1)
+												Evaluate expression: MODFLOW_L_SetListItem(CurrentSpecifiedBoundaryCountList, PeriodIndex, MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex) + 1)
+												Start a new line
+													Export expression: LayerCount-MODFLOW_NDIV(LayIndex)+DivIndex [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: MT3D Area Time Varying Constant Concentration Unit[LayIndex].MT3D Concentration[PeriodIndex] [G10]
+													Export expression: -1 [I10]
+													Export expression: " Area Time Varying Constant Concentration" [G0]
+												End line
+											End if
+										End if
+									End file
+									Evaluate expression: MODFLOW_Join_Files("DispTempTVConc" + PeriodIndex, "DispTempTVConc", "DispTempTVConc" + PeriodIndex)
+								End loop
+							End loop
+						End if
+					End loop
+				End if
+			End loop
+			End if
+			Set Variable: MXSS:= 0
+			Evaluate expression: MODFLOW_Delete_File("@adeFileName@.SSM")
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Redirect output to: DispTemp7
+					Start a new line
+						Set Variable: NSS:= MODFLOW_L_GetFromList(CurrentSpecifiedBoundaryCountList, PeriodIndex)
+						Export expression: NSS [I10]
+						Export expression: " Stress Period " [G0]
+						Export expression: PeriodIndex [G0]
+						Export expression: " NSS (D7)" [G0]
+					End line
+					Set Variable: NSS:= MODFLOW_L_GetFromList(CurrentBoundaryCountList, PeriodIndex)
+					If: NSS > MXSS
+						Set Variable: MXSS:= NSS
+					End if
+					Set Variable: ProgressBarMessage:= "D7"
+					Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+				End file
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTemp36Rech" + PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTemp36EVT" + PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTemp7", "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "TempGHBPer"+ PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "TempRivPer"+ PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "TempDrainPer"+ PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "TempWellPer"+ PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "TempStreamPer"+ PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTempTVConc"+ PeriodIndex, "@adeFileName@.SSM")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTempConstHead"+ PeriodIndex, "@adeFileName@.SSM")
+				# Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTempTVConc"+ PeriodIndex, "@adeFileName@.SSM")
+				# Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTemp8", "@adeFileName@.SSM")
+				# Evaluate expression: MODFLOW_Join_Files("@adeFileName@.SSM", "DispTemp36", "@adeFileName@.SSM")
+			End loop
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Evaluate expression: MODFLOW_Delete_File("TempGHBPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempRivPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempDrainPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempWellPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempStreamPer" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTempTVConc" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTempConstHead" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTemp36Rech" + PeriodIndex)
+				Evaluate expression: MODFLOW_Delete_File("DispTemp36EVT" + PeriodIndex)
+			End loop
+			Evaluate expression: MODFLOW_Delete_File("DispTemp7")
+			# End if
+			Redirect output to: DispTemp1
+				# Export FWEL, FDRN, FRCH, FEVT, FRIV, FGHB (MT3D, Sink and Source mixing package, D1)
+				# 
+				Set Variable: ProgressBarMessage:= "D1"
+				Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+				Start a new line
+					If: WellChoice
+						Export expression: " T" [G2]
+					Else
+						Export expression: " F" [G2]
+					End if
+					If: DrainChoice
+						Export expression: " T" [G2]
+					Else
+						Export expression: " F" [G2]
+					End if
+					If: RechargeChoice
+						Export expression: " T" [G2]
+					Else
+						Export expression: " F" [G2]
+					End if
+					If: EvapotranspirationChoice
+						Export expression: " T" [G2]
+					Else
+						Export expression: " F" [G2]
+					End if
+					If: RiverChoice
+						Export expression: " T" [G2]
+					Else
+						Export expression: " F" [G2]
+					End if
+					If: GeneralHeadChoice
+						Export expression: " T" [G2]
+					Else
+						Export expression: " F" [G2]
+					End if
+					Export expression: "                                                              D1" [G0]
+				End line
+				# 
+				# Export MXSS (MT3D, Sink and Source mixing package, D2)
+				# 
+				Set Variable: ProgressBarMessage:= "D2"
+				Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+				Start a new line
+					Export expression: MXSS [I10]
+					Export expression: "                                                                D2" [G0]
+				End line
+			End file
+			Evaluate expression: MODFLOW_Join_Files("DispTemp1","@adeFileName@.SSM", "@adeFileName@.SSM")
+			Evaluate expression: MODFLOW_Delete_File("DispTemp1")
+			Evaluate expression: MODFLOW_Delete_File("DispTempTVConc")
+			Evaluate expression: MODFLOW_Delete_File("DispTempConstHead")
+			Evaluate expression: MODFLOW_Delete_File("TempWellPer")
+			Evaluate expression: MODFLOW_Delete_File("TempDrainPer")
+			Evaluate expression: MODFLOW_Delete_File("TempRivPer")
+			Evaluate expression: MODFLOW_Delete_File("TempGHBPer")
+		End if
+		If: MT3D_RCT & ExportMT3D_RCT
+			# RBW New Code 3/26/98
+			Set Variable: ProgressBarMessage:= "Exporting Reaction Package"
+			Evaluate expression: MODFLOW_ProgressBarSetMessage(ProgressBarMessage)
+			Evaluate expression: MODFLOW_ProgressBarAdvance()
+			# RBW End New Code 3/26/98
+			Redirect output to: @adeFileName@.RCT
+				Start a new line
+					Export expression: MT3D_ISOTHM [I10]
+					Export expression: MT3D_IREACT [I10]
+				End line
+				If: MT3D96
+					If: MT3D_ISOTHM>0
+						Set Variable: k:= 0
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RARRAY reader
+									Start a new line
+										Set Variable: k:= k+1
+										Export expression: 100 [I10]
+										Export expression: 1 [I10]
+										Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+										Export expression: 0 [I10]
+										Export expression: " RHOB, Layer " [G0]
+										Export expression: k [G0]
+									End line
+									# SCONC
+									Export matrix: MT3D Bulk Density Unit[LayIndex] [E13.6]
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_ISOTHM>0
+						Set Variable: k:= 0
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RARRAY reader
+									Start a new line
+										Set Variable: k:= k+1
+										Export expression: 100 [I10]
+										Export expression: 1 [I10]
+										Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+										Export expression: 0 [I10]
+										Export expression: " SP1, Layer " [G0]
+										Export expression: k [G0]
+									End line
+									# SP1
+									Export matrix: MT3D First Sorption Constant Unit[LayIndex] [E13.6]
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_ISOTHM>0
+						Set Variable: k:= 0
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RARRAY reader
+									Start a new line
+										Set Variable: k:= k+1
+										Export expression: 100 [I10]
+										Export expression: 1 [I10]
+										Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+										Export expression: 0 [I10]
+										Export expression: " SP2, Layer " [G0]
+										Export expression: k [G0]
+									End line
+									# SP2
+									Export matrix: MT3D Second Sorption Constant Unit[LayIndex] [E13.6]
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_IREACT>0
+						Set Variable: k:= 0
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RARRAY reader
+									Start a new line
+										Set Variable: k:= k+1
+										Export expression: 100 [I10]
+										Export expression: 1 [I10]
+										Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+										Export expression: 0 [I10]
+										Export expression: " RC1, Layer " [G0]
+										Export expression: k [G0]
+									End line
+									# RC1
+									Export matrix: MT3D Rate Constant Dissolved Phase Unit[LayIndex] [E13.6]
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_IREACT>0
+						Set Variable: k:= 0
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RARRAY reader
+									Start a new line
+										Set Variable: k:= k+1
+										Export expression: 100 [I10]
+										Export expression: 1 [I10]
+										Export expression: " (E13.6, "+(NumColumns()-1)+"E14.6)" [G20]
+										Export expression: 0 [I10]
+										Export expression: " RC2, Layer " [G0]
+										Export expression: k [G0]
+									End line
+									# RC2
+									Export matrix: MT3D Rate Constant Sorbed Phase Unit[LayIndex] [E13.6]
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					# ELSE MT3D 1.5
+				Else
+					If: MT3D_ISOTHM>0
+						# RARRAY reader
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.5)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " RHOB" [G0]
+						End line
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RHOB
+									Start a new line
+										Export expression: MT3D_RHOB(LayIndex) [G13]
+									End line
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_ISOTHM>0
+						# RARRAY reader
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.5)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " SP1" [G0]
+						End line
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# SP1
+									Start a new line
+										Export expression: MT3D_SP1(LayIndex) [G13]
+									End line
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_ISOTHM>0
+						# RARRAY reader
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.5)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " SP2" [G0]
+						End line
+						Set Variable: k:= 0
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# SP2
+									Start a new line
+										Export expression: MT3D_SP2(LayIndex) [G13]
+									End line
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_IREACT>0
+						# RARRAY reader
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.5)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " RC1" [G0]
+						End line
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RC1
+									Start a new line
+										Export expression: MT3D_RC1(LayIndex) [G13]
+									End line
+								End loop
+							End if
+						End loop
+						# 
+					End if
+					If: MT3D_IREACT>0
+						# RARRAY reader
+						Start a new line
+							Export expression: 100 [I10]
+							Export expression: 1 [I10]
+							Export expression: " (E13.5)" [G20]
+							Export expression: 0 [I10]
+							Export expression: " RC2" [G0]
+						End line
+						Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									# RC2
+									Start a new line
+										Export expression: MT3D_RC2(LayIndex) [G13]
+									End line
+								End loop
+							End if
+						End loop
+						# 
+					End if
+				End if
+			End file
+		End if
+	End if
+	# ----------------------------------------------------
+	# Run MT3D.EXE
+	# ----------------------------------------------------
+	Redirect output to: MT3D.BAT
+		Start a new line
+			Export expression: MT3D_Path + " <@adeFileName@.MTR" [G0]
+		End line
+		Start a new line
+			Export expression: "Pause" [G0]
+		End line
+	End file
+	If: MT3D_Run
+		# 	Execute external code: MODFLOW_GetDirectory() + "Mt3d.exe"
+		Execute external code: "MT3D.BAT"
+	End if
+End if
+# RBW New Code 3/26/98
+If: MODFLOW_L_GetErrorCount()
+	Alert: "Error in List PIE. Contact PIE developer."
+End if
+If: MODFLOW_BL_GetErrorCount()
+	Alert: "Error in BlockList PIE. Contact PIE developer."
+End if
+Evaluate expression: MODFLOW_L_FreeAllLists()
+Evaluate expression: MODFLOW_ProgressBarFree()
+# RBW End New Code 3/26/98
+Evaluate expression: MODFLOW_BL_FreeAllBlockLists()
+

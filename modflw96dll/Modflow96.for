@@ -1,0 +1,523 @@
+C     Last change:  RBW  16 Jan 2006    1:27 pm
+c      SUBROUTINE GETVALUE(IXINDEX, VALUE)
+c      DLL_EXPORT GETVALUE
+c      PARAMETER (LENX=6000000)
+c      COMMON X(LENX)
+c      REAL VALUE
+c      INTEGER IXINDEX
+c      VALUE = X(IXINDEX)
+c      RETURN
+c      END
+! The MODFLOW code has been altered to read data but not to process it by
+! removing subroutine calls that formulate or approximate the solution
+! for each time step.
+
+! HNOFLO added to list of global variables in BAS5RP to make it available for export.
+! WSEED added to list of global variables in SIP5RP to make it available for export.
+
+C     ******************************************************************
+C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-96
+C           BY MICHAEL G. MCDONALD AND ARLEN W. HARBAUGH
+C     MODFLOW-88 documented in:
+C           McDonald, M.G. and Harbaugh, A.W., 1988, A modular
+C           three-dimensional finite-difference ground-water flow
+C           model: U.S. Geological Survey Techniques of Water
+C           Resources Investigations, Book 6, Chapter A1, 586 p.
+C     MODFLOW-96 documented in:
+C           Harbaugh, A.W. and McDonald, M.G., 1996, User's
+C           documentation for the U.S. Geological Survey modular
+C           finite-difference ground-water flow model: U.S. Geological
+C           Survey Open-File Report 96-485
+C-----VERSION 0950 23MAY1996 MAIN
+C-----VERSION 1401 03DEC1996 -- added PCG2, STR1, IBS1, CHD1, GFD1,
+C                               HFB1, TLK1, DE45, and RES1 as documented
+C                               in USGS reports
+C     ******************************************************************
+C
+C        SPECIFICATIONS:
+C     ------------------------------------------------------------------
+C1------SPECIFY THE SIZE OF THE X ARRAY.  TO CHANGE THE SIZE OF THE
+C1------X ARRAY, CHANGE VALUE OF LENX IN THE NEXT STATEMENT.
+
+      SUBROUTINE INIT(IAPART, ICHFLG, ISTRT, ISUM, ITMUNI, LCIBOU,
+     1 LCSTRT, NCOL, NLAY, NPER, NROW, NSTP, ISS, IHDWET, IWDFLG,
+     2 IWETIT, LCBOT, LCCC, LCCV, LCDELC, LCDELR, LCHY, LCSC1, LCSC2,
+     3 LCTOP, LCTRPY, LCWETD, IWELAL, LCWELL, MXWELL, NWELVL, NWELLS,
+     4 IDRNAL, LCDRAI, MXDRN, NDRAIN, NDRNVL, LCRIVR, MXRIVR, NRIVER,
+     5 NRIVVL, IRIVAL, LCIEVT, LCEVTR, LCEXDP, LCSURF, NEVTOP, LCBNDS,
+     6 NBOUND, MXBND, NGHBVL, IGHBAL, LCIRCH, LCRECH, NRCHOP, MXITER,
+     7 NPARM, IPCALC, IPRSIP, MXUP, MXLOW, MXBW, ITMX, IFREQ, IPRD4,
+     8 MUTD4, IPRSOR, ITER1, NPCOND, NBPOL, IPRPCG, MUTPCG, ! INBAS,
+     9 NRESOP, IFHBCB, IFHBD3, IFHBD4, IFHBD5, IFHBSS, LCFLLC, LCBDTM,
+     1 LCFLRT, LCHDLC, LCSBHD, NBDTIM, NFHBX1, NFHBX2, NFLW, NHED,
+     2 LCHFBR, NHFB,MXSTRM,NSTREM,ISTCB1,ISTCB2,NSS,NTRIB,NDIV,ICALC,
+     3 LCSTRM,LCTBAR,LCTRIB,LCIVAR,ICSTRM,
+     4 IDLLPE,
+     5 WETFCT, TSMULT, ACCL, HCLOSE, RCLOSE, RELAX, DAMP, WSEED,CONST,
+     6 DELT, HDRY,
+     7 HNOFLO,
+     8 LAYCOX, LAYAVGX, IUNITX, ! XX,
+     9 HEADX1, HEADX2)
+
+C      IDLLPE is the stress period number for which to read data.
+
+C     "DLL_EXPORT" IS AN EXTENSION OF FORTRAN IN THE LAHEY LF90 COMPILER.
+C     It makes the subroutine or function that follows available in a dll.
+      USE XMODULE
+      DLL_EXPORT INIT
+
+C      PARAMETER (LENX=16000000)
+C      COMMON X(LENX)
+      COMMON /FLWCOM/LAYCON(200)
+C RBW BEGIN CHANGE
+      COMMON /FLWAVG/LAYAVG(200)
+C RBW END CHANGE
+C      CHARACTER*16 VBNM(40)
+      CHARACTER*80 HEADNG(2)
+      DIMENSION VBVL(4,40),IUNIT(40)
+      DOUBLE PRECISION DUMMY
+c-BEGIN ADDED CODE
+      DOUBLE PRECISION HNOFLO
+c-END ADDED CODE
+C      EQUIVALENCE (DUMMY,X(1))
+      CHARACTER*20 CHEDFM,CDDNFM
+      CHARACTER*80 FNAME
+      LOGICAL EXISTS
+      CHARACTER*4 CUNIT(40)
+! The following array(s) are exported
+! HEADX1 and HEADX2 is the exported version of HEADNG.
+c-BEGIN ADDED CODE
+      CHARACTER(LEN=*) :: HEADX1, HEADX2
+c      INTEGER (KIND=4) ICHFLG
+C - IMPLICIT TYPING IS USED TO DEFINE TYPES
+      DIMENSION LAYCOX(200), LAYAVGX(200)
+      DIMENSION IUNITX(40)
+C      REAL XX(LENX)
+      REAL, ALLOCATABLE :: IBOUNX(:,:,:), IRCHX(:,:),
+     1  IRESX(:,:),IRESLX(:,:),IEVTX(:,:)
+      INTEGER, ALLOCATABLE :: IFLLOCX(:,:), IHDLOCX(:,:), ISTRMX(:,:),
+     1  IDIVARX(:), ITRBARX(:,:)
+c-END ADDED CODE
+
+      DATA CUNIT/'BCF ','WEL ','DRN ','RIV ','EVT ','TLK ','GHB ',
+     1           'RCH ','SIP ','DE4 ','SOR ','OC  ','PCG ','GFD ',
+     2           '    ','HFB ','RES ','STR ','IBS ','CHD ','FHB ',
+     3           '    ','    ','    ','    ','    ','    ','    ',
+     4           '    ','    ','    ','    ','    ','    ','    ',
+     5           '    ','    ','    ','    ','    '/
+C     ------------------------------------------------------------------
+C     set string for use if RCS ident command
+      FNAME =
+     &'$Id: modflw96.f,v 3.2 1997/03/11 19:47:43 rsregan Exp rsregan $'
+      FNAME = 
+     &    '@(#)MODFLOW-96 - Modular 3-D Finite-Difference GW Flow Model'
+      FNAME = '@(#)MODFLOW-96 - USGS TWRI, Book 6, Chap. A1, McDonald an
+     &d Harbaugh'
+      FNAME = '@(#)MODFLOW-96 - USGS OFR 96-485, Harbaugh and McDonald'
+      FNAME = 
+     &     '@(#)MODFLOW-96 - Contact: h2osoft@usgs.gov'
+      FNAME = '@(#)MODFLOW-96 - Version: 3.0 1996/12/03 includes MOC'
+      FNAME =
+     &     '@(#)MODFLOW-96 - Version: 3.1x 1997/03/11 fixed HFB1FM call'
+      FNAME = '@(#)MODFLOW-96 - Version: 3.2x 1998/01/09 includes FHB'
+C     ------------------------------------------------------------------
+      INUNIT=99
+      IBUNIT=98
+      IBOUTS=97
+      IBATCH=0
+      INQUIRE(FILE='modflow.bf',EXIST=EXISTS)
+      IF(EXISTS) THEN
+         IBATCH=1
+         OPEN(UNIT=IBUNIT,FILE='modflow.bf',STATUS='OLD')
+         OPEN(UNIT=IBOUTS,FILE='modbatch.rpt')
+         WRITE(IBOUTS,*) ' USGS MODFLOW MODEL BATCH-MODE REPORT'
+      END IF
+C
+C2------OPEN FILE OF FILE NAMES.
+50    IF(IBATCH.GT.0) THEN
+         READ(IBUNIT,'(A)',END=500) FNAME
+         IF(FNAME.EQ.' ') GO TO 50
+         WRITE(IBOUTS,'(1X,/1X,A)') FNAME
+      ELSE
+C BEGIN ADDED CODE
+         RETURN
+C END ADDED CODE
+C BEGIN MODIFIED CODE
+C         WRITE(*,*) ' Enter the name of the NAME FILE:'
+C         READ(*,'(A)') FNAME
+C END MODIFIED CODE
+      END IF
+      INQUIRE(FILE=FNAME,EXIST=EXISTS)
+      IF(.NOT.EXISTS) THEN
+         IF(IBATCH.GT.0) THEN
+            WRITE(IBOUTS,*) ' Specified name file does not exist.'
+            WRITE(IBOUTS,*) ' Processing will continue with the next ',
+     1                      'name file in modflow.bf.'
+         ELSE
+C BEGIN ADDED CODE
+            RETURN
+C END ADDED CODE
+C BEGIN MODIFIED CODE
+C            WRITE(*,*) ' File does not exist'
+C END MODIFIED CODE
+         END IF
+         GO TO 50
+      END IF
+      OPEN(UNIT=INUNIT,FILE=FNAME,STATUS='OLD')
+C
+C3------DEFINE PROBLEM--ROWS,COLUMNS,LAYERS,STRESS PERIODS,PACKAGES.
+      CALL BAS5DF(ISUM,HEADNG,NPER,ITMUNI,TOTIM,NCOL,NROW,NLAY,
+     1        NODES,INBAS,IOUT,IUNIT,CUNIT,INUNIT,IXSEC,ICHFLG,IFREFM)
+C
+C- BEGIN ADDED CODE
+      ALLOCATE (IBOUNX(NCOL,NROW,NLAY), IRCHX(NCOL,NROW),
+     1 IRESX(NCOL,NROW),IRESLX(NCOL,NROW),IEVTX(NCOL,NROW) )
+C- END ADDED CODE
+
+C4------ALLOCATE SPACE IN "X" ARRAY.
+      CALL BAS5AL(ISUM,LENX,LCHNEW,LCHOLD,LCIBOU,LCCR,LCCC,LCCV,
+     1              LCHCOF,LCRHS,LCDELR,LCDELC,LCSTRT,LCBUFF,LCIOFL,
+     2              INBAS,ISTRT,NCOL,NROW,NLAY,IOUT,IAPART,IFREFM)
+      IF(IUNIT(1).GT.0) CALL BCF5AL(ISUM,LENX,LCSC1,LCHY,
+     1     LCBOT,LCTOP,LCSC2,LCTRPY,IUNIT(1),ISS,
+     2     NCOL,NROW,NLAY,IOUT,IBCFCB,LCWETD,IWDFLG,LCCVWD,
+     3     WETFCT,IWETIT,IHDWET,HDRY,IAPART,IFREFM)
+      IF(IUNIT(2).GT.0) CALL WEL5AL(ISUM,LENX,LCWELL,MXWELL,NWELLS,
+     1                 IUNIT(2),IOUT,IWELCB,NWELVL,IWELAL,IFREFM)
+      IF(IUNIT(3).GT.0) CALL DRN5AL(ISUM,LENX,LCDRAI,NDRAIN,MXDRN,
+     1                 IUNIT(3),IOUT,IDRNCB,NDRNVL,IDRNAL,IFREFM)
+      IF(IUNIT(4).GT.0) CALL RIV5AL(ISUM,LENX,LCRIVR,MXRIVR,NRIVER,
+     1            IUNIT(4),IOUT,IRIVCB,NRIVVL,IRIVAL,IFREFM)
+      IF(IUNIT(5).GT.0) CALL EVT5AL(ISUM,LENX,LCIEVT,LCEVTR,LCEXDP,
+     1            LCSURF,NCOL,NROW,NEVTOP,IUNIT(5),IOUT,IEVTCB,IFREFM)
+      IF(IUNIT(6).GT.0) CALL TLK1AL(ISUM,LENX,NCOL,NROW,NLAY,
+     1          LCRAT,LCZCB,LCA1,LCB1,LCALPH,LCBET,LCRM1,LCRM2,LCRM3,
+     2          LCRM4,LCTL,LCTLK,LCSLU,LCSLD,NODES1,NM1,NM2,NUMC,
+     3          NTM1,ITLKSV,ITLKRS,ITLKCB,ISS,IUNIT(6),IOUT)
+      IF(IUNIT(7).GT.0) CALL GHB5AL(ISUM,LENX,LCBNDS,NBOUND,MXBND,
+     1            IUNIT(7),IOUT,IGHBCB,NGHBVL,IGHBAL,IFREFM)
+      IF(IUNIT(8).GT.0) CALL RCH5AL(ISUM,LENX,LCIRCH,LCRECH,NRCHOP,
+     1            NCOL,NROW,IUNIT(8),IOUT,IRCHCB,IFREFM)
+      IF(IUNIT(9).GT.0) CALL SIP5AL(ISUM,LENX,LCEL,LCFL,LCGL,LCV,
+     1          LCHDCG,LCLRCH,LCW,MXITER,NPARM,NCOL,NROW,NLAY,
+     2          IUNIT(9),IOUT,IFREFM)
+      IF(IUNIT(10).GT.0) CALL DE45AL(ISUM,LENX,LCAU,LCAL,LCIUPP,
+     1           LCIEQP,LCD4B,LCLRCH,LCHDCG,
+     2           MXUP,MXLOW,MXEQ,MXBW,IUNIT(10),ITMX,ID4DIR,
+     3           NCOL,NROW,NLAY,IOUT,ID4DIM)
+      IF(IUNIT(11).GT.0) CALL SOR5AL(ISUM,LENX,LCA,LCRES,LCHDCG,LCLRCH,
+     1       LCIEQP,MXITER,NCOL,NLAY,NSLICE,MBW,IUNIT(11),IOUT,IFREFM)
+      IF(IUNIT(13).GT.0) CALL PCG2AL(ISUM,LENX,LCV,LCSS,LCP,LCCD,
+     1       LCHCHG,LCLHCH,LCRCHG,LCLRCH,MXITER,ITER1,NCOL,NROW,NLAY,
+     2       IUNIT(13),IOUT,NPCOND,LCIT1)
+      IF(IUNIT(14).GT.0) CALL GFD1AL(ISUM,LENX,LCSC1,LCCDTR,LCCDTC,
+     1     LCBOT,LCTOP,LCSC2,IUNIT(14),ISS,NCOL,NROW,NLAY,IOUT,IGFDCB)
+      IF(IUNIT(16).GT.0) CALL HFB1AL(ISUM,LENX,LCHFBR,NHFB,IUNIT(16),      *HFB*
+     1           IOUT)                                                     *HFB*
+      IF(IUNIT(17).GT.0) CALL RES1AL(ISUM,LENX,LCIRES,LCIRSL,LCBRES,
+     1  LCCRES,LCBBRE,LCHRES,LCHRSE,IUNIT(17),IOUT,NRES,IRESCB,
+     2  NRESOP,IRESPT,NPTS,NCOL,NROW)
+      IF(IUNIT(18).GT.0) CALL STR1AL(ISUM,LENX,LCSTRM,ICSTRM,MXSTRM,    STR1
+     1                 NSTREM,IUNIT(18),IOUT,ISTCB1,ISTCB2,NSS,NTRIB,   STR1
+     2                  NDIV,ICALC,CONST,LCTBAR,LCTRIB,LCIVAR,LCFGAR)   STR1
+      IF (IUNIT(19).GT.0) CALL IBS1AL(ISUM,LENX,LCHC,LCSCE,LCSCV,       IBS
+     1           LCSUB,NCOL,NROW,NLAY,IIBSCB,IIBSOC,ISS,IUNIT(19),IOUT) IBS
+      IF(IUNIT(20).GT.0) CALL CHD1AL(ISUM,LENX,LCCHDS,NCHDS,MXCHD,      CHD
+     1           IUNIT(20),IOUT)                                        CHD
+      IF(IUNIT(21).GT.0) CALL FHB1AL(ISUM,LENX,LCFLLC,LCBDTM,LCFLRT,
+     1          LCBDFV,LCBDHV,LCHDLC,LCSBHD,NBDTIM,NFLW,NHED,IUNIT(21),
+     2          IOUT,IFHBCB,NFHBX1,NFHBX2,IFHBD3,IFHBD4,IFHBD5,
+     3          IFHBSS,ISS)
+C- BEGIN ADDED CODE
+      ALLOCATE (IFLLOCX(4,NFLW), IHDLOCX(4,NHED),
+     1          ISTRMX(5,MXSTRM),ITRBARX(NSS,NTRIB),
+     2          IDIVARX(NSS) )
+C- END ADDED CODE
+
+C
+C5------IF THE "X" ARRAY IS NOT BIG ENOUGH THEN STOP.
+       IF (.NOT.ALLOCATED(X)) THEN
+         ALLOCATE(X(ISUM))
+       END IF
+C      IF(ISUM-1.GT.LENX) STOP
+C
+C6------READ AND PREPARE INFORMATION FOR ENTIRE SIMULATION.
+C- BEGIN MODIFIED CODE
+      CALL BAS5RP(X(LCIBOU),X(LCHNEW),X(LCSTRT),X(LCHOLD),
+     1       ISTRT,INBAS,HEADNG,NCOL,NROW,NLAY,VBVL,X(LCIOFL),
+     2       IUNIT(12),IHEDFM,IDDNFM,IHEDUN,IDDNUN,IOUT,IPEROC,ITSOC,
+     3       CHEDFM,CDDNFM,IBDOPT,IXSEC,LBHDSV,LBDDSV,IFREFM,HNOFLO,
+     4       IBOUNX)
+C- END MODIFIED CODE
+      IF(IUNIT(1).GT.0) CALL BCF5RP(X(LCIBOU),X(LCHNEW),X(LCSC1),
+     1          X(LCHY),X(LCCR),X(LCCC),X(LCCV),X(LCDELR),
+     2     X(LCDELC),X(LCBOT),X(LCTOP),X(LCSC2),X(LCTRPY),IUNIT(1),
+     3     ISS,NCOL,NROW,NLAY,IOUT,X(LCWETD),IWDFLG,X(LCCVWD))
+      IF(IUNIT(6).GT.0) CALL TLK1RP(X(LCRAT),X(LCZCB),X(LCA1),X(LCB1),
+     1          X(LCALPH),X(LCBET),X(LCRM1),X(LCRM2),X(LCRM3),X(LCRM4),
+     2          NODES1,NM1,NM2,NUMC,NTM1,ITLKRS,DELTM1,X(LCBUFF),
+     3          X(LCDELC),X(LCDELR),TLKTIM,NROW,NCOL,IUNIT(6),IOUT)
+      IF(IUNIT(9).GT.0) CALL SIP5RP(NPARM,MXITER,ACCL,HCLOSE,X(LCW),
+     1          IUNIT(9),IPCALC,IPRSIP,IOUT,IFREFM,WSEED)
+      IF(IUNIT(10).GT.0) CALL DE45RP(IUNIT(10),MXITER,NITER,ITMX,
+     1            ACCL,HCLOSE,IFREQ,IPRD4,IOUT,MUTD4)
+      IF(IUNIT(11).GT.0) CALL SOR5RP(MXITER,ACCL,HCLOSE,IUNIT(11),
+     1         IPRSOR,IOUT,IFREFM)
+      IF(IUNIT(13).GT.0) CALL PCG2RP(MXITER,ITER1,HCLOSE,RCLOSE,
+     1         NPCOND,NBPOL,RELAX,IPRPCG,IUNIT(13),IOUT,MUTPCG,
+     2         NITER,X(LCIT1),DAMP)
+      IF(IUNIT(14).GT.0) CALL GFD1RP(X(LCIBOU),X(LCHNEW),X(LCSC1),
+     1          X(LCCDTR),X(LCCDTC),X(LCCR),X(LCCC),X(LCCV),X(LCDELR),
+     2          X(LCDELC),X(LCBOT),X(LCTOP),X(LCSC2),
+     3          IUNIT(14),ISS,NCOL,NROW,NLAY,NODES,IOUT)
+      IF(IUNIT(16).GT.0) CALL HFB1RP(X(LCCR),X(LCCC),X(LCDELR),            *HFB*
+     1         X(LCDELC),X(LCHFBR),IUNIT(16),NCOL,NROW,NLAY,NODES,         *HFB*
+     1         NHFB,IOUT)                                                  *HFB*
+      IF(IUNIT(19).GT.0) CALL IBS1RP(X(LCDELR),X(LCDELC),X(LCHNEW),     IBS
+     1      X(LCHC),X(LCSCE),X(LCSCV),X(LCSUB),NCOL,NROW,NLAY,          IBS
+     2      NODES,IIBSOC,ISUBFM,ICOMFM,IHCFM,ISUBUN,ICOMUN,IHCUN,       IBS
+     3      IUNIT(19),IOUT)                                             IBS
+C- BEGIN MODIFIED CODE
+      IF(IUNIT(21).GT.0) CALL FHB1RP(X(LCIBOU),NROW,NCOL,NLAY,
+     &          X(LCFLLC),X(LCBDTM),NBDTIM,X(LCFLRT),NFLW,NHED,
+     &          X(LCHDLC),X(LCSBHD),IUNIT(21),IOUT,
+     &          NFHBX1,NFHBX2,IFHBD3,IFHBD5,IFLLOCX, IHDLOCX)
+C- END MODIFIED CODE
+C
+
+c-BEGIN ADDED CODE
+      HEADX1 =   TRIM(HEADNG(1))
+      HEADX2 =   TRIM(HEADNG(2))
+c- THIS CONVERTS STRINGS TO Delphi format.
+      HEADX1 =    char( len(HEADX1 )) // HEADX1
+      HEADX2 =    char( len(HEADX2 )) // HEADX2
+
+      DO INDEX=1,200
+        LAYCOX(INDEX) = LAYCON(INDEX)
+        LAYAVGX(INDEX) = LAYAVG(INDEX)
+      END DO
+      DO INDEX=1,40
+        IUNITX(INDEX) = IUNIT(INDEX)
+      END DO
+C IBOUND IS AN INTEGER ARRAY SO THE INTERNAL STORAGE OF
+C NUMBERS IS DIFFERENT THAN IN A REAL ARRAY. THIS CAUSES
+C PROBLEMS WHEN TRYING TO ACCESS IBOUND VALUES ACROSS THE
+C DLL INTERFACE.
+C
+C IBOUNX IS A COPY OF IBOUND BUT IT IS DECLARED AS REAL
+      KDLL = LCIBOU
+      DO K = 1, NLAY
+        DO I = 1, NROW
+          DO J = 1, NCOL
+            X(KDLL) = IBOUNX(J,I,K)
+            KDLL = KDLL + 1
+          END DO
+        END DO
+      END DO
+      if (ALLOCATED(IBOUNX)) then
+        deallocate (IBOUNX)
+      end if
+
+      KDLL = LCFLLC
+      DO K = 1, NFLW
+        DO I = 1, 4
+            X(KDLL) = IFLLOCX(I,K)
+            KDLL = KDLL + 1
+        END DO
+      END DO
+      if (ALLOCATED(IFLLOCX)) then
+        deallocate (IFLLOCX)
+      end if
+
+      KDLL = LCHDLC
+      DO K = 1, NHED
+        DO I = 1, 4
+            X(KDLL) = IHDLOCX(I,K)
+            KDLL = KDLL + 1
+        END DO
+      END DO
+      if (ALLOCATED(IHDLOCX)) then
+        deallocate (IHDLOCX)
+      end if
+C
+C-END ADDED CODE
+C
+C7------SIMULATE EACH STRESS PERIOD.
+C- BEGIN MODIFIED CODE
+      DO 300 KPER=1, IDLLPE
+C- END MODIFIED CODE
+      KKPER=KPER
+C
+C7A-----READ STRESS PERIOD TIMING INFORMATION.
+      CALL BAS5ST(NSTP,DELT,TSMULT,PERTIM,KKPER,INBAS,IOUT,IFREFM)
+C
+C7B-----READ AND PREPARE INFORMATION FOR STRESS PERIOD.
+      IF(IUNIT(2).GT.0) CALL WEL5RP(X(LCWELL),NWELLS,MXWELL,IUNIT(2),
+     1             IOUT,NWELVL,IWELAL,IFREFM)
+      IF(IUNIT(3).GT.0) CALL DRN5RP(X(LCDRAI),NDRAIN,MXDRN,IUNIT(3),
+     1                 IOUT,NDRNVL,IDRNAL,IFREFM)
+      IF(IUNIT(4).GT.0) CALL RIV5RP(X(LCRIVR),NRIVER,MXRIVR,IUNIT(4),
+     1            IOUT,NRIVVL,IRIVAL,IFREFM)
+c -begin modified code
+      IF(IUNIT(5).GT.0) CALL EVT5RP(NEVTOP,X(LCIEVT),X(LCEVTR),
+     1            X(LCEXDP),X(LCSURF),X(LCDELR),X(LCDELC),NCOL,NROW,
+     1            IUNIT(5),IOUT,IFREFM,IEVTX)
+c- end modified code
+      IF(IUNIT(7).GT.0) CALL GHB5RP(X(LCBNDS),NBOUND,MXBND,IUNIT(7),
+     1              IOUT,NGHBVL,IGHBAL,IFREFM)
+c -begin modified code
+      IF(IUNIT(8).GT.0) CALL RCH5RP(NRCHOP,X(LCIRCH),X(LCRECH),
+     1            X(LCDELR),X(LCDELC),NROW,NCOL,IUNIT(8),IOUT,IFREFM,
+     2            IRCHX)
+      IF(IUNIT(17).GT.0) CALL RES1RP(X(LCIRES),X(LCIRSL),X(LCBRES),
+     1   X(LCCRES),X(LCBBRE),X(LCHRSE),X(LCIBOU),X(LCDELR),X(LCDELC),
+     2   NRES,NRESOP,NPTS,NCOL,NROW,NLAY,PERLEN,DELT,NSTP,TSMULT,
+     3   IUNIT(17),IOUT,IRESX,IRESLX )
+c- end modified code
+C- BEGIN MODIFIED CODE
+      IF(IUNIT(18).GT.0) CALL STR1RP(X(LCSTRM),X(ICSTRM),NSTREM,        STR1
+     1                     MXSTRM,IUNIT(18),IOUT,X(LCTBAR),NDIV,NSS,    STR1
+     2                     NTRIB,X(LCIVAR),ICALC,IPTFLG,ISTRMX,IDIVARX,
+     3                     ITRBARX)                                     STR1
+c- end modified code
+      IF(IUNIT(20).GT.0) CALL CHD1RP(X(LCCHDS),NCHDS,MXCHD,X(LCIBOU),   CHD
+     1            NCOL,NROW,NLAY,PERLEN,DELT,NSTP,TSMULT,IUNIT(20),IOUT)CHD
+C
+
+
+
+
+
+
+
+  300 CONTINUE
+
+C-BEGIN INSERTED CODE
+C IRCHX, IRESX, IRESLX, AND IEVTX ARE COPIES OF
+C IRCH,  IRES,  IRESL,  AND IEVT BUT ARE DECLARED AS REAL
+
+      IF ((IUNIT(8).GT.0).AND.(NRCHOP.EQ.2)) THEN
+        KIRCHX = LCIRCH
+        DO I = 1, NROW
+          DO J = 1, NCOL
+            X(KIRCHX) = IRCHX(J,I)
+            KIRCHX = KIRCHX + 1
+          END DO
+        END DO
+      END IF
+      if (ALLOCATED (IRCHX)) then
+        DEALLOCATE (IRCHX)
+      end if
+
+      IF (IUNIT(17).GT.0) THEN
+        KIRESX = LCIRES
+        DO I = 1, NROW
+          DO J = 1, NCOL
+            X(KIRESX) = IRESX(J,I)
+            KIRESX = KIRESX + 1
+          END DO
+        END DO
+      END IF
+      if (ALLOCATED (IRESX)) then
+        DEALLOCATE (IRESX)
+      end if
+
+      IF ((IUNIT(17).GT.0).AND.(NRESOP.EQ.2)) THEN
+        KIRESL = LCIRSL
+        DO I = 1, NROW
+          DO J = 1, NCOL
+            X(KIRESL) = IRESLX(J,I)
+            KIRESL = KIRESL + 1
+          END DO
+        END DO
+      END IF
+      if (ALLOCATED (IRESLX)) then
+        DEALLOCATE (IRESLX)
+      end if
+
+      IF ((IUNIT(5).GT.0).AND.(NEVTOP.EQ.2)) THEN
+        KIEVTX = LCIEVT
+        DO I = 1, NROW
+          DO J = 1, NCOL
+            X(KIEVTX) = IEVTX(J,I)
+            KIEVTX = KIEVTX + 1
+          END DO
+        END DO
+      END IF
+      if (ALLOCATED (IEVTX)) then
+        DEALLOCATE (IEVTX)
+      end if
+
+      IF (IUNIT(18).GT.0) THEN
+        KISTRMX = ICSTRM
+        DO I = 1, MXSTRM
+          DO J = 1, 5
+            X(KISTRMX) = ISTRMX(J,I)
+            KISTRMX = KISTRMX + 1
+          END DO
+        END DO
+      END IF
+      if (ALLOCATED (ISTRMX)) then
+        DEALLOCATE (ISTRMX)
+      end if
+      IF (IUNIT(18).GT.0) THEN
+        KTRIB = LCTBAR
+        DO I = 1, NTRIB
+          DO J = 1, NSS
+            X(KTRIB) = ITRBARX(J,I)
+            KTRIB = KTRIB + 1
+          END DO
+        END DO
+      END IF
+      if (ALLOCATED (ITRBARX)) then
+        DEALLOCATE (ITRBARX)
+      end if
+      IF (IUNIT(18).GT.0) THEN
+        KTRIB = LCIVAR
+          DO J = 1, NSS
+            X(KTRIB) = IDIVARX(J)
+            KTRIB = KTRIB + 1
+          END DO
+      END IF
+      if (ALLOCATED (IDIVARX)) then
+        DEALLOCATE (IDIVARX)
+      end if
+
+C      DO INDEX=1,ISUM-1
+C        XX(INDEX) = X(INDEX)
+C      END DO
+C-END INSERTED CODE
+
+
+
+
+C
+C7C7----WRITE RESTART RECORDS
+C7C7A---WRITE RESTART RECORDS FOR TRANSIENT-LEAKAGE PACKAGE
+      IF(IUNIT(6).GT.0) CALL TLK1OT(X(LCRM1),X(LCRM2),
+     1     X(LCRM3),X(LCRM4),NM1,NM2,ITLKSV,DELTM1,TLKTIM,IOUT)
+C
+C8------END OF SIMULATION
+      IF(IBATCH.GT.0) THEN
+         WRITE(IBOUTS,*) ' Normal termination of simulation.'
+         DO 400 I=1,IBOUTS-1
+C-begin INSERTED CODE
+            IF ((I.NE.5).AND.(I.NE.6)) THEN
+C-END INSERTED CODE
+              INQUIRE(UNIT=I,OPENED=EXISTS)
+              IF(EXISTS) CLOSE(I)
+C-begin INSERTED CODE
+            ELSE
+              CLOSE(I)
+            END IF
+C-END INSERTED CODE
+            CLOSE(INUNIT)
+            CLOSE(IBUNIT)
+            CLOSE(IBOUTS)
+  400    CONTINUE
+      END IF
+  500 CONTINUE
+C       STOP
+      RETURN
+C
+      END

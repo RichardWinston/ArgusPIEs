@@ -1,0 +1,527 @@
+# 
+# MF_STR.met
+# ----------------------------------------------------
+# Stream Package
+# ----------------------------------------------------
+If: ContinueSimulation&(StreamChoice&ExportStreams)
+	Redirect output to: @adeFileName@.str
+	End file
+	Evaluate expression: MODFLOW_BL_InitializeGridInformation("MODFLOW FD Grid", 0)
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+			Evaluate expression: MODFLOW_BL_AddVertexLayer("Stream Unit" + LayIndex)
+			Loop for: Objects in layer: Stream Unit[LayIndex]
+				Evaluate expression: MODFLOW_L_AddToList(StreamSegmentList, Segment Number)
+				Evaluate expression: MODFLOW_L_AddToList(SortedStreamSegmentList, Segment Number)
+				Evaluate expression: MODFLOW_L_AddToList(StreamUnitList, LayIndex)
+				If: UseDiversions
+					Evaluate expression: MODFLOW_L_AddToList(StreamTributaryList, Stream Unit[LayIndex].Upstream Diversion Segment Number)
+				End if
+			End loop
+		End if
+	End loop
+	Evaluate expression: MODFLOW_L_SortList(SortedStreamSegmentList)
+	Evaluate expression: MODFLOW_L_EliminateDuplicates(SortedStreamSegmentList)
+	Set Variable: StreamSegmentCount:= MODFLOW_L_GetListSize(SortedStreamSegmentList)
+	Set Variable: Tributary2DArray:= MODFLOW_L_CreateNew3DList(StreamSegmentCount, TributaryMaxAllowed + 2, 1)
+	Set Variable: StreamProperties3DArray:= MODFLOW_L_CreateNew3DList(StreamSegmentCount, MODFLOW_NPER()+1, InterpolateWidth+1)
+	# 
+	Set Variable: StreamIndex:= 0
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)!=0
+			Loop for: Objects in layer: Stream Unit[LayIndex]
+				If: ContourType()=2
+					Evaluate expression: MODFLOW_L_Set3DListItem(Tributary2DArray, StreamIndex, TributaryMaxAllowed+1, 0, 1)
+				End if
+				Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, FlowIndex, Flow[PeriodIndex])
+					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamStageIndex, Upstream Stage[PeriodIndex])
+					If: Downstream Stage[PeriodIndex]!=$N/A
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamStageIndex, Downstream Stage[PeriodIndex])
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateStage, 1)
+					Else
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateStage, 0)
+					End if
+					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, ConductivityIndex, Stream Unit[LayIndex].Streambed hydraulic conductivity)
+					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamTopElevIndex, Upstream top elevation[PeriodIndex])
+					If: Downstream top elevation[PeriodIndex]!=$N/A
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamTopElevIndex, Downstream top elevation[PeriodIndex])
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateTopElev, 1)
+					Else
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateTopElev, 0)
+					End if
+					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamBotElevIndex, Upstream bottom elevation[PeriodIndex])
+					If: Downstream bottom elevation[PeriodIndex]!=$N/A
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamBotElevIndex, Downstream bottom elevation[PeriodIndex])
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateBottomElev, 1)
+					Else
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateBottomElev, 0)
+					End if
+					Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, UpstreamWidthIndex, Upstream width[PeriodIndex])
+					If: Downstream width[PeriodIndex]!=$N/A
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, DownstreamWidthIndex, Downstream width[PeriodIndex])
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateWidth, 1)
+					Else
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, InterpolateWidth, 0)
+					End if
+					If: ICALC
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, SlopeIndex, Slope[PeriodIndex])
+						Evaluate expression: MODFLOW_L_Set3DListItem(StreamProperties3DArray, StreamIndex, PeriodIndex, RoughnessIndex, Mannings roughness[PeriodIndex])
+					End if
+				End loop
+				Set Variable: StreamIndex:= StreamIndex+1
+				If: UseTributaries
+					If: Downstream Segment Number!=$N/A
+						If: Downstream Segment Number>0
+							Set Variable: TributaryIndex:= MODFLOW_L_UnsortedIndexOf(StreamSegmentList, Downstream Segment Number)
+							If: TributaryIndex<0
+								# Error
+							Else
+								Set Variable: TributaryCount:= MODFLOW_L_GetFrom3DList(Tributary2DArray, TributaryIndex, 0, 0)
+								If: TributaryCount=TributaryMaxAllowed
+									# Error
+								Else
+									Set Variable: TributaryCount:= TributaryCount + 1
+									Evaluate expression: MODFLOW_L_Set3DListItem(Tributary2DArray, TributaryIndex, 0, 0, TributaryCount)
+									Evaluate expression: MODFLOW_L_Set3DListItem(Tributary2DArray, TributaryIndex, TributaryCount, 0, TributaryIndex + 1)
+									Evaluate expression: MODFLOW_L_Set3DListItem(Tributary2DArray, TributaryIndex, TributaryCount, 0, MODFLOW_L_UnsortedIndexOf(SortedStreamSegmentList, Segment Number) + 1)
+								End if
+							End if
+						End if
+					End if
+				End if
+			End loop
+		End if
+	End loop
+	# 
+	# 
+	# Check for close contours or point objects. Display a warning if any are detected.
+	If: ContinueSimulation&ShowWarnings&(StreamSegmentCount!=MODFLOW_L_GetListSize(StreamSegmentList))
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: One or more stream segment numbers are not unique.")
+	End if
+	If: ShowWarnings&ContinueSimulation
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+				Loop for: Objects in layer: Stream Unit[LayIndex]
+					If: (ContourType()=1)
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: Point object on stream layer. Point Object Segment Number: " + Stream Unit[LayIndex].Segment Number)
+					End if
+					If: (ContourType()=3)
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: Close contour on stream layer. Close Contour Segment Number: " + Stream Unit[LayIndex].Segment Number)
+					End if
+				End loop
+			End if
+		End loop
+	End if
+	# 
+	# Check that no segment numbers are equal to 0.
+	If: ShowWarnings&ContinueSimulation
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+				Loop for: Objects in layer: Stream Unit[LayIndex]
+					If: Segment Number=0
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Stream segment number = 0 on non-simulated layer Stream Unit" + LayIndex + " will be ignored.")
+					End if
+				End loop
+			End if
+		End loop
+	End if
+	# 
+	# Check that no stream widths are less than or equal to 0.
+	If: ContinueSimulation&ShowWarnings
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+				Loop for: Objects in layer: Stream Unit[LayIndex]
+					Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+						If: Upstream width[PeriodIndex]<=0
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Upstream width[" + PeriodIndex+ "] <= 0 in Stream Unit" + LayIndex)
+						End if
+						If: IsNumber(Downstream width[PeriodIndex])
+							If: Downstream width[PeriodIndex]<=0
+								Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Downstream width[" + PeriodIndex+ "] <= 0 in Stream Unit" + LayIndex)
+							End if
+						End if
+					End loop
+					If: Segment Number=0
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Stream segment number = 0 on non-simulated layer Stream Unit" + LayIndex + " will be ignored.")
+					End if
+				End loop
+			End if
+		End loop
+	End if
+	# 
+	# Check that no two segments have the same segment number.
+	If: ContinueSimulation&ShowWarnings
+		Loop for: Variable SegmentIndex from: 0 to: StreamSegmentCount-1 step: 1
+			If: MODFLOW_L_UnsortedIndexOf(StreamSegmentList, MODFLOW_L_GetFromList(StreamSegmentList, SegmentIndex))!=SegmentIndex
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: Two or more Stream segments are assigned segment numbers of " + MODFLOW_L_GetFromList(StreamSegmentList, StreamIndex))
+			End if
+		End loop
+	End if
+	# 
+	# Check that all downstream segments have higher segment numbers than upsteam segments.
+	Set Variable: not_ok:= 0
+	If: ContinueSimulation&ShowWarnings
+		If: UseTributaries
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Objects in layer: Stream Unit[LayIndex]
+						If: (Downstream Segment Number<=Segment Number)&(Segment Number!=0)&(Downstream Segment Number!=0)
+							Set Variable: not_ok:= 1
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Stream Segment Number " + Stream Unit[LayIndex].Segment Number + " has a downstream segment number " + Stream Unit[LayIndex].Downstream Segment Number + ".  Downstream segments must be higher than upstream segments.")
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End if
+	# 
+	# Check that all diversion segments have higher segment numbers than upsteam segments.
+	If: ContinueSimulation&ShowWarnings
+		If: UseDiversions
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Objects in layer: Stream Unit[LayIndex]
+						If: (Upstream Diversion Segment Number>=Segment Number)&(Segment Number!=0)&(Upstream Diversion Segment Number!=0)
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Segment Number " + Stream Unit[LayIndex].Segment Number + " is a diversion but it has a higher segment that the segment from which flow is diverted (" + Stream Unit[LayIndex].Upstream Diversion Segment Number + ").")
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End if
+	# 
+	# Check that all stream tops are higher than the corresponding stream bottoms.
+	Set Variable: not_ok:= 0
+	If: ContinueSimulation&ShowWarnings
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+				Loop for: Objects in layer: Stream Unit[LayIndex]
+					Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+						If: (PeriodIndex=1)|!StreamsSteady
+							Set Variable: StreamTop:= Upstream top elevation[PeriodIndex]
+							Set Variable: StreamBottom:= Upstream bottom elevation[PeriodIndex]
+							If: (StreamTop<=StreamBottom)
+								Set Variable: not_ok:= 1
+								Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Top <= Bottom in Stream Segment " + Stream Unit[LayIndex].Segment Number + " for period " + PeriodIndex)
+							End if
+							If: Downstream top elevation[PeriodIndex]!=$N/A
+								Set Variable: StreamTop:= Downstream top elevation[PeriodIndex]
+							End if
+							If: Downstream bottom elevation[PeriodIndex]!=$N/A
+								Set Variable: StreamBottom:= Downstream bottom elevation[PeriodIndex]
+							End if
+							If: (StreamTop<StreamBottom)&(Segment Number!=0)
+								Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Top < Bottom in Stream Segment " + Stream Unit[LayIndex].Segment Number + " for period " + PeriodIndex)
+							End if
+						End if
+					End loop
+				End loop
+			End if
+		End loop
+	End if
+	# 
+	# Check that all stream stages are higher than the corresponding stream bottoms.
+	If: ContinueSimulation&ShowWarnings
+		If: !ICALC
+			Set Variable: not_ok:= 0
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Objects in layer: Stream Unit[LayIndex]
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							If: (PeriodIndex=1)|(!StreamsSteady)
+								Set Variable: StreamStage:= Upstream Stage[PeriodIndex]
+								Set Variable: StreamBottom:= Upstream bottom elevation[PeriodIndex]
+								If: (StreamStage<StreamBottom)&(Segment Number!=0)
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Stage < Bottom in Stream Segment " + Stream Unit[LayIndex].Segment Number)
+								End if
+								If: Downstream Stage[PeriodIndex]!=$N/A
+									Set Variable: StreamStage:= Downstream Stage[PeriodIndex]
+								End if
+								If: Downstream bottom elevation[PeriodIndex]!=$N/A
+									Set Variable: StreamBottom:= Downstream bottom elevation[PeriodIndex]
+								End if
+								If: (StreamStage<StreamBottom)&(Segment Number!=0)
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Stage < Bottom in Stream Segment " + Stream Unit[LayIndex].Segment Number)
+								End if
+							End if
+						End loop
+					End loop
+				End if
+			End loop
+		End if
+	End if
+	# 
+	# Check that all stream stages are higher than the corresponding stream tops.
+	If: ContinueSimulation&ShowWarnings
+		If: !ICALC
+			Set Variable: not_ok:= 0
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Objects in layer: Stream Unit[LayIndex]
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							If: (PeriodIndex =1)|(!StreamsSteady)
+								Set Variable: StreamTop:= Upstream top elevation[PeriodIndex]
+								Set Variable: StreamStage:= Upstream Stage[PeriodIndex]
+								If: (StreamStage<StreamTop)&(Segment Number!=0)&(ICALC<=0)
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Stage < Top in Stream Segment " + Stream Unit[LayIndex].Segment Number)
+								End if
+								If: Downstream top elevation[PeriodIndex]!=$N/A
+									Set Variable: StreamTop:= Downstream top elevation[PeriodIndex]
+								End if
+								If: Downstream Stage[PeriodIndex]!=$N/A
+									Set Variable: StreamStage:= Downstream Stage[PeriodIndex]
+								End if
+								If: (StreamStage<StreamTop)&(Segment Number!=0)&(ICALC<=0)
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Stage < Top in Stream Segment " + Stream Unit[LayIndex].Segment Number)
+								End if
+							End if
+						End loop
+					End loop
+				End if
+			End loop
+		End if
+	End if
+	# 
+	# Check that all downstream segments exist.
+	If: ContinueSimulation&ShowWarnings
+		If: UseTributaries
+			Set Variable: not_ok:= 0
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Objects in layer: Stream Unit[LayIndex]
+						If: Downstream Segment Number!=$N/A
+							If: !(Downstream Segment Number=0)
+								If: MODFLOW_L_UnsortedIndexOf(SortedStreamSegmentList, Downstream Segment Number)<0
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("The downstream segment for stream segment " + Stream Unit[LayIndex].Segment Number + " does not exist.")
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End if
+	# 
+	If: ContinueSimulation&ShowWarnings
+		If: UseDiversions
+			# Check that all upstream segments for diversions exist.
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Objects in layer: Stream Unit[LayIndex]
+						If: Upstream Diversion Segment Number!=$N/A
+							If: !(Upstream Diversion Segment Number=0)
+								If: MODFLOW_L_UnsortedIndexOf(SortedStreamSegmentList, Upstream Diversion Segment Number)<0
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("In Stream segment " + Stream Unit[LayIndex].Segment Number + ", the segment from which flow is to be diverted (" + Stream Unit[LayIndex].Upstream Diversion Segment Number + ") does not exist.")
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End if
+	# 
+	# Check that no objects are on non-simulated layers
+	If: ContinueSimulation&ShowWarnings
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)=0)
+				Set Variable: TempInteger:= 0
+				Loop for: Objects in layer: Stream Unit[LayIndex]
+					Set Variable: TempInteger:= TempInteger+1
+				End loop
+				If: TempInteger>0
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Streams on non-simulated layer " + LayIndex + " will be ignored.")
+				End if
+			End if
+		End loop
+	End if
+	Set Variable: NTRIB:= 0
+	If: ContinueSimulation&UseTributaries
+		Loop for: Variable StreamIndex from: 0 to: StreamSegmentCount-1 step: 1
+			Set Variable: NTRIBCurrent:= MODFLOW_L_GetFrom3DList(Tributary2DArray, StreamIndex, 0, 0)
+			If: NTRIBCurrent>NTRIB
+				Set Variable: NTRIB:= NTRIBCurrent
+			End if
+		End loop
+	End if
+	If: ContinueSimulation&UseDiversions
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+				Loop for: Objects in layer: Stream Unit[LayIndex]
+					If: Upstream Diversion Segment Number>0
+						Set Variable: NDIV:= 1
+					End if
+				End loop
+			End if
+		End loop
+	End if
+	Set Variable: MaxStreamReachCount:= 0
+	Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Set Variable: CurrentStreamReachCount:= 0
+			Redirect output to: TempStream3
+				Loop for: Variable StreamIndex from: 0 to: StreamSegmentCount-1 step: 1
+					Set Variable: CurrentStream:= MODFLOW_L_GetFromList(SortedStreamSegmentList, StreamIndex)
+					Set Variable: StreamIndex2:= MODFLOW_L_UnsortedIndexOf(StreamSegmentList, CurrentStream)
+					# StreamIndex2 is now the index of the current stream segment and may be used to retrieve data about the current stream.
+					Set Variable: BlockListCount:= MODFLOW_BL_GetCountOfACellList(StreamIndex2)
+					If: BlockListCount>0
+						Loop for: Variable BlockIndex from: 0 to: BlockListCount-1 step: 1
+							Set Variable: StreamUnit:= MODFLOW_L_GetFromList(StreamUnitList, StreamIndex2)
+							Set Variable: DumRow:= MODFLOW_BL_GetCellRow(StreamIndex2, BlockIndex)
+							Set Variable: DumCol:= MODFLOW_BL_GetCellColumn(StreamIndex2, BlockIndex)
+							Set Variable: BlockBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, StreamUnit)
+							Set Variable: BlockTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, StreamUnit)
+							Set Variable: StreamBottom:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, UpstreamBotElevIndex)
+							If: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateBottomElev)
+								Set Variable: DownstreamStreamBottom:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, DownstreamBotElevIndex)
+								Set Variable: StreamBottom:= StreamBottom - MODFLOW_BL_FractionOfLine(StreamIndex2, BlockIndex) * (StreamBottom - DownstreamStreamBottom)
+							End if
+							Set Variable: StreamStage:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, UpstreamStageIndex)
+							Set Variable: StreamConductance:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, ConductivityIndex) * MODFLOW_BL_SumSegmentLengths(StreamIndex2, BlockIndex)
+							If: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateStage)
+								Set Variable: DownstreamStreamStage:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, DownstreamStageIndex)
+								Set Variable: StreamStage:= StreamStage - MODFLOW_BL_FractionOfLine(StreamIndex2, BlockIndex) * (StreamStage - DownstreamStreamStage)
+							End if
+							Set Variable: Width:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, UpstreamWidthIndex)
+							If: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateWidth)
+								Set Variable: DownstreamWidth:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, DownstreamWidthIndex)
+								Set Variable: Width:= Width - MODFLOW_BL_FractionOfLine(StreamIndex2, BlockIndex) * (Width - DownstreamWidth)
+							End if
+							Set Variable: StreamTop:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, UpstreamTopElevIndex)
+							If: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateTopElev)
+								Set Variable: DownstreamStreamTop:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, DownstreamTopElevIndex)
+								Set Variable: StreamTop:= StreamTop - MODFLOW_BL_FractionOfLine(StreamIndex2, BlockIndex) * (StreamTop - DownstreamStreamTop)
+							End if
+							Set Variable: StreamConductance:= StreamConductance * Width / (StreamTop - StreamBottom)
+							Set Variable: CurrentStreamReachCount:= CurrentStreamReachCount + 1
+							If: StreamsSteady
+								Set Variable: Flow:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, 1, FlowIndex)
+							Else
+								Set Variable: Flow:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, FlowIndex)
+							End if
+							Start a new line
+								Export expression: MODFLOW_Layer(StreamUnit, BlockTop, BlockBottom, StreamBottom) [I5]
+								Export expression: DumRow [I5]
+								Export expression: DumCol [I5]
+								Export expression: StreamIndex + 1 [I5]
+								Export expression: BlockIndex + 1 [I5]
+								Export expression: Flow; [G15]
+								Export expression: StreamStage; [G9]
+								Export expression: StreamConductance; [G9]
+								Export expression: StreamBottom; [G9]
+								Export expression: StreamTop [G9]
+							End line
+						End loop
+					End if
+				End loop
+				If: ICALC
+					Loop for: Variable StreamIndex from: 0 to: StreamSegmentCount-1 step: 1
+						Set Variable: CurrentStream:= MODFLOW_L_GetFromList(SortedStreamSegmentList, StreamIndex)
+						Set Variable: StreamIndex2:= MODFLOW_L_UnsortedIndexOf(StreamSegmentList, CurrentStream)
+						# StreamIndex2 is now the index of the current stream segment and may be used to retrieve data about the current stream.
+						Set Variable: BlockListCount:= MODFLOW_BL_GetCountOfACellList(StreamIndex2)
+						If: BlockListCount>0
+							Loop for: Variable BlockIndex from: 0 to: BlockListCount-1 step: 1
+								Set Variable: Width:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, UpstreamWidthIndex)
+								If: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, InterpolateWidth)
+									Set Variable: DownstreamWidth:= MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, DownstreamWidthIndex)
+									Set Variable: Width:= Width - MODFLOW_BL_FractionOfLine(StreamIndex2, BlockIndex) * (Width - DownstreamWidth)
+								End if
+								Start a new line
+									Export expression: Width [G10]
+									Export expression: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, SlopeIndex) [G10]
+									Export expression: MODFLOW_L_GetFrom3DList(StreamProperties3DArray, StreamIndex2, PeriodIndex, RoughnessIndex) [G10]
+								End line
+							End loop
+						End if
+					End loop
+				End if
+				If: NTRIB
+					Loop for: Variable StreamIndex from: 0 to: StreamSegmentCount-1 step: 1
+						Set Variable: CurrentStream:= MODFLOW_L_GetFromList(SortedStreamSegmentList, StreamIndex)
+						Set Variable: StreamIndex2:= MODFLOW_L_UnsortedIndexOf(StreamSegmentList, CurrentStream)
+						# StreamIndex2 is now the index of the current stream segment and may be used to retrieve data about the current stream.
+						Start a new line
+							# Loop for: Variable TributaryIndex from: 1 to: NTRIB step: 1
+							Loop for: Variable TributaryIndex from: 1 to: 10 step: 1
+								Export expression: MODFLOW_L_GetFrom3DList(Tributary2DArray, StreamIndex2, TributaryIndex , 0) [I5]
+							End loop
+						End line
+					End loop
+				End if
+				If: NDIV
+					Loop for: Variable StreamIndex from: 0 to: StreamSegmentCount-1 step: 1
+						Set Variable: CurrentStream:= MODFLOW_L_GetFromList(SortedStreamSegmentList, StreamIndex)
+						Set Variable: StreamIndex2:= MODFLOW_L_UnsortedIndexOf(StreamSegmentList, CurrentStream)
+						# StreamIndex2 is now the index of the current stream segment and may be used to retrieve data about the current stream.
+						Start a new line
+							Export expression: MODFLOW_L_GetFromList(StreamTributaryList, StreamIndex2) [I10]
+						End line
+					End loop
+				End if
+			End file
+			If: CurrentStreamReachCount>MaxStreamReachCount
+				Set Variable: MaxStreamReachCount:= CurrentStreamReachCount
+			End if
+			Redirect output to: TempStream2
+				Start a new line
+					Export expression: CurrentStreamReachCount [I10]
+					Export expression: 0 [I10]
+					Export expression: 0 [I10]
+				End line
+			End file
+			Evaluate expression: MODFLOW_Join_Files("TempStream2", "TempStream3", "TempStream2")\n
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.str", "TempStream2", "@adeFileName@.str")\n
+		End if
+	End loop
+	If: ContinueSimulation
+		Redirect output to: TempStream1
+			Start a new line
+				Export expression: MaxStreamReachCount [I10]
+				Export expression: StreamSegmentCount [I10]
+				Export expression: NTRIB [I10]
+				Export expression: NDIV [I10]
+				Export expression: ICALC [I10]
+				Export expression: StreamCONST [G10]
+				If: ISTCB1>0&OneCBCFile=1
+					Export expression: 33 [I10]
+				End if
+				If: ISTCB1>0&OneCBCFile=0
+					Export expression: 36 [I10]
+				End if
+				If: ISTCB1=0
+					Export expression: -1 [I10]
+				End if
+				If: ISTCB2>0
+					Export expression: 37 [I10]
+				End if
+				If: ISTCB2=0
+					Export expression: 0 [I10]
+				End if
+			End line
+		End file
+		Evaluate expression: MODFLOW_Join_Files("TempStream1", "@adeFileName@.str", "@adeFileName@.str")\n
+		Evaluate expression: MODFLOW_Delete_File("TempStream1")
+		Evaluate expression: MODFLOW_Delete_File("TempStream2")
+		Evaluate expression: MODFLOW_Delete_File("TempStream3")
+	End if
+End if
+# 
+

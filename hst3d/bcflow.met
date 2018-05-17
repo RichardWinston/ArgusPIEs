@@ -1,0 +1,1513 @@
+# 
+# Export template for BCFLOW  v. 2.3
+# by Richard B. Winston
+# Copyright, 1998, Richard B. WInston
+# 
+Define Variable: Title1 [String]
+Define Variable: Title2 [String]
+# 
+Set Variable: Title1:= "@adeBCFLOWTitle1@"
+Set Variable: Title2:= "@adeBCFLOWTitle2@"
+# 
+Define Variable: NX [Integer]
+Define Variable: NY [Integer]
+Define Variable: NZ [Integer]
+Define Variable: HST3D_NUnits [Integer]
+# 
+Set Variable: HST3D_NUnits:= @edNumLayers@
+Set Variable: NZ:= HST3D_NUnits + 1
+# 
+Set Variable: NX:= NumColumns()+1
+Set Variable: NY:= NumRows()+1
+Define Variable: ElementLayerIndex [Integer]
+# 
+Define Variable: NSBC [Integer]
+Define Variable: NFBC [Integer]
+Define Variable: NLBC [Integer]
+Define Variable: NETBC [Integer]
+Define Variable: NAIFC [Integer]
+Define Variable: NHCBC [Integer]
+# 
+Define Variable: UseSpecPres [Boolean]
+Define Variable: UseSpecTemp [Boolean]
+Define Variable: UseSpecMassFrac [Boolean]
+Define Variable: UseSpecFlux [Boolean]
+Define Variable: UseSpecHeatFlux [Boolean]
+Define Variable: UseSpecSoluteFlux [Boolean]
+Define Variable: UseLeakageBoundary [Boolean]
+Define Variable: UseRiverLeakage [Boolean]
+Define Variable: UseEvapotranspiration [Boolean]
+Define Variable: UseAquiferInfluence [Boolean]
+Define Variable: UseHeatCond [Boolean]
+# 
+Set Variable: UseSpecPres:= @cbSpecPres@
+Set Variable: UseSpecTemp:= @cbSpecTemp@
+Set Variable: UseSpecMassFrac:= @cbSpecMass@
+Set Variable: UseSpecFlux:= @cbSpecFlow@
+Set Variable: UseSpecHeatFlux:= @cbSpecHeat@
+Set Variable: UseSpecSoluteFlux:= @cbSpecSolute@
+Set Variable: UseLeakageBoundary:= @cbLeakage@
+Set Variable: UseRiverLeakage:= @cbRiver@
+Set Variable: UseEvapotranspiration:= @cbET@
+Set Variable: UseAquiferInfluence:= @cbAqInfl@
+Set Variable: UseHeatCond:= @cbHeatCond@
+# 
+Define Variable: UseBCFLOWSpecState [Boolean]
+Define Variable: UseBCFLOWSpecFlux [Boolean]
+Define Variable: UseBCFLOWLeakageBoundary [Boolean]
+Define Variable: UseBCFLOWEvapotranspiration [Boolean]
+Define Variable: UseBCFLOWAquiferInfluence [Boolean]
+Define Variable: UseBCFLOWHeatCond [Boolean]
+# 
+Set Variable: UseBCFLOWSpecState:= @cbBCFLOWUseSpecState@
+Set Variable: UseBCFLOWSpecFlux:= @cbBCFLOWUseSpecFlux@
+Set Variable: UseBCFLOWLeakageBoundary:= @cbBCFLOWUseLeakage@
+Set Variable: UseBCFLOWEvapotranspiration:= @cbBCFLOWUseET@
+Set Variable: UseBCFLOWAquiferInfluence:= @cbBCFLOWUseAqInfl@
+Set Variable: UseBCFLOWHeatCond:= @cbBCFLOWUseHeatCond@
+# 
+Define Variable: RunPath [String]
+Define Variable: OutputExtension [String]
+Define Variable: RunBCFLOW [Boolean]
+Define Variable: InputFileName [String]
+# 
+Set Variable: RunPath:= "@edBCFLOWPath@"
+Set Variable: OutputExtension:= "@edExtension@"
+Set Variable: RunBCFLOW:= @rgExportDecision@ - 2
+# 
+Define Variable: ColumnIndex [Integer]
+Define Variable: RowIndex [Integer]
+# 
+Define Variable: ListIndex [Integer]
+Define Variable: CellIndex [Integer]
+Define Variable: CellIndex2 [Integer]
+Define Variable: AColumn [Integer]
+Define Variable: ARow [Integer]
+Define Variable: BCTYPE [Integer]
+# 
+Define Variable: RowCount [Integer]
+Define Variable: ColumnCount [Integer]
+Define Variable: NodeX [Real]
+Define Variable: NodeY [Real]
+# 
+Define Variable: ListCount [Integer]
+Define Variable: CellCount [Integer]
+# 
+Define Variable: CellList [Integer]
+Define Variable: ColumnList [Integer]
+Define Variable: RowList [Integer]
+# 
+Define Variable: SpecifiedStateTest [Boolean]
+Define Variable: SpecifiedFluxTest [Boolean]
+# 
+Define Variable: XPosition [Real]
+Define Variable: YPosition [Real]
+Define Variable: ZTop [Real]
+Define Variable: ZBottom [Real]
+# 
+Define Variable: ok [Boolean]
+Define Variable: SCALMF [Boolean]
+Set Variable: SCALMF:= @rgMassFrac@
+Set Variable: ok:= 1
+# 
+Define Variable: ProgressMax [Integer]
+Set Variable: ProgressMax:= 2
+If: UseSpecPres|UseSpecTemp|UseSpecMassFrac
+	Set Variable: ProgressMax:= ProgressMax + NZ
+End if
+If: UseSpecFlux|UseSpecHeatFlux|UseSpecSoluteFlux
+	Set Variable: ProgressMax:= ProgressMax + NZ
+End if
+If: UseLeakageBoundary
+	Set Variable: ProgressMax:= ProgressMax + NZ
+End if
+If: UseRiverLeakage
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+If: UseEvapotranspiration
+	Set Variable: ProgressMax:= ProgressMax + NZ
+End if
+If: UseAquiferInfluence
+	Set Variable: ProgressMax:= ProgressMax + NZ
+End if
+If: UseHeatCond
+	Set Variable: ProgressMax:= ProgressMax + NZ
+End if
+If: UseBCFLOWSpecState
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+If: UseBCFLOWSpecFlux
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+If: UseBCFLOWLeakageBoundary
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+If: UseBCFLOWEvapotranspiration
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+If: UseBCFLOWAquiferInfluence
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+If: UseBCFLOWHeatCond
+	Set Variable: ProgressMax:= ProgressMax + 1
+End if
+# 
+Define Variable: Message [String]
+Set Variable: Message:= "Phase 2: Exporting Data Set "
+# 
+Evaluate expression: ProgressBarInitialize(ProgressMax)
+Evaluate expression: ProgressBarSetMessage(Message + "1.1")
+# 
+Evaluate expression: L_Initialize()
+Set Variable: ColumnList:= L_CreateNewList()
+Set Variable: RowList:= L_CreateNewList()
+Loop for: Variable ColumnIndex from: 0 to: NumColumns() step: 1
+	Evaluate expression: L_AddToList(ColumnList, NthColumnPos(ColumnIndex))
+End loop
+Loop for: Variable RowIndex from: 0 to: NumRows() step: 1
+	Evaluate expression: L_AddToList(RowList, NthRowPos(RowIndex))
+End loop
+# To Do: Error Checking
+Redirect output to: bcflowdata
+	# 1.1
+	Evaluate expression: ProgressBarAdvance()
+	Start a new line
+		Export expression: "C 1.1" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+		Export expression: Title1 [G0]
+	End line
+	# 1.2
+	Evaluate expression: ProgressBarAdvance()
+	Evaluate expression: ProgressBarSetMessage(Message + "1.2")
+	Start a new line
+		Export expression: "C 1.2" [G79]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+		Export expression: Title2 [G79]
+	End line
+	Evaluate expression: ProgressBarSetMessage(Message + "1.3")
+	# Count items for data set 1.3
+	Set Variable: CellList:= L_CreateNewList()
+	Set Variable: CellCount:= 0
+	Set Variable: CellIndex2:= 0
+	Evaluate expression: BL_InitializeGridInformation("HST3D Grid",1)
+	If: !UseSpecPres&!UseSpecTemp&!UseSpecMassFrac
+		Set Variable: NSBC:= 0
+	Else
+		# Loop over Geological Units
+		Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+			Evaluate expression: ProgressBarAdvance()
+			Evaluate expression: L_SetListSize(CellList, NX * NY * NZ)
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Specified State NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			If: NSBC = 0
+				Loop for: Objects in layer: Specified State NL[ElementLayerIndex]
+					Set Variable: ListIndex:= ListIndex + 1
+					Set Variable: SpecifiedStateTest:= 0
+					If: UseSpecPres
+						If: !IsNA(Specified Pressure1)
+							Set Variable: SpecifiedStateTest:= 1
+						End if
+					End if
+					If: UseSpecTemp
+						If: !IsNA(Specified Temperature1)
+							Set Variable: SpecifiedStateTest:= 1
+						End if
+					End if
+					If: UseSpecMassFrac
+						If: SCALMF
+							If: !IsNA(Specified Scaled Mass Fraction1)
+								Set Variable: SpecifiedStateTest:= 1
+							End if
+						Else
+							If: !IsNA(Specified Mass Fraction1)
+								Set Variable: SpecifiedStateTest:= 1
+							End if
+						End if
+					End if
+					If: SpecifiedStateTest
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					End if
+				End loop
+				Evaluate expression: L_AddToList(CellList, 0)
+				Evaluate expression: L_SortList(CellList)
+				Evaluate expression: L_EliminateDuplicates(CellList)
+				Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+				Evaluate expression: L_FreeAList(CellList)
+				# end Loop for: Objects in layer: Specified State NL[ElementLayerIndex]
+			End if
+		End loop
+		# End Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+		Set Variable: NSBC:= CellCount
+	End if
+	If: !UseSpecFlux&!UseSpecHeatFlux&!UseSpecSoluteFlux
+		Set Variable: NFBC:= 0
+	Else
+		Set Variable: CellCount:= 0
+		Set Variable: CellIndex2:= 0
+		Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+			Evaluate expression: ProgressBarAdvance()
+			Evaluate expression: L_SetListSize(CellList, NX * NY * NZ)
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Vertical Specified Flux Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			If: NFBC = 0
+				Loop for: Objects in layer: Vertical Specified Flux Boundary NL[ElementLayerIndex]
+					Set Variable: ListIndex:= ListIndex + 1
+					Set Variable: SpecifiedFluxTest:= 0
+					If: UseSpecFlux
+						If: !IsNA(Fluid Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: UseSpecHeatFlux
+						If: !IsNA(Heat Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: UseSpecSoluteFlux
+						If: !IsNA(Solute Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: SpecifiedFluxTest
+						If: BL_GetCountOfACrossRowList(ListIndex)>0
+							Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+								Set Variable: CellIndex2:= CellIndex2 + 1
+								Set Variable: AColumn:= BL_GetCrossRowColumn(ListIndex, CellIndex)
+								Set Variable: ARow:= BL_GetCrossRowRow(ListIndex, CellIndex)
+								Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+							End loop
+							# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+						End if
+						# If: BL_GetCountOfACrossRowList(ListIndex)>0
+					End if
+				End loop
+				# Loop for: Objects in layer: Vertical Specified Flux Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= -1
+				Loop for: Objects in layer: Vertical Specified Flux Boundary NL[ElementLayerIndex]
+					Set Variable: ListIndex:= ListIndex + 1
+					Set Variable: SpecifiedFluxTest:= 0
+					If: UseSpecFlux
+						If: !IsNA(Fluid Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: UseSpecHeatFlux
+						If: !IsNA(Heat Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: UseSpecSoluteFlux
+						If: !IsNA(Solute Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: SpecifiedFluxTest
+						If: BL_GetCountOfACrossColumnList(ListIndex)>0
+							Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+								Set Variable: CellIndex2:= CellIndex2 + 1
+								Set Variable: AColumn:= BL_GetCrossColumnColumn(ListIndex, CellIndex)
+								Set Variable: ARow:= BL_GetCrossColumnRow(ListIndex, CellIndex)
+								Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+							End loop
+							# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+						End if
+						# If: BL_GetCountOfACrossColumnList(ListIndex)>0
+					End if
+				End loop
+				# Loop for: Objects in layer: Vertical Specified Flux Boundary NL[ElementLayerIndex]
+				# Clear Line information
+				Evaluate expression: BL_FreeVertexList()
+				# Read Line information for current Unit
+				Evaluate expression: BL_AddVertexLayer("Horizontal Specified Flux Boundary NL" + ElementLayerIndex)
+				Set Variable: ListIndex:= -1
+				Loop for: Objects in layer: Horizontal Specified Flux Boundary NL[ElementLayerIndex]
+					Set Variable: ListIndex:= ListIndex + 1
+					Set Variable: SpecifiedFluxTest:= 0
+					If: UseSpecFlux
+						If: !IsNA(Upward Fluid Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: UseSpecHeatFlux
+						If: !IsNA(Upward Heat Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: UseSpecSoluteFlux
+						If: !IsNA(Upward Solute Flux1)
+							Set Variable: SpecifiedFluxTest:= 1
+						End if
+					End if
+					If: SpecifiedFluxTest
+						Set Variable: RowCount:= BL_GetRowNodeCount()
+						Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+						Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+							Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+							Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+								Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+								If: BL_GetCountOfCellLists()>0
+									# Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+									If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+										Set Variable: CellIndex2:= CellIndex2 + 1
+										Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + RowIndex * NX + ColumnIndex, CellIndex2)
+									End if
+									# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									# End loop
+									# end Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+								End if
+								# end If: BL_GetCountOfCellLists()>0
+							End loop
+							# end Loop for: Variable RowIndex from:  to: RowCount step: 1
+						End loop
+						# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+					End if
+				End loop
+				# end Loop for: Objects in layer: Horizontal Specified Flux Boundary NL[ElementLayerIndex]
+				Evaluate expression: L_AddToList(CellList, 0)
+				Evaluate expression: L_SortList(CellList)
+				Evaluate expression: L_EliminateDuplicates(CellList)
+				Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+				Evaluate expression: L_FreeAList(CellList)
+			End if
+		End loop
+		Set Variable: NFBC:= CellCount
+	End if
+	If: !UseLeakageBoundary
+		Set Variable: NLBC:= 0
+	Else
+		Set Variable: CellCount:= 0
+		Set Variable: CellIndex2:= 0
+		# Loop over Geological Units
+		Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+			Evaluate expression: ProgressBarAdvance()
+			Evaluate expression: L_SetListSize(CellList, NX * NY * NZ)
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Vertical Aquifer Leakage Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Aquifer Leakage Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				If: BL_GetCountOfACrossRowList(ListIndex)>0
+					If: !IsNA(Vertical Aquifer Leakage Boundary NL[ElementLayerIndex].Potential Energy per Unit Mass1)
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCrossRowColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCrossRowRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+					End if
+				End if
+				# If: BL_GetCountOfACrossRowList(ListIndex)>0
+			End loop
+			# Loop for: Objects in layer: Vertical Aquifer Leakage Boundary NL[ElementLayerIndex]
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Aquifer Leakage Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				If: BL_GetCountOfACrossColumnList(ListIndex)>0
+					If: !IsNA(Vertical Aquifer Leakage Boundary NL[ElementLayerIndex].Potential Energy per Unit Mass1)
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCrossColumnColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCrossColumnRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+					End if
+				End if
+				# If: BL_GetCountOfACrossColumnList(ListIndex)>0
+			End loop
+			# end Loop for: Objects in layer: Vertical Aquifer Leakage Boundary NL[ElementLayerIndex]
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Horizontal Aquifer Leakage Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Horizontal Aquifer Leakage Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: RowCount:= BL_GetRowNodeCount()
+				Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+				If: !IsNA(Horizontal Aquifer Leakage Boundary NL[ElementLayerIndex].Potential Energy per Unit Mass1)
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								# Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Set Variable: CellIndex2:= CellIndex2 + 1
+									Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (RowIndex - 1) * NX + ColumnIndex - 1, CellIndex2)
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+								# End loop
+								# end Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+			End loop
+			# End Loop for: Objects in layer: Horizontal Aquifer Leakage Boundary NL[ElementLayerIndex]
+			Evaluate expression: L_AddToList(CellList, 0)
+			Evaluate expression: L_SortList(CellList)
+			Evaluate expression: L_EliminateDuplicates(CellList)
+			Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+			Evaluate expression: L_FreeAList(CellList)
+		End loop
+		# end Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+		Set Variable: NLBC:= CellCount
+	End if
+	If: UseRiverLeakage
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: CellCount:= 0
+		Set Variable: CellIndex2:= 0
+		# Evaluate expression: L_SetListSize(CellList, NX * NY)
+		# Clear Lines
+		Evaluate expression: BL_FreeVertexList()
+		# Read River information
+		Evaluate expression: BL_AddVertexLayer("River Leakage")
+		Set Variable: ListCount:= BL_GetCountOfCellLists()
+		Loop for: Variable ListIndex from: 0 to: ListCount-1 step: 1
+			Set Variable: CellCount:= BL_GetCountOfACellList(ListIndex)
+			Loop for: Variable CellIndex from: 0 to: CellCount-1 step: 1
+				Set Variable: CellIndex2:= CellIndex2 + 1
+				Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+				Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+				Evaluate expression: L_SetListItem(CellList, (ARow - 1) * NX + AColumn - 1, CellIndex2)
+			End loop
+			# end Loop for: Variable CellIndex from: 0 to: CellCount-1 step: 1
+		End loop
+		# end Loop for: Variable ListIndex from: 0 to: ListCount-1 step: 1
+		Evaluate expression: L_AddToList(CellList, 0)
+		Evaluate expression: L_SortList(CellList)
+		Evaluate expression: L_EliminateDuplicates(CellList)
+		Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+		Evaluate expression: L_FreeAList(CellList)
+		# Set Variable: NLBC:= CellCount
+		Set Variable: NLBC:= NLBC + CellCount
+	End if
+	If: !UseEvapotranspiration
+		Set Variable: NETBC:= 0
+	Else
+		Set Variable: CellCount:= 0
+		Set Variable: CellIndex2:= 0
+		Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+			Evaluate expression: ProgressBarAdvance()
+			Evaluate expression: L_SetListSize(CellList, NX * NY * NZ)
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Vertical Evapotranspiration Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Evapotranspiration Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				If: !IsNA(Vertical Evapotranspiration Boundary NL[ElementLayerIndex].Max Evapotranspiration1)
+					If: BL_GetCountOfACrossRowList(ListIndex)>0
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCrossRowColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCrossRowRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+					End if
+					# If: BL_GetCountOfACrossRowList(ListIndex)>0
+				End if
+			End loop
+			# end Loop for: Objects in layer: Vertical Evapotranspiration Boundary NL[ElementLayerIndex]
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Evapotranspiration Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: IBC:= "200700"
+				If: !IsNA(Vertical Evapotranspiration Boundary NL[ElementLayerIndex].Max Evapotranspiration1)
+					If: BL_GetCountOfACrossColumnList(ListIndex)>0
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCrossColumnColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCrossColumnRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+					End if
+					# If: BL_GetCountOfACrossColumnList(ListIndex)>0
+				End if
+			End loop
+			# end Loop for: Objects in layer: Vertical Evapotranspiration Boundary NL[ElementLayerIndex]
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Horizontal Evapotranspiration Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Horizontal Evapotranspiration Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: RowCount:= BL_GetRowNodeCount()
+				Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+				If: !IsNA(Horizontal Evapotranspiration Boundary NL[ElementLayerIndex].Max Evapotranspiration1)
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								# Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Set Variable: CellIndex2:= CellIndex2 + 1
+									Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (RowIndex - 1) * NX + ColumnIndex - 1, CellIndex2)
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+								# End loop
+								# end Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+			End loop
+			# end Loop for: Objects in layer: Horizontal Evapotranspiration Boundary NL[ElementLayerIndex]
+			Evaluate expression: L_AddToList(CellList, 0)
+			Evaluate expression: L_SortList(CellList)
+			Evaluate expression: L_EliminateDuplicates(CellList)
+			Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+			Evaluate expression: L_FreeAList(CellList)
+		End loop
+		# End Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+		Set Variable: NETBC:= CellCount
+	End if
+	If: !UseAquiferInfluence
+		Set Variable: NAIFC:= 0
+	Else
+		Set Variable: CellCount:= 0
+		Set Variable: CellIndex2:= 0
+		Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+			Evaluate expression: ProgressBarAdvance()
+			Evaluate expression: L_SetListSize(CellList, NX * NY * NZ)
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Vertical Aquifer Influence Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Aquifer Influence Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: IBC:= "100400"
+				If: !IsNA(Vertical Aquifer Influence Boundary NL[ElementLayerIndex].Density1)
+					If: BL_GetCountOfACrossRowList(ListIndex)>0
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCrossRowColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCrossRowRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+					End if
+					# If: BL_GetCountOfACrossRowList(ListIndex)>0
+				End if
+			End loop
+			# Loop for: Objects in layer: Vertical Aquifer Influence Boundary NL[ElementLayerIndex]
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Aquifer Influence Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: IBC:= "200400"
+				If: !IsNA(Vertical Aquifer Influence Boundary NL[ElementLayerIndex].Density1)
+					If: BL_GetCountOfACrossColumnList(ListIndex)>0
+						Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+							Set Variable: CellIndex2:= CellIndex2 + 1
+							Set Variable: AColumn:= BL_GetCrossColumnColumn(ListIndex, CellIndex)
+							Set Variable: ARow:= BL_GetCrossColumnRow(ListIndex, CellIndex)
+							Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+						End loop
+						# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+					End if
+					# If: BL_GetCountOfACrossColumnList(ListIndex)>0
+				End if
+			End loop
+			# Loop for: Objects in layer: Vertical Aquifer Influence Boundary NL[ElementLayerIndex]
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Horizontal Aquifer Influence Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Horizontal Aquifer Influence Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: IBC:= "300400"
+				Set Variable: RowCount:= BL_GetRowNodeCount()
+				Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+				If: !IsNA(Horizontal Aquifer Influence Boundary NL[ElementLayerIndex].Density1)
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								# Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Set Variable: CellIndex2:= CellIndex2 + 1
+									Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (RowIndex - 1) * NX + ColumnIndex - 1, CellIndex2)
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+								# End loop
+								# end Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+			End loop
+			# end Loop for: Objects in layer: Horizontal Aquifer Influence Boundary NL[ElementLayerIndex]
+			Evaluate expression: L_AddToList(CellList, 0)
+			Evaluate expression: L_SortList(CellList)
+			Evaluate expression: L_EliminateDuplicates(CellList)
+			Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+			Evaluate expression: L_FreeAList(CellList)
+		End loop
+		# End Loop over Geological units
+		Set Variable: NAIFC:= CellCount
+	End if
+	If: !UseHeatCond
+		Set Variable: NHCBC:= 0
+	Else
+		Set Variable: CellCount:= 0
+		Set Variable: CellIndex2:= 0
+		Loop for: Variable ElementLayerIndex from: 1 to: NZ step: 1
+			Evaluate expression: ProgressBarAdvance()
+			Evaluate expression: L_SetListSize(CellList, NX * NY * NZ)
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Vertical Heat Conduction Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Heat Conduction Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				If: BL_GetCountOfACrossRowList(ListIndex)>0
+					Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+						Set Variable: CellIndex2:= CellIndex2 + 1
+						Set Variable: AColumn:= BL_GetCrossRowColumn(ListIndex, CellIndex)
+						Set Variable: ARow:= BL_GetCrossRowRow(ListIndex, CellIndex)
+						Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+					End loop
+					# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossRowList(ListIndex)-1 step: 1
+				End if
+				# If: BL_GetCountOfACrossRowList(ListIndex)>0
+			End loop
+			# Loop for: Objects in layer: Vertical Heat Conduction Boundary NL[ElementLayerIndex]
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Vertical Heat Conduction Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: IBC:= "200040"
+				If: BL_GetCountOfACrossColumnList(ListIndex)>0
+					Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+						Set Variable: CellIndex2:= CellIndex2 + 1
+						Set Variable: AColumn:= BL_GetCrossColumnColumn(ListIndex, CellIndex)
+						Set Variable: ARow:= BL_GetCrossColumnRow(ListIndex, CellIndex)
+						Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (ARow - 1) * NX + AColumn - 1, CellIndex2)
+					End loop
+					# Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACrossColumnList(ListIndex)-1 step: 1
+				End if
+				# If: BL_GetCountOfACrossColumnList(ListIndex)>0
+			End loop
+			# end Loop for: Objects in layer: Vertical Heat Conduction Boundary NL[ElementLayerIndex]
+			# Clear Line information
+			Evaluate expression: BL_FreeVertexList()
+			# Read Line information for current Unit
+			Evaluate expression: BL_AddVertexLayer("Horizontal Heat Conduction Boundary NL" + ElementLayerIndex)
+			Set Variable: ListIndex:= -1
+			Loop for: Objects in layer: Horizontal Heat Conduction Boundary NL[ElementLayerIndex]
+				Set Variable: ListIndex:= ListIndex + 1
+				Set Variable: IBC:= "300040"
+				Set Variable: RowCount:= BL_GetRowNodeCount()
+				Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+				Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+					Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+					Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+						Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+						If: BL_GetCountOfCellLists()>0
+							# Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+							If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+								Set Variable: CellIndex2:= CellIndex2 + 1
+								Evaluate expression: L_SetListItem(CellList, (ElementLayerIndex - 1) * NX * NY + (RowIndex) * NX + ColumnIndex, CellIndex2)
+							End if
+							# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							# End loop
+							# end Loop for: Variable ListIndex from: 0 to: BL_GetCountOfCellLists()-1 step: 1
+						End if
+						# end If: BL_GetCountOfCellLists()>0
+					End loop
+					# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+				End loop
+				# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+			End loop
+			# end Loop for: Objects in layer: Horizontal Heat Conduction Boundary NL[ElementLayerIndex]
+			Evaluate expression: L_AddToList(CellList, 0)
+			Evaluate expression: L_SortList(CellList)
+			Evaluate expression: L_EliminateDuplicates(CellList)
+			Set Variable: CellCount:= CellCount + L_GetListSize(CellList) - 1
+			Evaluate expression: L_FreeAList(CellList)
+		End loop
+		# End Loop over Geological units
+		Set Variable: NHCBC:= CellCount
+	End if
+	Start a new line
+		Export expression: "C 1.3" [G0]
+	End line
+	Start a new line
+		Export expression: NSBC; [G0]
+		Export expression: NFBC; [G0]
+		Export expression: NLBC; [G0]
+		Export expression: NETBC; [G0]
+		Export expression: NAIFC; [G0]
+		Export expression: NHCBC; [G0]
+	End line
+	# 2.1
+	# Clear Line information
+	Evaluate expression: BL_FreeVertexList()
+	# Read Line information for current Unit
+	Evaluate expression: BL_AddVertexLayer("BCFLOW Zones")
+	Evaluate expression: ProgressBarSetMessage(Message + "2.1")
+	# Evaluate expression: BL_InitializeGridInformation("HST3D Grid",1)
+	If: NSBC>0&UseBCFLOWSpecState
+		Set Variable: BCTYPE:= 1
+		Evaluate expression: ProgressBarSetMessage(Message + "2.n; BCTYPE = 1")
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: ListIndex:= -1
+		Loop for: Objects in layer: BCFLOW Zones
+			Set Variable: ListIndex:= ListIndex + 1
+			If: Sum Specified Value
+				Start a new line
+					Export expression: "C 2.1.1" [G0]
+				End line
+				Start a new line
+					Export expression: " " [G0]
+					Export expression: Zone Name [G59]
+				End line
+				Start a new line
+					Export expression: "C 2.1.2" [G0]
+				End line
+				Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+					Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+					Start a new line
+						Set Variable: XPosition:= L_GetFromList(ColumnList, AColumn - 1)
+						If: Abs(XPosition)>=10000
+							Export expression: XPosition; [E11.4]
+							Export expression: XPosition; [E11.4]
+						Else
+							Export expression: XPosition; [G0]
+							Export expression: XPosition; [G0]
+						End if
+						Set Variable: YPosition:= L_GetFromList(RowList, ARow - 1)
+						If: Abs(YPosition)>=10000
+							Export expression: YPosition; [E11.4]
+							Export expression: YPosition; [E11.4]
+						Else
+							Export expression: YPosition; [G0]
+							Export expression: YPosition; [G0]
+						End if
+						If: Abs(Bottom Elevation)>=10000
+							Export expression: Bottom Elevation; [E11.4]
+						Else
+							Export expression: Bottom Elevation; [G0]
+						End if
+						If: Abs(Top Elevation)>=10000
+							Export expression: Top Elevation; [E11.4]
+						Else
+							Export expression: Top Elevation; [G0]
+						End if
+					End line
+					Start a new line
+						Export expression: BCTYPE; [G0]
+						Export expression: 1; [G0]
+					End line
+				End loop
+				# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+				If: ContourType()=3
+					Set Variable: RowCount:= BL_GetRowNodeCount()
+					Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Start a new line
+										Set Variable: XPosition:= L_GetFromList(ColumnList, ColumnIndex)
+										If: Abs(XPosition)>=10000
+											Export expression: XPosition; [E11.4]
+											Export expression: XPosition; [E11.4]
+										Else
+											Export expression: XPosition; [G0]
+											Export expression: XPosition; [G0]
+										End if
+										Set Variable: YPosition:= L_GetFromList(RowList, RowIndex)
+										If: Abs(YPosition)>=10000
+											Export expression: YPosition; [E11.4]
+											Export expression: YPosition; [E11.4]
+										Else
+											Export expression: YPosition; [G0]
+											Export expression: YPosition; [G0]
+										End if
+										If: Abs(Bottom Elevation)>=10000
+											Export expression: Bottom Elevation; [E11.4]
+										Else
+											Export expression: Bottom Elevation; [G0]
+										End if
+										If: Abs(Top Elevation)>=10000
+											Export expression: Top Elevation; [E11.4]
+										Else
+											Export expression: Top Elevation; [G0]
+										End if
+										# Export expression: L_GetFromList(ColumnList, ColumnIndex); [E11.4]
+										# Export expression: L_GetFromList(ColumnList, ColumnIndex); [E11.4]
+										# Export expression: L_GetFromList(RowList, RowIndex); [E11.4]
+										# Export expression: L_GetFromList(RowList, RowIndex); [E11.4]
+										# Export expression: Bottom Elevation; [E11.4]
+										# Export expression: Top Elevation; [E11.4]
+									End line
+									Start a new line
+										Export expression: BCTYPE; [G0]
+										Export expression: 1; [G0]
+									End line
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+				Start a new line
+					Export expression: "END" [G0]
+				End line
+			End if
+		End loop
+		# end Loop for: Objects in layer: BCFLOW Zones
+	End if
+	# 2.2
+	Start a new line
+		Export expression: "C 2.2" [G0]
+	End line
+	If: NFBC>0&UseBCFLOWSpecFlux
+		Set Variable: BCTYPE:= 2
+		Evaluate expression: ProgressBarSetMessage(Message + "2.2; BCTYPE = 2")
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: ListIndex:= -1
+		Loop for: Objects in layer: BCFLOW Zones
+			Set Variable: ListIndex:= ListIndex + 1
+			If: Sum Specified Flux
+				Start a new line
+					Export expression: "C 2.2.1" [G0]
+				End line
+				Start a new line
+					Export expression: Zone Name [G0]
+				End line
+				Start a new line
+					Export expression: "C 2.2.2" [G0]
+				End line
+				Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+					Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+					Start a new line
+						Set Variable: XPosition:= L_GetFromList(ColumnList, AColumn - 1)
+						If: Abs(XPosition)>=10000
+							Export expression: XPosition; [E11.4]
+							Export expression: XPosition; [E11.4]
+						Else
+							Export expression: XPosition; [G0]
+							Export expression: XPosition; [G0]
+						End if
+						Set Variable: YPosition:= L_GetFromList(RowList, ARow - 1)
+						If: Abs(YPosition)>=10000
+							Export expression: YPosition; [E11.4]
+							Export expression: YPosition; [E11.4]
+						Else
+							Export expression: YPosition; [G0]
+							Export expression: YPosition; [G0]
+						End if
+						If: Abs(Bottom Elevation)>=10000
+							Export expression: Bottom Elevation; [E11.4]
+						Else
+							Export expression: Bottom Elevation; [G0]
+						End if
+						If: Abs(Top Elevation)>=10000
+							Export expression: Top Elevation; [E11.4]
+						Else
+							Export expression: Top Elevation; [G0]
+						End if
+					End line
+					Start a new line
+						Export expression: BCTYPE; [G0]
+						Export expression: 1; [G0]
+					End line
+				End loop
+				# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+				If: ContourType()=3
+					Set Variable: RowCount:= BL_GetRowNodeCount()
+					Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Start a new line
+										Set Variable: XPosition:= L_GetFromList(ColumnList, ColumnIndex)
+										If: Abs(XPosition)>=10000
+											Export expression: XPosition; [E11.4]
+											Export expression: XPosition; [E11.4]
+										Else
+											Export expression: XPosition; [G0]
+											Export expression: XPosition; [G0]
+										End if
+										Set Variable: YPosition:= L_GetFromList(RowList, RowIndex)
+										If: Abs(YPosition)>=10000
+											Export expression: YPosition; [E11.4]
+											Export expression: YPosition; [E11.4]
+										Else
+											Export expression: YPosition; [G0]
+											Export expression: YPosition; [G0]
+										End if
+										If: Abs(Bottom Elevation)>=10000
+											Export expression: Bottom Elevation; [E11.4]
+										Else
+											Export expression: Bottom Elevation; [G0]
+										End if
+										If: Abs(Top Elevation)>=10000
+											Export expression: Top Elevation; [E11.4]
+										Else
+											Export expression: Top Elevation; [G0]
+										End if
+									End line
+									Start a new line
+										Export expression: BCTYPE; [G0]
+										Export expression: 1; [G0]
+									End line
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+				Start a new line
+					Export expression: "END" [G0]
+				End line
+			End if
+		End loop
+		# end Loop for: Objects in layer: BCFLOW Zones
+	End if
+	# 2.n
+	If: NLBC>0&UseBCFLOWLeakageBoundary
+		Start a new line
+			Export expression: "C 2.3" [G0]
+		End line
+	End if
+	If: NLBC>0&UseBCFLOWLeakageBoundary
+		Set Variable: BCTYPE:= 3
+		Evaluate expression: ProgressBarSetMessage(Message + "2.3; BCTYPE = 3")
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: ListIndex:= -1
+		Loop for: Objects in layer: BCFLOW Zones
+			Set Variable: ListIndex:= ListIndex + 1
+			If: Sum Leakage
+				Start a new line
+					Export expression: "C 2.3.1" [G0]
+				End line
+				Start a new line
+					Export expression: Zone Name [G0]
+				End line
+				Start a new line
+					Export expression: "C 2.3.2" [G0]
+				End line
+				Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+					Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+					Start a new line
+						Set Variable: XPosition:= L_GetFromList(ColumnList, AColumn - 1)
+						If: Abs(XPosition)>=10000
+							Export expression: XPosition; [E11.4]
+							Export expression: XPosition; [E11.4]
+						Else
+							Export expression: XPosition; [G0]
+							Export expression: XPosition; [G0]
+						End if
+						Set Variable: YPosition:= L_GetFromList(RowList, ARow - 1)
+						If: Abs(YPosition)>=10000
+							Export expression: YPosition; [E11.4]
+							Export expression: YPosition; [E11.4]
+						Else
+							Export expression: YPosition; [G0]
+							Export expression: YPosition; [G0]
+						End if
+						If: Abs(Bottom Elevation)>=10000
+							Export expression: Bottom Elevation; [E11.4]
+						Else
+							Export expression: Bottom Elevation; [G0]
+						End if
+						If: Abs(Top Elevation)>=10000
+							Export expression: Top Elevation; [E11.4]
+						Else
+							Export expression: Top Elevation; [G0]
+						End if
+					End line
+					Start a new line
+						Export expression: BCTYPE; [G0]
+						Export expression: 1; [G0]
+					End line
+				End loop
+				# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+				If: ContourType()=3
+					Set Variable: RowCount:= BL_GetRowNodeCount()
+					Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Start a new line
+										Set Variable: XPosition:= L_GetFromList(ColumnList, ColumnIndex)
+										If: Abs(XPosition)>=10000
+											Export expression: XPosition; [E11.4]
+											Export expression: XPosition; [E11.4]
+										Else
+											Export expression: XPosition; [G0]
+											Export expression: XPosition; [G0]
+										End if
+										Set Variable: YPosition:= L_GetFromList(RowList, RowIndex)
+										If: Abs(YPosition)>=10000
+											Export expression: YPosition; [E11.4]
+											Export expression: YPosition; [E11.4]
+										Else
+											Export expression: YPosition; [G0]
+											Export expression: YPosition; [G0]
+										End if
+										If: Abs(Bottom Elevation)>=10000
+											Export expression: Bottom Elevation; [E11.4]
+										Else
+											Export expression: Bottom Elevation; [G0]
+										End if
+										If: Abs(Top Elevation)>=10000
+											Export expression: Top Elevation; [E11.4]
+										Else
+											Export expression: Top Elevation; [G0]
+										End if
+									End line
+									Start a new line
+										Export expression: BCTYPE; [G0]
+										Export expression: 1; [G0]
+									End line
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+				Start a new line
+					Export expression: "END" [G0]
+				End line
+			End if
+		End loop
+		# end Loop for: Objects in layer: BCFLOW Zones
+	End if
+	# 2.4
+	If: NETBC>0&UseBCFLOWEvapotranspiration
+		Set Variable: BCTYPE:= 7
+		Evaluate expression: ProgressBarSetMessage(Message + "2.4; BCTYPE = 7")
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: ListIndex:= -1
+		Loop for: Objects in layer: BCFLOW Zones
+			Set Variable: ListIndex:= ListIndex + 1
+			If: Sum Evapotranspiration
+				Start a new line
+					Export expression: "C 2.4.1" [G0]
+				End line
+				Start a new line
+					Export expression: Zone Name [G0]
+				End line
+				Start a new line
+					Export expression: "C 2.4.2" [G0]
+				End line
+				Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+					Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+					Start a new line
+						Set Variable: XPosition:= L_GetFromList(ColumnList, AColumn - 1)
+						If: Abs(XPosition)>=10000
+							Export expression: XPosition; [E11.4]
+							Export expression: XPosition; [E11.4]
+						Else
+							Export expression: XPosition; [G0]
+							Export expression: XPosition; [G0]
+						End if
+						Set Variable: YPosition:= L_GetFromList(RowList, ARow - 1)
+						If: Abs(YPosition)>=10000
+							Export expression: YPosition; [E11.4]
+							Export expression: YPosition; [E11.4]
+						Else
+							Export expression: YPosition; [G0]
+							Export expression: YPosition; [G0]
+						End if
+						If: Abs(Bottom Elevation)>=10000
+							Export expression: Bottom Elevation; [E11.4]
+						Else
+							Export expression: Bottom Elevation; [G0]
+						End if
+						If: Abs(Top Elevation)>=10000
+							Export expression: Top Elevation; [E11.4]
+						Else
+							Export expression: Top Elevation; [G0]
+						End if
+					End line
+					Start a new line
+						Export expression: BCTYPE; [G0]
+						Export expression: 1; [G0]
+					End line
+				End loop
+				# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+				If: ContourType()=3
+					Set Variable: RowCount:= BL_GetRowNodeCount()
+					Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Start a new line
+										Set Variable: XPosition:= L_GetFromList(ColumnList, ColumnIndex)
+										If: Abs(XPosition)>=10000
+											Export expression: XPosition; [E11.4]
+											Export expression: XPosition; [E11.4]
+										Else
+											Export expression: XPosition; [G0]
+											Export expression: XPosition; [G0]
+										End if
+										Set Variable: YPosition:= L_GetFromList(RowList, RowIndex)
+										If: Abs(YPosition)>=10000
+											Export expression: YPosition; [E11.4]
+											Export expression: YPosition; [E11.4]
+										Else
+											Export expression: YPosition; [G0]
+											Export expression: YPosition; [G0]
+										End if
+										If: Abs(Bottom Elevation)>=10000
+											Export expression: Bottom Elevation; [E11.4]
+										Else
+											Export expression: Bottom Elevation; [G0]
+										End if
+										If: Abs(Top Elevation)>=10000
+											Export expression: Top Elevation; [E11.4]
+										Else
+											Export expression: Top Elevation; [G0]
+										End if
+									End line
+									Start a new line
+										Export expression: BCTYPE; [G0]
+										Export expression: 1; [G0]
+									End line
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+				Start a new line
+					Export expression: "END" [G0]
+				End line
+			End if
+		End loop
+		# end Loop for: Objects in layer: BCFLOW Zones
+	End if
+	# 2.n
+	Start a new line
+		Export expression: "C 2.5" [G0]
+	End line
+	If: NAIFC>0&UseBCFLOWAquiferInfluence
+		Set Variable: BCTYPE:= 4
+		Evaluate expression: ProgressBarSetMessage(Message + "2.5; BCTYPE = 4")
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: ListIndex:= -1
+		Loop for: Objects in layer: BCFLOW Zones
+			Set Variable: ListIndex:= ListIndex + 1
+			If: Sum Aquifer Influence
+				Start a new line
+					Export expression: "C 2.5.1" [G0]
+				End line
+				Start a new line
+					Export expression: Zone Name [G0]
+				End line
+				Start a new line
+					Export expression: "C 2.5.2" [G0]
+				End line
+				Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+					Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+					Start a new line
+						Set Variable: XPosition:= L_GetFromList(ColumnList, AColumn - 1)
+						If: Abs(XPosition)>=10000
+							Export expression: XPosition; [E11.4]
+							Export expression: XPosition; [E11.4]
+						Else
+							Export expression: XPosition; [G0]
+							Export expression: XPosition; [G0]
+						End if
+						Set Variable: YPosition:= L_GetFromList(RowList, ARow - 1)
+						If: Abs(YPosition)>=10000
+							Export expression: YPosition; [E11.4]
+							Export expression: YPosition; [E11.4]
+						Else
+							Export expression: YPosition; [G0]
+							Export expression: YPosition; [G0]
+						End if
+						If: Abs(Bottom Elevation)>=10000
+							Export expression: Bottom Elevation; [E11.4]
+						Else
+							Export expression: Bottom Elevation; [G0]
+						End if
+						If: Abs(Top Elevation)>=10000
+							Export expression: Top Elevation; [E11.4]
+						Else
+							Export expression: Top Elevation; [G0]
+						End if
+					End line
+					Start a new line
+						Export expression: BCTYPE; [G0]
+						Export expression: 1; [G0]
+					End line
+				End loop
+				# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+				If: ContourType()=3
+					Set Variable: RowCount:= BL_GetRowNodeCount()
+					Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Start a new line
+										Set Variable: XPosition:= L_GetFromList(ColumnList, ColumnIndex)
+										If: Abs(XPosition)>=10000
+											Export expression: XPosition; [E11.4]
+											Export expression: XPosition; [E11.4]
+										Else
+											Export expression: XPosition; [G0]
+											Export expression: XPosition; [G0]
+										End if
+										Set Variable: YPosition:= L_GetFromList(RowList, RowIndex)
+										If: Abs(YPosition)>=10000
+											Export expression: YPosition; [E11.4]
+											Export expression: YPosition; [E11.4]
+										Else
+											Export expression: YPosition; [G0]
+											Export expression: YPosition; [G0]
+										End if
+										If: Abs(Bottom Elevation)>=10000
+											Export expression: Bottom Elevation; [E11.4]
+										Else
+											Export expression: Bottom Elevation; [G0]
+										End if
+										If: Abs(Top Elevation)>=10000
+											Export expression: Top Elevation; [E11.4]
+										Else
+											Export expression: Top Elevation; [G0]
+										End if
+									End line
+									Start a new line
+										Export expression: BCTYPE; [G0]
+										Export expression: 1; [G0]
+									End line
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+				Start a new line
+					Export expression: "END" [G0]
+				End line
+			End if
+		End loop
+		# end Loop for: Objects in layer: BCFLOW Zones
+	End if
+	# 2.n
+	Start a new line
+		Export expression: "C 2.6" [G0]
+	End line
+	If: NHCBC>0&UseBCFLOWHeatCond
+		Set Variable: BCTYPE:= 5
+		Evaluate expression: ProgressBarSetMessage(Message + "2.6; BCTYPE = 5")
+		Evaluate expression: ProgressBarAdvance()
+		Set Variable: ListIndex:= -1
+		Loop for: Objects in layer: BCFLOW Zones
+			Set Variable: ListIndex:= ListIndex + 1
+			If: Sum Heat Conduction
+				Start a new line
+					Export expression: "C 2.6.1" [G0]
+				End line
+				Start a new line
+					Export expression: Zone Name [G0]
+				End line
+				Start a new line
+					Export expression: "C 2.6.2" [G0]
+				End line
+				Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+					Set Variable: AColumn:= BL_GetCellColumn(ListIndex, CellIndex)
+					Set Variable: ARow:= BL_GetCellRow(ListIndex, CellIndex)
+					Start a new line
+						Set Variable: XPosition:= L_GetFromList(ColumnList, AColumn - 1)
+						If: Abs(XPosition)>=10000
+							Export expression: XPosition; [E11.4]
+							Export expression: XPosition; [E11.4]
+						Else
+							Export expression: XPosition; [G0]
+							Export expression: XPosition; [G0]
+						End if
+						Set Variable: YPosition:= L_GetFromList(RowList, ARow - 1)
+						If: Abs(YPosition)>=10000
+							Export expression: YPosition; [E11.4]
+							Export expression: YPosition; [E11.4]
+						Else
+							Export expression: YPosition; [G0]
+							Export expression: YPosition; [G0]
+						End if
+						If: Abs(Bottom Elevation)>=10000
+							Export expression: Bottom Elevation; [E11.4]
+						Else
+							Export expression: Bottom Elevation; [G0]
+						End if
+						If: Abs(Top Elevation)>=10000
+							Export expression: Top Elevation; [E11.4]
+						Else
+							Export expression: Top Elevation; [G0]
+						End if
+					End line
+					Start a new line
+						Export expression: BCTYPE; [G0]
+						Export expression: 1; [G0]
+					End line
+				End loop
+				# end Loop for: Variable CellIndex from: 0 to: BL_GetCountOfACellList(ListIndex)-1 step: 1
+				If: ContourType()=3
+					Set Variable: RowCount:= BL_GetRowNodeCount()
+					Set Variable: ColumnCount:= BL_GetColumnNodeCount()
+					Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+						Set Variable: NodeX:= BL_GetColumnNodePosition(ColumnIndex)
+						Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+							Set Variable: NodeY:= BL_GetRowNodePosition(RowIndex)
+							If: BL_GetCountOfCellLists()>0
+								If: BL_PointInsideContour(ListIndex, NodeX, NodeY)
+									Start a new line
+										Set Variable: XPosition:= L_GetFromList(ColumnList, ColumnIndex)
+										If: Abs(XPosition)>=10000
+											Export expression: XPosition; [E11.4]
+											Export expression: XPosition; [E11.4]
+										Else
+											Export expression: XPosition; [G0]
+											Export expression: XPosition; [G0]
+										End if
+										Set Variable: YPosition:= L_GetFromList(RowList, RowIndex)
+										If: Abs(YPosition)>=10000
+											Export expression: YPosition; [E11.4]
+											Export expression: YPosition; [E11.4]
+										Else
+											Export expression: YPosition; [G0]
+											Export expression: YPosition; [G0]
+										End if
+										If: Abs(Bottom Elevation)>=10000
+											Export expression: Bottom Elevation; [E11.4]
+										Else
+											Export expression: Bottom Elevation; [G0]
+										End if
+										If: Abs(Top Elevation)>=10000
+											Export expression: Top Elevation; [E11.4]
+										Else
+											Export expression: Top Elevation; [G0]
+										End if
+									End line
+									Start a new line
+										Export expression: BCTYPE; [G0]
+										Export expression: 1; [G0]
+									End line
+								End if
+								# end if BL_PointInsideContour(ListIndex, NodeX, NodeY)
+							End if
+							# end If: BL_GetCountOfCellLists()>0
+						End loop
+						# end Loop for: Variable RowIndex from: 0 to: RowCount - 1 step: 1
+					End loop
+					# end Loop for: Variable ColumnIndex from: 0 to: ColumnCount - 1 step: 1
+				End if
+				Start a new line
+					Export expression: "END" [G0]
+				End line
+			End if
+		End loop
+		# end Loop for: Objects in layer: BCFLOW Zones
+	End if
+	Start a new line
+		Export expression: "C 2.9" [G0]
+	End line
+	Start a new line
+		Export expression: "END" [G0]
+	End line
+End file
+Redirect output to: RunBCFLOW.BAT
+	Start a new line
+		Export expression: "\"" [G0]
+		Export expression: RunPath [G0]
+		Export expression: "\""; [G0]
+		Export expression: "<bcResponse.txt" [G0]
+	End line
+	Start a new line
+		Export expression: "pause" [G0]
+	End line
+End file
+Redirect output to: bcResponse.txt
+	Start a new line
+		Export expression: "bcflowdata" [G0]
+	End line
+	Start a new line
+		Export expression: OutputExtension [G0]
+	End line
+	Start a new line
+		Export expression: OutputExtension [G0]
+	End line
+End file
+If: RunBCFLOW
+	Execute external code: "RunBCFLOW.BAT"
+End if
+Evaluate expression: BL_FreeAllBlockLists()
+Evaluate expression: L_FreeAllLists()
+Evaluate expression: ProgressBarFree()
+

@@ -1,0 +1,16 @@
+# 
+Redirect output to: $BaseName$
+	Start a new line
+		Export expression: ok_Add_Radio_Choice("Choice 1"); [G0]
+		Export expression: ok_Add_Radio_Choice("Choice 2"); [G0]
+		Export expression: ok_Add_Radio_Choice("Choice 3"); [G0]
+	End line
+	Start a new line
+		Export expression: ok_Get_Radio_Choice("What is your choice?", 60, 300, 25) [G0]
+	End line
+	# This isn't needed.
+	Start a new line
+		Export expression: ok_Radio_Free() [G0]
+	End line
+End file
+

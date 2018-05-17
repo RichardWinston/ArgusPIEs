@@ -1,0 +1,39 @@
+# 
+# Lake Variables
+Set Variable: LakeChoice:= @cbLAK@
+Set Variable: ILKCBC:= @cbExpLakFlow@
+If: ILKCBC
+	Set Variable: ILKCBC:= 66
+End if
+Set Variable: ILKOUT:= @cbPrintLake@
+If: ILKOUT
+	Set Variable: ILKOUT:= 67
+End if
+Set Variable: MaxRateEq:= @adeMaxLakEquations@
+Set Variable: SteadyLake:= @comboLAKSteady@
+Set Variable: NSUBSTEPS:= @adeLakeNumSubSteps@
+Set Variable: LakeBotCondChoice:= @comboLakeBottomCond@
+Set Variable: LakeSideCondChoice:= @comboLakeSideCond@
+Set Variable: ExportLAK:= @cbExpLak@
+If: LakeChoice&ExportLAK
+	Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY()
+End if
+Set Variable: ExportLAK:= @cbExpLak@
+# 
+# 
+# Seepage Variables
+Set Variable: SeepageChoice:= @cbSPG@&@cbSPGRetain@
+Set Variable: ExportSPG:= @cbExpSPG@
+Set Variable: SteadySeepage:= @comboSpgSteady@
+Set Variable: ISPGCB:= @cbFlowSpg@
+# 
+If: SeepageChoice&ExportSPG
+	Set Variable: ProgressMax:= ProgressMax + MODFLOW_NPER()
+End if
+# 
+# MT3D Variables
+Set Variable: MT3D_FlowFile:= @cbMT3D@
+Set Variable: MaxInflowSegments:= @adeMaxLakeStreams@
+Set Variable: MaxOutflowSegments:= @adeMaxLakeStreams@
+# 
+

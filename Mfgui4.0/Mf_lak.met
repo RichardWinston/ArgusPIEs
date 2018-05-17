@@ -1,0 +1,18 @@
+# 
+# Export Lake package
+If: UseLakes
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Lake Package")
+	If: ExportLakes
+		Set Variable: ContinueSimulation:= MF_ExportLakes()
+	Else
+		Set Variable: ContinueSimulation:= MF_InitializeLakes()
+	End if
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+End if
+# 
+# Export Gage package
+If: UseGages&ExportGages
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Gage Package")
+	Set Variable: ContinueSimulation:= MF_WriteGages(FileName)
+End if
+

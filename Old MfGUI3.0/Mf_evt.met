@@ -1,0 +1,154 @@
+# 
+# MF_EVT.met
+# ----------------------------------------------------
+# Export for EVT Package:
+# ----------------------------------------------------
+If: ContinueSimulation&(EvapotranspirationChoice!=0&ExportEVT!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evapotranspiration Package")
+	Redirect output to: @adeFileName@.evt
+		Start a new line
+			# Export NEVTOP
+			Export expression: NEVTOP [I5]
+			If: IEVTCB>0&OneCBCFile=1
+				Export expression: 33; [I5]
+			End if
+			If: IEVTCB>0&OneCBCFile=0
+				Export expression: 31; [I5]
+			End if
+			If: IEVTCB=0
+				Export expression: 0; [I5]
+			End if
+			If: MODPATHChoice
+				Export expression: EvapITOP [G0]
+			End if
+		End line
+		# Stress period 1
+		Start a new line
+			Export expression: 1 [I5]
+			Export expression: 1 [I5]
+			Export expression: 1 [I5]
+			If: NEVTOP=2
+				Export expression: 1 [I5]
+			End if
+			If: NEVTOP!=2
+				Export expression: -1 [I5]
+			End if
+		End line
+		# Export ET surface for stress period 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Start a new line
+				Export expression: "INTERNAL 1.0  (FREE)" [G0]
+				Export expression: 2 [I5]
+			End line
+			Export matrix: Evapotranspiration [G0]
+		End if
+		# Export ET rate for stress period 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Start a new line
+				Export expression: "INTERNAL 1.0  (FREE)" [G0]
+				Export expression: 2 [I5]
+			End line
+			Export matrix: Evapotranspiration.EVT Flux Stress1 [G0]
+		End if
+		# Export ET extinction depth for stress period 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Start a new line
+				Export expression: "INTERNAL 1.0  (FREE)" [G0]
+				Export expression: 2 [I5]
+			End line
+			Export matrix: Evapotranspiration.EVT Extinction Depth [G0]
+		End if
+		# Export Layer number where ET is removed if NEVTOP=2
+		If: ContinueSimulation&(NEVTOP=2)
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation
+				Start a new line
+					Export expression: "INTERNAL 1  (FREE)" [G0]
+					Export expression: 9 [I5]
+				End line
+			End if
+			If: ContinueSimulation
+				If: @cbETLayer@
+					Export matrix: ET Layer [I5]
+				Else
+					Loop for: Blocks
+						Set Variable: ocflag:= 0
+						If: Evapotranspiration.EVT Flux Stress1!=0&(ET Surface Elevation<=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), 1)&ET Surface Elevation>MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), MODFLOW_NLAY()))
+							Set Variable: M:= 0
+							Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+								If: ocflag=0
+									If: LayIndex=1
+										Set Variable: M:= 0
+									Else
+										Set Variable: M:= M+MODFLOW_NDIV(LayIndex-1)*MODFLOW_SIMUL(LayIndex-1)
+									End if
+									If: ET Surface Elevation<=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)&ET Surface Elevation>MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+										Set Variable: ocflag:= 1
+										If: MODFLOW_SIMUL(LayIndex)!=0
+											Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+												Set Variable: CellThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+												If: ET Surface Elevation<=(MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-(DivIndex-1)*CellThickness)&ET Surface Elevation>(MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-DivIndex*CellThickness)
+													Set Variable: k:= M+DivIndex
+													Start a new line
+														Export expression: k [I5]
+													End line
+												End if
+											End loop
+										Else
+											Start a new line
+												Set Variable: err_evt_1:= 1
+												# Alert: "Evapotranspiration surface is located in a non-simulated geologic unit!"
+												If: ShowWarnings
+													Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + Column() + " and Row " + Row() +  ", the evapotranspiration surface is located in a non-simulated geologic unit!")
+												End if
+												Export expression: 999 [I5]
+											End line
+										End if
+									End if
+								End if
+							End loop
+						Else
+							Start a new line
+								Export expression: 1 [I5]
+							End line
+						End if
+					End loop
+				End if
+			End if
+		End if
+		If: MODFLOW_NPER()>=2
+			# Modified next line on June 16, 1997
+			Loop for: Variable PeriodIndex from: 2 to: MODFLOW_NPER() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					If: SteadyEVT=0
+						Start a new line
+							Export expression: -1 [I5]
+							Export expression: -1 [I5]
+							Export expression: -1 [I5]
+							Export expression: -1 [I5]
+						End line
+					Else
+						Start a new line
+							# assume ET surface and extinction depth do not change if NEVTOP=2
+							Export expression: -1 [I5]
+							Export expression: 1 [I5]
+							Export expression: -1 [I5]
+							Export expression: -1 [I5]
+						End line
+						# Export ET flux for stress period
+						Start a new line
+							Export expression: "INTERNAL 1.0  (FREE)" [G0]
+							Export expression: 2 [I5]
+						End line
+						Export matrix: Evapotranspiration.EVT Flux Stress[PeriodIndex] [G0]
+					End if
+				End if
+			End loop
+		End if
+	End file
+End if
+

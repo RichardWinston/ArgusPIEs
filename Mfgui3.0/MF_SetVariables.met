@@ -1,0 +1,554 @@
+# 
+# MF_SetVariables.met
+# --------------------------
+# Set Variables
+# --------------------------
+# Variables used in more than one package
+Set Variable: ProgressMax:= 1
+Set Variable: ContinueSimulation:= 1
+# Initialize Error flags
+Set Variable: err_geo:= 0
+Set Variable: FileName:= "@adeFileName@"
+Set Variable: OneCBCFile:= @cbOneFlowFile@
+Set Variable: NumLay:= 0
+Set Variable: NumUnits:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	Set Variable: NumLay:= NumLay+MODFLOW_SIMUL(LayIndex)*MODFLOW_NDIV(LayIndex)
+	If: MODFLOW_SIMUL(LayIndex)
+		Set Variable: NumUnits:= NumUnits + 1
+	End if
+End loop
+If: NumLay>1
+	Set Variable: ProgressMax:= ProgressMax + MODFLOW_NLAY()
+End if
+Set Variable: NumGeo:= 0
+Set Variable: TopSimul:= 0
+Set Variable: BotSimul:= 0
+# 
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	If: MODFLOW_SIMUL(LayIndex)!=0&TopSimul=0
+		Set Variable: TopSimul:= LayIndex
+	End if
+End loop
+# 
+Loop for: Variable LayIndex from: MODFLOW_NLAY() to: 1 step: -1
+	If: MODFLOW_SIMUL(LayIndex)!=0&BotSimul=0
+		Set Variable: BotSimul:= LayIndex
+	End if
+End loop
+Set Variable: NumGeo:= BotSimul-TopSimul+1
+# 
+# Variables used only outside of packages
+Set Variable: UseCalibration:= @cbCalibrate@
+Set Variable: ShowWarnings:= @cbShowWarnings@
+Set Variable: RunMODFLOW:= @rbRun@
+# 
+# Basic package variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportBAS:= @cbExpBAS@
+Set Variable: Heading1:= "@adeTitle1@"
+Set Variable: Heading2:= "@adeTitle2@"
+Set Variable: ITMUNI:= @comboTimeUnits@
+Set Variable: IAPART:= @comboIAPART@
+Set Variable: ISTRT:= @comboISTRT@
+Set Variable: HNOFLO:= @adeHNOFLO@
+Set Variable: OPTION:= "FREE"
+Set Variable: CHTOCH:= @cbCHTOCH@
+If: CHTOCH
+	Set Variable: OPTION:= OPTION + ", CHTOCH"
+End if
+If: ExportBAS!=0
+	Set Variable: ProgressMax:= ProgressMax + MODFLOW_NLAY() * 2 + MODFLOW_NPER()
+End if
+Set Variable: InitialHeadName:= "@edInitial@"
+Set Variable: InitialHeadChoice:= @cbInitial@
+# 
+# Variables used in output control option
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportOC:= @cbExpOC@
+Set Variable: HeadPrintStyle:= @comboHeadPrintStyle@
+Set Variable: DrawdownPrintStyle:= @comboDrawdownPrintStyle@
+Set Variable: HeadPrintFormat:= @comboHeadPrintFormat@ + 1
+Set Variable: DrawdownPrintFormat:= @comboDrawdownPrintFormat@ + 1
+Set Variable: OutputHead:= @comboExportHead@
+Set Variable: OutputDrawdown:= @comboExportDrawdown@
+Set Variable: CompactBudget:= @cbFlowBudget@
+Set Variable: FreqHeadFileChoice:= @comboHeadExportFreq@
+If: FreqHeadFileChoice=0
+	Set Variable: FreqHeadFile:= 0
+Else
+	If: FreqHeadFileChoice=1
+		Set Variable: FreqHeadFile:= @adeHeadExportFreq@
+	Else
+		Set Variable: FreqHeadFile:= -1
+	End if
+End if
+Set Variable: FreqDrawdownFileChoice:= @comboDrawdownExportFreq@
+If: FreqDrawdownFileChoice=0
+	Set Variable: FreqDrawdownFile:= 0
+Else
+	If: FreqDrawdownFileChoice=1
+		Set Variable: FreqDrawdownFile:= @adeDrawdownExportFreq@
+	Else
+		Set Variable: FreqDrawdownFile:= -1
+	End if
+End if
+Set Variable: FreqBudFileChoice:= @comboBudExportFreq@
+If: FreqBudFileChoice=0
+	Set Variable: FreqBudgetFile:= 0
+Else
+	If: FreqBudFileChoice=1
+		Set Variable: FreqBudgetFile:= @adeBudExportFreq@
+	Else
+		Set Variable: FreqBudgetFile:= -1
+	End if
+End if
+Set Variable: FreqHeadListChoice:= @comboHeadPrintFreq@
+If: FreqHeadListChoice=0
+	Set Variable: FreqHeadList:= 0
+Else
+	If: FreqHeadListChoice=1
+		Set Variable: FreqHeadList:= @adeHeadPrintFreq@
+	Else
+		Set Variable: FreqHeadList:= -1
+	End if
+End if
+Set Variable: FreqDrawdownListChoice:= @comboDrawdownPrintFreq@
+If: FreqDrawdownListChoice=0
+	Set Variable: FreqDrawdownList:= 0
+Else
+	If: FreqDrawdownListChoice=1
+		Set Variable: FreqDrawdownList:= @adeDrawdownPrintFreq@
+	Else
+		Set Variable: FreqDrawdownList:= -1
+	End if
+End if
+Set Variable: FreqBudListChoice:= @comboBudPrintFreq@
+If: FreqBudListChoice=0
+	Set Variable: FreqBudgetList:= 0
+Else
+	If: FreqBudListChoice=1
+		Set Variable: FreqBudgetList:= @adeBudPrintFreq@
+	Else
+		Set Variable: FreqBudgetList:= -1
+	End if
+End if
+If: ExportOC!=0
+	Set Variable: ProgressMax:= ProgressMax + MODFLOW_NPER()
+End if
+# 
+# BCF Variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportBCF:= @cbExpBCF@
+# Initialize Error flags
+Set Variable: err_bcf_1:= 0
+Set Variable: ISS:= @comboSteady@
+Set Variable: HDRY:= @adeHDRY@
+Set Variable: IWDFLG:= @comboWetCap@
+Set Variable: WETFCT:= @adeWettingFact@
+Set Variable: IWETIT:= @adeWetIterations@
+Set Variable: IHDWET:= @comboWetEq@
+Set Variable: IBCFCB:= @cbFlowBCF@
+If: ExportBCF!=0
+	Set Variable: ProgressMax:= ProgressMax + 3 * MODFLOW_NLAY()
+End if
+# 
+# 
+# Well Package Variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportWEL:= @cbExpWEL@
+# Initialize Error flags
+Set Variable: err_wel_1:= 0
+Set Variable: err_wel_2:= 0
+# Set variables for choice of stress packages and output control:
+Set Variable: WellChoice:= @cbWEL@&@cbWELRetain@
+Set Variable: SteadyWell:= @comboWelSteady@
+Set Variable: IWELCB:= @cbFlowWel@
+If: WellChoice!=0&ExportWEL!=0
+	Set Variable: ProgressMax:= ProgressMax + NumUnits*NumBlocks()
+End if
+# 
+# Drain Package Variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportDRN:= @cfExpDRN@
+# Initialize Error flags
+Set Variable: err_drn_1:= 0
+Set Variable: err_drn_2:= 0
+Set Variable: err_drn_3:= 0
+Set Variable: err_drn_4:= 0
+# Set variables for choice of stress packages and output control:
+Set Variable: DrainChoice:= @cbDRN@&@cbDRNRetain@
+Set Variable: SteadyDrain:= @comboDrnSteady@
+Set Variable: IDRNCB:= @cbFlowDrn@
+If: DrainChoice!=0&ExportDRN!=0
+	Set Variable: ProgressMax:= ProgressMax + NumUnits*NumBlocks()
+End if
+# 
+# GHB Variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportGHB:= @cbExpGHB@
+# Initialize Error flags
+Set Variable: err_ghb_1:= 0
+Set Variable: err_ghb_2:= 0
+# Set variables for choice of stress packages and output control:
+Set Variable: GeneralHeadChoice:= @cbGHB@&@cbGHBRetain@
+Set Variable: SteadyGHB:= @comboGhbSteady@
+Set Variable: IGHBCB:= @cbFlowGHB@
+If: GeneralHeadChoice!=0&ExportGHB!=0
+	Set Variable: ProgressMax:= ProgressMax + NumUnits*NumBlocks()
+End if
+# 
+# River package variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportRIV:= @cbExpRIV@
+# Initialize Error flags
+Set Variable: err_riv_1:= 0
+Set Variable: err_riv_2:= 0
+Set Variable: err_riv_3:= 0
+Set Variable: err_riv_4:= 0
+# Set variables for choice of stress packages and output control:
+Set Variable: RiverChoice:= @cbRIV@&@cbRIVRetain@
+Set Variable: SteadyRiver:= @comboRivSteady@
+Set Variable: IRIVCB:= @cbFlowRiv@
+If: RiverChoice!=0&ExportRIV!=0
+	Set Variable: ProgressMax:= ProgressMax + NumUnits*NumBlocks()
+End if
+# 
+# Recharge package variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportRCH:= @cbExpRCH@
+# Initialize Error flags
+Set Variable: err_rch_1:= 0
+# Set variables for choice of stress packages and output control:
+Set Variable: RechargeChoice:= @cbRCH@&@cbRCHRetain@
+Set Variable: SteadyRecharge:= @comboRchSteady@
+Set Variable: NRCHOP:= @comboRchOpt@ + 1
+Set Variable: IRCHCB:= @cbFlowRCH@
+If: RechargeChoice!=0&ExportRCH!=0
+	Set Variable: ProgressMax:= ProgressMax + 1
+	If: NRCHOP=2
+		Set Variable: ProgressMax:= ProgressMax + 1
+	End if
+	If: MODFLOW_NPER()>=2
+		Set Variable: ProgressMax:= ProgressMax + MODFLOW_NPER() - 1
+	End if
+End if
+# 
+# Evapotranspiration package variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportEVT:= @cbExpEVT@
+# Initialize Error flags
+Set Variable: err_evt_1:= 0
+# Set variables for choice of stress packages and output control:
+Set Variable: EvapotranspirationChoice:= @cbEVT@&@cbEVTRetain@
+Set Variable: SteadyEVT:= @comboEvtSteady@
+Set Variable: NEVTOP:= @comboEvtOption@ + 1
+Set Variable: IEVTCB:= @cbFlowEVT@
+If: EvapotranspirationChoice!=0&ExportEVT!=0
+	Set Variable: ProgressMax:= ProgressMax + 3
+	If: NEVTOP=2
+		Set Variable: ProgressMax:= ProgressMax + 1
+	End if
+	If: MODFLOW_NPER()>=2
+		Set Variable: ProgressMax:= ProgressMax + MODFLOW_NPER() - 1
+	End if
+End if
+# 
+# Stream package variables
+Set Variable: StreamChoice:= @cbSTR@&@cbSTRRetain@
+Set Variable: ExportStreams:= @cbExpStr@
+Set Variable: StreamsSteady:= !@comboStreamOption@
+Set Variable: ICALC:= @cbStreamCalcFlow@
+Set Variable: UseTributaries:= @cbStreamTrib@
+Set Variable: UseDiversions:= @cbStreamDiversions@
+Set Variable: StreamSegmentList:= MODFLOW_L_CreateNewList()
+Set Variable: SortedStreamSegmentList:= MODFLOW_L_CreateNewList()
+Set Variable: StreamTributaryList:= MODFLOW_L_CreateNewList()
+Set Variable: TributaryMaxAllowed:= 10
+Set Variable: StreamUnitList:= MODFLOW_L_CreateNewList()
+Set Variable: ISTCB1:= @cbFlowSTR@
+Set Variable: ISTCB2:= @cbFlowSTR2@
+# ModelLengthUnits = 0 -> m
+# ModelLengthUnits = 1 -> ft
+Set Variable: ModelLengthUnits:= @comboModelUnits@
+Set Variable: StreamCONST:= 1
+If: ICALC&StreamChoice
+	If: ITMUNI=0
+		Alert: "Error: You must specify the time unit to calculate the stage height in the stream package. Check the Time Tab of the Edit Project Info Dialog box."
+	End if
+	If: ITMUNI=1
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 1.486
+		Else
+			Set Variable: StreamCONST:= 1
+		End if
+	End if
+	If: ITMUNI=2
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 89.16
+		Else
+			Set Variable: StreamCONST:= 60
+		End if
+	End if
+	If: ITMUNI=3
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 5349.6
+		Else
+			Set Variable: StreamCONST:= 3600
+		End if
+	End if
+	If: ITMUNI=4
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 128390.4
+		Else
+			Set Variable: StreamCONST:= 86400
+		End if
+	End if
+	If: ITMUNI=5
+		If: ModelLengthUnits
+			Set Variable: StreamCONST:= 46784593
+		Else
+			Set Variable: StreamCONST:= 31447600
+		End if
+	End if
+End if
+Set Variable: FlowIndex:= 0
+Set Variable: UpstreamStageIndex:= 1
+Set Variable: DownstreamStageIndex:= 2
+Set Variable: ConductivityIndex:= 3
+Set Variable: UpstreamTopElevIndex:= 4
+Set Variable: DownstreamTopElevIndex:= 5
+Set Variable: UpstreamBotElevIndex:= 6
+Set Variable: DownstreamBotElevIndex:= 7
+Set Variable: UpstreamWidthIndex:= 8
+Set Variable: DownstreamWidthIndex:= 9
+Set Variable: SlopeIndex:= 10
+Set Variable: RoughnessIndex:= 11
+Set Variable: InterpolateStage:= 12
+Set Variable: InterpolateTopElev:= 13
+Set Variable: InterpolateBottomElev:= 14
+Set Variable: InterpolateWidth:= 15
+If: StreamChoice&ExportStreams
+	Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY() + MODFLOW_NPER()
+	If: ShowWarnings
+		Set Variable: ProgressMax:= ProgressMax + 5*MODFLOW_NLAY()
+	End if
+	If: UseTributaries&ShowWarnings
+		Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY()
+	End if
+	If: UseDiversions
+		Set Variable: ProgressMax:= ProgressMax + MODFLOW_NLAY()
+	End if
+	If: UseDiversions&ShowWarnings
+		Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY()
+	End if
+	If: (!ICALC)&ShowWarnings
+		Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY()
+	End if
+End if
+# 
+# Flow and Head variables
+Set Variable: FlowHeadChoice:= @cbFHB@&@cbFHBRetain@
+Set Variable: ExportFHB:= @cbExpFHB@
+Set Variable: NBDTIM:= @adeFHBNumTimes@
+Set Variable: IFHBSS:= @comboFHBSteadyStateOption@
+Set Variable: IFHBCB:= @cbFlowFHB@
+If: IFHBCB
+	If: OneCBCFile=1
+		Set Variable: IFHBCB:= 33
+	Else
+		Set Variable: IFHBCB:= 39
+	End if
+End if
+Set Variable: IFHBUN:= 40
+If: FlowHeadChoice&ExportFHB
+	Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY()
+End if
+# 
+# HFB Variables
+Set Variable: HFBChoice:= @cbHFB@&@cbHFBRetain@
+Set Variable: ExportHFB:= @cbExpHFB@
+Set Variable: ColumnCount:= NumColumns()
+Set Variable: RowCount:= NumRows()
+If: ExportHFB&HFBChoice
+	Set Variable: ProgressMax:= ProgressMax + MODFLOW_NLAY()
+End if
+# 
+# Solver Variables
+# Set variables for exporting packages (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportSOL:= @cbExpMatrix@
+Set Variable: SolverChoice:= @rgSolMeth@
+# 
+# Set variables for SOR solver (SolverChoice=3)
+Set Variable: SOR_MXITER:= @adeSORMaxIter@
+Set Variable: SOR_ACCL:= @adeSORAccl@
+Set Variable: SOR_HCLOSE:= @adeSORConv@
+Set Variable: SOR_IPRSOR:= @adeSORPri@
+# 
+# Set variables for SIP solver (SolverChoice=0)
+Set Variable: SIP_MXITER:= @adeSIPMaxIter@
+Set Variable: SIP_NPARM:= @adeSIPNumParam@
+Set Variable: SIP_ACCL:= @adeSIPAcclParam@
+Set Variable: SIP_HCLOSE:= @adeSIPConv@
+Set Variable: SIP_IPCALC:= @comboSIPIterSeed@
+Set Variable: SIP_WSEED:= @adeSIPIterSeed@
+Set Variable: SIP_IPRSIP:= @adeSIPPrint@
+# 
+# Set variables for PCG solver (SolverChoice=2)
+Set Variable: PCG_MXITER:= @adePCGMaxOuter@
+Set Variable: PCG_ITER1:= @adePCGMaxInner@
+Set Variable: PCG_NPCOND:= @comboPCGPrecondMeth@ +1
+Set Variable: PCG_HCLOSE:= @adePCGMaxHeadChange@
+Set Variable: PCG_RCLOSE:= @adePCGMaxResChange@
+Set Variable: PCG_RELAX:= @adePCGRelax@
+Set Variable: PCG_NBPOL:= @comboPCGEigenValue@ + 1
+Set Variable: PCG_IPRPCG:= @adePCGPrintInt@
+Set Variable: PCG_MUTPCG:= @comboPCGPrint@
+Set Variable: PCG_DAMP:= @adePCGDamp@
+# 
+# Set variables for DE4 solver (SolverChoice=1)
+Set Variable: DE4_ITMX:= @adeDE4MaxIter@
+Set Variable: DE4_MXUP:= @adeDE4MaxUp@
+Set Variable: DE4_MXLOW:= @adeDE4MaxLow@
+Set Variable: DE4_MXBW:= @adeDE4Band@
+Set Variable: DE4_IFREQ:= @comboDE4Freq@ + 1
+Set Variable: DE4_MUTD4:= @comboDE4Print@
+Set Variable: DE4_ACCL:= @adeDE4Accl@
+Set Variable: DE4_HCLOSE:= @adeDE4Conv@
+Set Variable: DE4_IPRD4:= @adeDE4TimeStep@
+# 
+# MODPATH Variables
+Set Variable: MODPATHChoice:= @cbMODPATH@
+Set Variable: RechargeITOP:= @comboMODPATH_RechargeITOP@
+Set Variable: EvapITOP:= @comboMODPATH_EvapITOP@
+# 
+# MOC3D variables
+Set Variable: PrintMOC3DLocations:= @rgMOC3DConcFormat@
+Set Variable: RunMoc3d:= @cbUseSolute@
+# Initialize Error flags
+Set Variable: err_moc_1:= 0
+# Set variable for exporting package (0 prohibits export of package, != 0 enables export of package)
+Set Variable: ExportTRANS:= @cbExpCONC@
+Set Variable: ExportOBS:= @cbExpOBS@
+Set Variable: Transport:= @cbMOC3D@
+Set Variable: TransportFlag:= Transport
+If: Transport
+	Set Variable: Transport:= Transport + @rgMOC3DSolver@
+End if
+Set Variable: FirstMoc3DUnit:= @adeMOC3DLay1@
+Set Variable: LastMoc3DUnit:= @adeMOC3DLay2@
+If: LastMoc3DUnit= -1
+	Set Variable: LastMoc3DUnit:= MODFLOW_NLAY()
+End if
+Set Variable: MOC_ISLAY1:= 1
+Set Variable: MOC_ISLAY2:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	If: MODFLOW_SIMUL(LayIndex)
+		If: LayIndex<FirstMoc3DUnit
+			Set Variable: MOC_ISLAY1:= MOC_ISLAY1 + MODFLOW_NDIV(LayIndex)
+		End if
+		If: LayIndex<=LastMoc3DUnit
+			Set Variable: MOC_ISLAY2:= MOC_ISLAY2 + MODFLOW_NDIV(LayIndex)
+		End if
+	End if
+End loop
+Set Variable: MOC_ISROW1:= MOC_ISROW1()
+Set Variable: MOC_ISROW2:= MOC_ISROW2()
+Set Variable: MOC_ISCOL1:= MOC_ISCOL1()
+Set Variable: MOC_ISCOL2:= MOC_ISCOL2()
+Set Variable: MOC_NODISP:= @cbMOC3DNoDisp@
+Set Variable: MOC_DECAY:= @adeMOC3DDecay@
+Set Variable: MOC_DIFFUS:= @adeMOC3DDiffus@
+Set Variable: MOC_INTRPL:= @comboMOC3DInterp@ + 1
+Set Variable: MOC_CNOFLO:= @adeMOC3DCnoflow@
+Set Variable: MOC_INCRCH:= -@comboMOC3DReadRech@
+Set Variable: MOC_IOBSFL:= @comboMOC3DSaveWell@
+Set Variable: MOC_NPMAX:= @adeMOC3DMaxParticles@
+Set Variable: MOC_CELDIS:= @adeMOC3DMaxFrac@
+Set Variable: MOC_FZERO:= @adeMOC3DLimitActiveCells@
+Set Variable: MOC_NPCUST:= @cbCustomParticle@
+Set Variable: MOC_NPTPND:= @edMOC3DInitParticles@
+Set Variable: MOC_CNC_OPT:= @comboMOC3DConcFileType@
+Set Variable: MOC_NPNTCL:= @comboMOC3DConcFreq@
+Set Variable: MOC_NPNTCLN:= @adeMOC3DConcFreq@
+Set Variable: MOC_VEL_OPT:= @comboMOC3DVelFileType@
+Set Variable: MOC_NPNTVL:= @comboMOC3DVelFreq@
+Set Variable: MOC_NPNTVLN:= @adeMOC3DVelFreq@
+Set Variable: MOC_NPNTDL:= @comboMOC3DDispFreq@
+Set Variable: MOC_NPNTDLN:= @adeMOC3DDispFreq@
+Set Variable: MOC_PRT_OPT:= @comboMOC3DPartFileType@
+Set Variable: MOC_NPNTPL:= @comboMOC3DPartFreq@
+Set Variable: MOC_NPNTPLN:= @adeMOC3DPartFreq@
+Set Variable: MOC_NSLAY:= @adeMOCNumLayers@
+Set Variable: NColsSub:= MOC_ISCOL2-MOC_ISCOL1+1
+Set Variable: NRowsSub:= MOC_ISROW2-MOC_ISROW1+1
+Set Variable: NLaySub:= MOC_ISLAY2-MOC_ISLAY1+1
+Set Variable: MOC_NPTPNDError:= 0
+If: RunMoc3d&!MOC_NPCUST
+	Set Variable: Dimensions:= 0
+	If: NLaySub>1
+		Set Variable: Dimensions:= Dimensions + 1
+	End if
+	If: NRowsSub>1
+		Set Variable: Dimensions:= Dimensions + 1
+	End if
+	If: NColsSub>1
+		Set Variable: Dimensions:= Dimensions + 1
+	End if
+	If: Dimensions=1
+		If: !((MOC_NPTPND=1)|(MOC_NPTPND=2)|(MOC_NPTPND=3)|(MOC_NPTPND=4))
+			Set Variable: MOC_NPTPNDError:= 1
+		End if
+	End if
+	If: Dimensions=2
+		If: !((MOC_NPTPND=1)|(MOC_NPTPND=4)|(MOC_NPTPND=9)|(MOC_NPTPND=16))
+			Set Variable: MOC_NPTPNDError:= 1
+		End if
+	End if
+	If: Dimensions=3
+		If: !((MOC_NPTPND=1)|(MOC_NPTPND=8)|(MOC_NPTPND=27))
+			Set Variable: MOC_NPTPNDError:= 1
+		End if
+	End if
+End if
+# MOCIMP
+Set Variable: MOC_EPSSLV:= @adeMOCTolerance@
+Set Variable: MOC_FDTMTH:= @adeMOCWeightFactor@
+Set Variable: MOC_IDIREC:= @comboMOC3D_IDIREC@ + 1
+Set Variable: MOC_MAXIT:= @adeMOCMaxIter@
+Set Variable: MOC_NCXIT:= @adeMOCNumIter@
+# MOC3D Age package variables
+Set Variable: AgeChoice:= @cbAge@
+Set Variable: AGER8:= @adeAge@
+# MOC3D Dual Porosity package variables
+Set Variable: DualPorosityChoice:= @cbDualPorosity@&@cbUseDualPorosity@
+Set Variable: IDPFO:= @cbIDPFO@
+Set Variable: IDPZO:= @cbIDPZO@
+Set Variable: IDPTIM:= @cbIDPTIM_Decay@|@cbIDPTIM_Growth@
+Set Variable: IDPPS:= @comboDualPOutOption@ + 1
+# MOC3D Simple Reaction package variables
+Set Variable: SimpleReactionChoice:= @cbSimpleReactions@&@cbUseSimpleReactions@
+Set Variable: IDKRF:= @cbIDKRF@
+Set Variable: IDKTIM:= @cbIDKTIM_DisDecay@|@cbIDKTIM_SorbDecay@|@cbIDKTIM_DisGrowth@|@cbIDKTIM_SorbGrowth@
+Set Variable: IDKFO:= @cbIDKFO@
+Set Variable: IDKFS:= @cbIDKFS@
+Set Variable: IDKZO:= @cbIDKZO@
+Set Variable: IDKZS:= @cbIDKZS@
+Set Variable: CalcElev:= 0
+If: TransportFlag=1
+	If: Transport>0
+		If: ExportTRANS!=0
+			Set Variable: ProgressMax:= ProgressMax + 3 * (LastMoc3DUnit - FirstMoc3DUnit + 1)
+			If: RechargeChoice!=0
+				Set Variable: ProgressMax:= ProgressMax + MODFLOW_NPER()
+			End if
+			If: ExportOBS!=0
+				If: MOC_NUMOBS>0
+					Set Variable: ProgressMax:= ProgressMax + LastMoc3DUnit - FirstMoc3DUnit + 1
+				End if
+			End if
+		End if
+	End if
+End if
+# 
+# 

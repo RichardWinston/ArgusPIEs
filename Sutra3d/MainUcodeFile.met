@@ -1,0 +1,1449 @@
+# Editable SUTRA TEMPLATE for UCODE MAIN INPUT FILE (.in) goes here
+Define Variable: BlankIndex [Integer]
+Define Variable: DerParamName [String]
+Define Variable: ElementCount [Integer]
+Define Variable: EstimParamNumber [Integer]
+Define Variable: IDerParCount [Integer]
+Define Variable: IParCount [Integer]
+Define Variable: IsDefinedPar [Integer]
+Define Variable: NodeCount [Integer]
+Define Variable: NodElemCount [Integer]
+Define Variable: OK [Boolean]
+Define Variable: ParamName [String]
+Define Variable: PriorInfoIndex [Integer]
+Define Variable: SimulationMode [Integer]
+Define Variable: ICount [Integer]
+#Define Variable: ICountNodesInContour [Integer]
+#Define Variable: ICountObsTimes [Integer]
+#Define Variable: ObservationName [String]
+#Define Variable: ObservationNodeCount [Integer]
+#Define Variable: ObsTimeNumber [Integer]
+#Define Variable: Phase [Integer]
+#Define Variable: Time [Real]
+#
+Set Variable: SimulationMode:= @rgPhase@
+If: (@rgDimensions@=1)
+	Set Variable: SutraDimensions:= 3
+Else
+	Set Variable: SutraDimensions:= 2
+End if
+Define Variable: StateVariableType [Integer]
+# StateVariableType: 1=Head, 2=Pressure
+# If: @rbSpecific@&@rbSoluteConstDens@
+# 	Set Variable: StateVariableType:= 1
+# Else
+# 	Set Variable: StateVariableType:= 2
+# End if
+# Define Variable: TransportType [Integer]
+# TransportType: 1=Energy, 2=Solute
+# If: @rbEnergy@=1
+# 	Set Variable: TransportType:= 1
+# Else
+# 	Set Variable: TransportType:= 2
+# End if
+Define Variable: SutraDimensions [Integer]
+If: (@rgDimensions@=1)
+	Set Variable: SutraDimensions:= 3
+Else
+	Set Variable: SutraDimensions:= 2
+End if
+# Evaluate expression: Sutra_InitializeSimulationTimes()
+# 
+# INITIALIZING THE EXPORTABLE FILE
+Redirect output to: @edRoot@.uma
+	# 
+	# FILE HEAD
+	Start a new line
+		Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# UCODE_2005 MAIN input file"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# Model Name:"; [G0]
+		Export expression: "@edModelName@"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+	End line
+	# Writing the OPTIONS input block
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# OPTIONS"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN OPTIONS Keywords"; [G0]
+	End line
+	Start a new line
+		Export expression: " Verbose="; [G0]
+		Export expression: @rgUcodeOutputOptions@; [I5]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: "END OPTIONS"; [G0]
+	End line
+	# 
+	# UCODE_CONTROL_DATA input block
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# CONTROL information"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN UCODE_CONTROL_DATA Keywords"; [G0]
+	End line
+	Start a new line
+		Export expression: " ModelName="; [G0]
+		Export expression: "@edModelName@"; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#UNITS"; [G0]
+	End line
+	Start a new line
+		Export expression: " ModelLengthUnits= NA      #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " ModelMassUnits= NA        #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " ModelTimeUnits= NA        #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#PERFORMANCE"; [G0]
+	End line
+	Start a new line
+		Export expression: " Sensitivities="; [G0]
+		If: SimulationMode=1
+			Export expression: "NO"; [G0]
+		Else
+			Export expression: "YES"; [G0]
+		End if
+		Export expression: "       #user-defined value, depends on SimulationMode"; [G0]
+	End line
+	Start a new line
+		Export expression: " Optimize="; [G0]
+		If: SimulationMode=3
+			Export expression: "YES"; [G0]
+		Else
+			Export expression: "NO"; [G0]
+		End if
+		Export expression: "            #user-defined value, depends on SimulationMode"; [G0]
+	End line
+	Start a new line
+		Export expression: " Linearity= NO             #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " Prediction= NO            #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " LinearityAdv= NO          #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " NonLinearIntervals= NO    #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " SOSsurface= NO            #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " StdErrOne="; [G0]
+		Export expression: @cbPerfectData@; [G0]
+		Export expression: "              #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " EigenValues= YES          #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#PRINTING"; [G0]
+	End line
+	Start a new line
+		Export expression: " StarRes="; [G0]
+		If: @cbStartRes@=1
+			Export expression: "YES"; [G0]
+		Else
+			Export expression: "NO"; [G0]
+		End if
+		Export expression: "             #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " IntermedRes="; [G0]
+		If: @cbIntermedRes@=1
+			Export expression: "YES"; [G0]
+		Else
+			Export expression: "NO"; [G0]
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " FinalRes="; [G0]
+		If: @cbFinalRes@=1
+			Export expression: "YES"; [G0]
+		Else
+			Export expression: "NO"; [G0]
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " StarSens="; [G0]
+		If: @comboStartSens@=0
+			Export expression: "NONE"; [G0]
+		Else
+			If: @comboStartSens@=1
+				Export expression: "DSS"; [G0]
+			Else
+				If: @comboStartSens@=2
+					Export expression: "ONEPERCENTSS"; [G0]
+				Else
+					If: @comboStartSens@=3
+						Export expression: "ALLSS"; [G0]
+					Else
+						If: @comboStartSens@=4
+							Export expression: "UNSCALED"; [G0]
+						Else
+							If: @comboStartSens@=5
+								Export expression: "ALL"; [G0]
+							End if
+						End if
+					End if
+				End if
+			End if
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " IntermedSens="; [G0]
+		If: @comboIntermedSens@=0
+			Export expression: "NONE"; [G0]
+		Else
+			If: @comboIntermedSens@=1
+				Export expression: "DSS"; [G0]
+			Else
+				If: @comboIntermedSens@=2
+					Export expression: "ONEPERCENTSS"; [G0]
+				Else
+					If: @comboIntermedSens@=3
+						Export expression: "ALLSS"; [G0]
+					Else
+						If: @comboIntermedSens@=4
+							Export expression: "UNSCALED"; [G0]
+						Else
+							If: @comboIntermedSens@=5
+								Export expression: "ALL"; [G0]
+							End if
+						End if
+					End if
+				End if
+			End if
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " FinalSens="; [G0]
+		If: @comboFinalSens@=0
+			Export expression: "NONE"; [G0]
+		Else
+			If: @comboFinalSens@=1
+				Export expression: "DSS"; [G0]
+			Else
+				If: @comboFinalSens@=2
+					Export expression: "ONEPERCENTSS"; [G0]
+				Else
+					If: @comboFinalSens@=3
+						Export expression: "ALLSS"; [G0]
+					Else
+						If: @comboFinalSens@=4
+							Export expression: "UNSCALED"; [G0]
+						Else
+							If: @comboFinalSens@=5
+								Export expression: "ALL"; [G0]
+							End if
+						End if
+					End if
+				End if
+			End if
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " DataExchange="; [G0]
+		If: @cbDataExchange@=1
+			Export expression: "YES"; [G0]
+		Else
+			Export expression: "NO"; [G0]
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " CreateInitFiles= YES     #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: "END UCODE_CONTROL_DATA"; [G0]
+	End line
+	# 
+	# REG_GN_CONTROLS input block
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# REGRESSION information"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN REG_GN_CONTROLS Keywords"; [G0]
+	End line
+	Start a new line
+		Export expression: "#ESTIMATION STOP"; [G0]
+	End line
+	Start a new line
+		Export expression: " TolPar="; [G0]
+		Export expression: @adeUcodeTolerance@; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " TolSOSC="; [G0]
+		Export expression: @adeUcodeSOSC@; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " MaxIter="; [G0]
+		Export expression: @adeUcodeMaxiter@; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#PARAMETER CHANGE PER ITERATION"; [G0]
+	End line
+	Start a new line
+		Export expression: " MaxChange="; [G0]
+		Export expression: @adeUcodeMaxChange@; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " MaxChangeRealm="; [G0]
+		If: @comboMaxChangeRealm@=0
+			Export expression: "NATIVE"; [G0]
+		Else
+			If: @comboFinalSens@=1
+				Export expression: "REGRESSION"; [G0]
+			End if
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#MARQUARDT"; [G0]
+	End line
+	Start a new line
+		Export expression: " MqrtDirection= 85.4       #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " MqrtFactor= 1.5           #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " MqrtIncrement= 0.001      #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#QUASI-NEWTON UPDATING"; [G0]
+	End line
+	Start a new line
+		Export expression: " QuasiNewton="; [G0]
+		Export expression: @cbQuasiNewton@; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	If: @cbQuasiNewton@=1
+		Start a new line
+			Export expression: " QNiter="; [G0]
+			Export expression: @adeQNIter@; [G0]
+			Export expression: "           #user-defined value"; [G0]
+		End line
+		Start a new line
+			Export expression: " QNsosr="; [G0]
+			Export expression: @adeQNsosr@; [G0]
+			Export expression: "           #user-defined value"; [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: " OmitDefault= 0            #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " Stats_On_Nonconverge="; [G0]
+		If: @comboFinalSens@=0
+			Export expression: "NO"; [G0]
+		Else
+			Export expression: "YES"; [G0]
+		End if
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: " TolParWtOS= 10            #preset value. only used if WtOSConstant>0"; [G0]
+	End line
+	Start a new line
+		Export expression: "#DYNAMIC OMISSION of insensitive parameters"; [G0]
+	End line
+	Start a new line
+		Export expression: " OmitInsensitive= NO       #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " MinimumSensRatio= 0.005   #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: " ReincludeSensRatio= 0.02  #preset value"; [G0]
+	End line
+	Start a new line
+		Export expression: "#TRUST-REGION modification of Gauss-Newton regression"; [G0]
+	End line
+	Start a new line
+		Export expression: " TrustRegion="; [G0]
+		Export expression: @cbTrustRegion@; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	If: @cbTrustRegion@=1
+		Start a new line
+			Export expression: " MaxStep="; [G0]
+			Export expression: @adeUcodeMaxStep@; [G0]
+			Export expression: "           #user-defined value"; [G0]
+		End line
+		Start a new line
+			Export expression: " ConsecMax="; [G0]
+			Export expression: @adeUcodeConsecMax@; [G0]
+			Export expression: "           #user-defined value"; [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "END REG_GN_CONTROLS"; [G0]
+	End line
+	# 
+	# MODEL_COMMAND_LINES input block
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# CONTROL EXECUTION of the MODEL"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN MODEL_COMAND_LINES Keywords"; [G0]
+	End line
+	Start a new line
+		Export expression: " Command="; [G0]
+		Export expression: "@edRunSutra@"; [G0]
+		Export expression: "           #user-defined value"; [G0]
+	End line
+	Start a new line
+		Export expression: " Purpose="; [G0]
+		If: SimulationMode=1
+			Export expression: "FORWARD"; [G0]
+		Else
+			Export expression: "FORWARD&DER"; [G0]
+		End if
+		Export expression: "           #user-defined value, depends on SimulationMode"; [G0]
+	End line
+	Start a new line
+		Export expression: " CommandID="; [G0]
+		Export expression: "@edRunSutra@"; [G0]
+	End line
+	Start a new line
+		Export expression: "END MODEL_COMAND_LINES"; [G0]
+	End line
+	# 
+	# PARAMETER_DATA and DERIVED_PARAMETERS input blocks
+	# Check if there are UCODE parameters defined in the parameters TAB
+	If: @adeParameterCount@=0
+		Alert: "Warning: No parameter has been defined for UCODE parameter estimation"
+		# Write the PARAMETER_DATA input block
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------" [G0]
+		End line
+		Start a new line
+			Export expression: "# PARAMETER information" [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------" [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "#Warning: No PARAMETER has been defined for this UCODE simulation" [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+	Else
+		Evaluate expression: SUTRA_L_FreeNamedStringLists()
+		# List the UCODE parameter_names defined in SUTRA layers
+		If: SutraDimensions=2
+			Loop for: Nodes
+				# DATA SET 14B - NODEWISE DATA
+				If: (Thickness.UString_Thickness!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", Thickness.UString_Thickness)
+				End if
+				If: (SUTRA Mesh.UString_POR!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_POR)
+				End if
+			End loop
+			Loop for: Elements
+				# DATA SET #15B - ELEMENTWISE DATA
+				If: (SUTRA Mesh.UString_PMAX!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_PMAX)
+				End if
+				If: (SUTRA Mesh.UString_PMIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_PMIN)
+				End if
+				If: (SUTRA Mesh.UString_ANGLE1!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_ANGLE1)
+				End if
+				If: (SUTRA Mesh.UString_ALMAX!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_ALMAX)
+				End if
+				If: (SUTRA Mesh.UString_ALMIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_ALMIN)
+				End if
+				If: (SUTRA Mesh.UString_ATMAX!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_ATMAX)
+				End if
+				If: (SUTRA Mesh.UString_ATMIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_ATMIN)
+				End if
+			End loop
+			Loop for: Nodes
+				# DATA SET #17 - DATA FOR FLUID SOURCES AND SINKS
+				If: (SUTRA Mesh.UString_QIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_QIN)
+				End if
+				If: (SUTRA Mesh.UString_UIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_UIN)
+				End if
+				# DATA SET #18 DATA FOR ENERGY OR SOLUTE MASS SOURCES AND SINKS
+				If: (SUTRA Mesh.UString_QUIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_QUIN)
+				End if
+				# DATA SET #19 - DATA FOR SPECIFIED PRESSURE NODES
+				If: (SUTRA Mesh.UString_PBC!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_PBC)
+				End if
+				If: (SUTRA Mesh.UString_pUBC!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_pUBC)
+				End if
+				# DATA SET #20 DATA FOR SPECIFIED CONCENTRATION OR TEMPERATURE NODES
+				If: (SUTRA Mesh.UString_UBC!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList("DefinedSearchStrings", SUTRA Mesh.UString_UBC)
+				End if
+			End loop
+		End if
+		# Count simple and derived UCODE parameters defined in the parameters TAB
+		Set Variable: IParCount:= 0
+		Set Variable: IDerParCount:= 0
+		If: @adeParameterCount@>0
+			Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+				If: Sutra_ParameterExpression(EstimParamNumber)=""
+					Set Variable: IParCount:= IParCount + 1
+				Else
+					Set Variable: IDerParCount:= IDerParCount + 1
+				End if
+			End loop
+		End if
+		# Write the PARAMETER_DATA input block
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------" [G0]
+		End line
+		Start a new line
+			Export expression: "# PARAMETER information" [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------" [G0]
+		End line
+		# Check if there are simple (not-derived) parameter defined in the parameters TAB
+		If: IParCount=0
+			Start a new line
+				Export expression: " " [G0]
+			End line
+			Start a new line
+				Export expression: "#Warning: No PARAMETER has been defined for this UCODE simulation" [G0]
+			End line
+			Start a new line
+				Export expression: " " [G0]
+			End line
+		Else
+			Start a new line
+				Export expression: " " [G0]
+			End line
+			Start a new line
+				Export expression: "BEGIN PARAMETER_DATA Table " [G0]
+			End line
+			Start a new line
+				Export expression: "nrow=" [G0]
+				Export expression: IParCount; [G0]
+				Export expression: "ncol=12 ColumnLabels" [G0]
+			End line
+			Start a new line
+				Export expression: "ParamName     StartValue LowerValue UpperValue Constrain UpperConstraint LowerConstraint Adjustable PerturbAmt Transform SenMethod ScalePval" [G0]
+			End line
+			# Print the PARAMETER table if the parameter names are defined both in the parameter TAB and the SUTRA layers
+			Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+				Set Variable: IsDefinedPar:= 0
+				Set Variable: ParamName:= Sutra_EstimatedParameter(EstimParamNumber)
+				# Check if the parameter name is "simple" (not-derived).
+				If: Sutra_ParameterExpression(EstimParamNumber)=""
+					# Check if the UCODE parameters defined in the Parameters TAB are defined in the SUTRA layers as well
+					If: SUTRA_L_PositionInNamedStringList("DefinedSearchStrings",ParamName)!=-1
+						Set Variable: IsDefinedPar:= 1
+					End if
+					If: IsDefinedPar = 0
+						# Check if the parameter_name defined is a global parameter
+						If: ParamName = "COMPFL"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "CW"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "SIGMAW"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "RHOW0"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "URHOW0"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "DRWDU"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "VISC0"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "COMPMA"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "CS"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "SIGMAS"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "RHOS"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "ADSMOD"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "CHI1"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "CHI2"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "PRODF0"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "PRODS0"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "PRODF1"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "PRODS1"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "GRAVX"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "GRAVY"
+							Set Variable: IsDefinedPar:= 1
+						End if
+						If: ParamName = "GRAVZ"
+							Set Variable: IsDefinedPar:= 1
+						End if
+					End if
+				Else
+					# ParamName is a derived parameter (IsDefined=2)
+					Set Variable: IsDefinedPar:= 2
+				End if
+				If: IsDefinedPar=0
+					# ParamName is a simple parameter not defined in any SUTRA layer
+					Alert: "Please note: The parameter '" + ParamName + "' has not been defined in any SUTRA layer"
+				End if
+				# Print the parameter information por simple and global parameters
+				If: IsDefinedPar!=2
+					Start a new line
+						Export expression: ParamName ; [G0]
+						If: Length(ParamName)>12
+							Alert: "Please Note: UCODE_2005 only supports parameter names of up to 12 characters. You may want to review the parameter names defined."
+						End if
+						Loop for: Variable BlankIndex from: Length(ParamName) to: 13 step: 1
+							Export expression: " " [G0]
+						End loop
+						Export expression: Sutra_InitialGuessParamValue(EstimParamNumber); [G9]
+						Export expression: Sutra_MinimumParamValue(EstimParamNumber); [G10]
+						Export expression: Sutra_MaximumParamValue(EstimParamNumber); [G10]
+						#Print whether the Parameter is "Constraint" or not
+						If: Sutra_IsConstraint(EstimParamNumber)
+							Export expression: "      " [G0]
+							Export expression: "yes"; [G0]
+						Else
+							Export expression: "       " [G0]
+							Export expression: "no"; [G0]
+						End if
+						Export expression: Sutra_UpperConstraint(EstimParamNumber); [G15]
+						Export expression: Sutra_LowerConstraint(EstimParamNumber); [G15]
+						#Print whether the Parameter is "Adjustable" or not
+						If: Sutra_IsEstimated(EstimParamNumber)
+							Export expression: "       " [G0]
+							Export expression: "yes"; [G0]
+						Else
+							Export expression: "        " [G0]
+							Export expression: "no"; [G0]
+						End if
+						Export expression: Sutra_PerturbationParameter(EstimParamNumber); [G10]
+						#Print whether the Parameter is "Log Transformed" or not
+						If: Sutra_LogTransformedParmeter(EstimParamNumber)
+							Export expression: "      " [G6]
+							Export expression: "yes"; [G0]
+						Else
+							Export expression: "       " [G7]
+							Export expression: "no"; [G0]
+						End if
+						If: SimulationMode=1
+							Export expression: "        1"; [G0]
+						Else
+							Export expression: "        2"; [G0]
+						End if
+						Export expression: "   10e-99" [G0]
+					End line
+				End if
+			End loop
+		End if
+		Start a new line
+			Export expression: "END PARAMETER_DATA" [G0]
+		End line
+	End if
+	# Writing the DERIVED_PARAMETER input block
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# DERIVED PARAMETER information"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	# Check if there is any derived parameter defined
+	If: IDerParCount=0
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "#Please Note: No DERIVED PARAMETER has been defined for this UCODE estimation" [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+	Else
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "#Please Note: The information on DERIVED PARAMETERS is printed in file:"; [G0]
+			Export expression: "@edRoot@" [G0]
+			Export expression: ".udp"; [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "BEGIN DERIVED_PARAMETERS Files"; [G0]
+		End line
+		Start a new line
+			Export expression: "@edRoot@" [G0]
+			Export expression: ".udp"; [G0]
+		End line
+		Start a new line
+			Export expression: "END DERIVED_PARAMETERS"; [G0]
+		End line
+	End if
+	# 
+	# LINEAR_PRIOR_INFORMATION input block
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# PRIOR information" [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	# check if there is any prior information defined
+	If: @adePriorInfoEquationCount@=0
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "#Please Note: No PRIOR INFORMATION has been defined for this UCODE estimation" [G0]
+		End line
+	Else
+		# Prior information groups: IsEstimated, NotEstimated
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "BEGIN PRIOR_INFORMATION_GROUPS Table"; [G0]
+		End line
+		Start a new line
+			Export expression: "nrow=2 ncol=2   ColumnLabels;" [G0]
+		End line
+		Start a new line
+			Export expression: "GroupName   UseFlag"; [G0]
+		End line
+		Start a new line
+			Export expression: "IsUsed      yes"; [G0]
+		End line
+		Start a new line
+			Export expression: "NotUsed     no"; [G0]
+		End line
+		Start a new line
+			Export expression: "END PRIOR_INFORMATION_GROUPS"; [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "#Please Note: The information on LINEAR PRIOR INFORMATION is printed in file:"; [G0]
+			Export expression: "@edRoot@" [G0]
+			Export expression: ".upi"; [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "BEGIN LINEAR_PRIOR_INFORMATION Files" [G0]
+		End line
+		Start a new line
+			Export expression: "@edRoot@" [G0]
+			Export expression: ".upi"; [G0]
+		End line
+		Start a new line
+			Export expression: "END LINEAR_PRIOR_INFORMATION" [G0]
+		End line
+	End if
+	# 
+	# MODEL_INPUT_FILES input block
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# Model INPUT FILES"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN MODEL_INPUT_FILES Keywords"; [G0]
+	End line
+	Start a new line
+		Export expression: "ModInFile=" [G0]
+		Export expression: "@edRoot@" [G0]
+		Export expression: ".inp"; [G0]
+	End line
+	Start a new line
+		Export expression: "TemplateFile=" [G0]
+		Export expression: "@edRoot@" [G0]
+		Export expression: ".tpl"; [G0]
+	End line
+	Start a new line
+		Export expression: "END MODEL_INPUT_FILES"; [G0]
+	End line
+	# 
+	# MODEL_OUTPUT_FILES input block
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# Model OUTPUT FILES"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "#Please Note: The information on OUTPUT FILES is printed in file:"; [G0]
+		Export expression: "@edRoot@" [G0]
+		Export expression: ".uof"; [G0]
+	End line
+	# end .uma file
+End file
+# 
+# HERE, WE WRITE THE LIST OF DERIVED PARAMETERS IN A SEPARATE FILE (*.udp)
+If: IDerParCount!=0
+	Redirect output to: @edRoot@.udp
+		# Here we check which parameter layer the derived parameter on Parameter Tab belongs to, if the parameter is node- or element-related,and how many derived parameters will be exported
+		Set Variable: NodeCount:= 0
+		Set Variable: ElementCount:= 0
+		Loop for: Nodes
+			If: Thickness.UString_Thickness!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= Thickness.UString_Thickness
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", Thickness.UString_Thickness)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", Thickness.UString_Thickness)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_POR!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_POR
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_POR)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_POR)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_QIN!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_QIN
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_QIN)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_QIN)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_UIN!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_UIN
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_UIN)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_UIN)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_QUIN!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_QUIN
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_QUIN)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_QUIN)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_PBC!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_PBC
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_PBC)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_PBC)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_pUBC!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_pUBC
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_pUBC)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_pUBC)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_UBC!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_UBC
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: NodeCount:= NodeCount+1
+							If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", UString_UBC)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("NodeParameterNames", UString_UBC)
+							End if
+						End if
+					End if
+				End loop
+			End if
+		End loop
+		Loop for: Elements
+			If: UString_PMAX!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_PMAX
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_PMAX)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_PMAX)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_PMIN!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_PMIN
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_PMIN)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_PMIN)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_ANGLE1!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_ANGLE1
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_ANGLE1)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_ANGLE1)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_ALMAX!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_ALMAX
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_ALMAX)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_ALMAX)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_ALMIN!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_ALMIN
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_ALMIN)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_ALMIN)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_ATMAX!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_ATMAX
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_ATMAX)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_ATMAX)
+							End if
+						End if
+					End if
+				End loop
+			End if
+			If: UString_ATMIN!=""
+				#Add the parameter_name found into the list of derived parameters to export, if this is the case
+				Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+					# Look for the same parameter_name in the list of Parameter_names in the TAB
+					If: Sutra_EstimatedParameter(EstimParamNumber)= UString_ATMIN
+						# Check if the parameter_name is a derived parameter
+						If: Sutra_ParameterExpression(EstimParamNumber)!=""
+							Set Variable: ElementCount:= ElementCount+1
+							If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", UString_ATMIN)< 0
+								Evaluate expression: SUTRA_L_AddToNamedStringList("ElementParameterNames", UString_ATMIN)
+							End if
+						End if
+					End if
+				End loop
+			End if
+		End loop
+		Set Variable: NodElemCount:= NodeCount + ElementCount
+		# Writing the file head
+		Start a new line
+			Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+		End line
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "# UCODE_2005 DERIVED PARAMETERS input file"; [G0]
+		End line
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "# Model Name:"; [G0]
+			Export expression: "@edModelName@"; [G0]
+		End line
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+		End line
+		# Writing the DERIVED_PARAMETER input block
+		Start a new line
+			Export expression: " "; [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------"; [G0]
+		End line
+		Start a new line
+			Export expression: "# DERIVED PARAMETER information" [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------"; [G0]
+		End line
+		Start a new line
+			Export expression: " "; [G0]
+		End line
+		Start a new line
+			Export expression: "BEGIN DERIVED_PARAMETERS Table"; [G0]
+		End line
+		Start a new line
+			Export expression: "nrow=" [G0]
+			Export expression: NodElemCount; [G0]
+			Export expression: "ncol=2 ColumnLabels"; [G0]
+		End line
+		Start a new line
+			Export expression: "DerParName   DerParEqn"; [G0]
+		End line
+                # Here we print the derived parameters in the table.
+		Set Variable: OK:= 1
+		Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+			# Check if the parameter is "derived".
+			If: Sutra_ParameterExpression(EstimParamNumber)!=""
+				Set Variable: ParamName:= Sutra_EstimatedParameter(EstimParamNumber)
+				#Flag to stop the loop if Error
+				If: OK
+					# Check if a Derived ParamName is also defined in any SUTRA layer. Derived Parameters ALWAYS must have a relation with a SUTRA layer, because they are defined spacially
+					If: SUTRA_L_PositionInNamedStringList("DefinedSearchStrings",ParamName)!=-1
+						# Check if the derived parameter is node-distributed
+						If: SUTRA_L_PositionInNamedStringList("NodeParameterNames", ParamName)>= 0
+							Loop for: Nodes
+								# here we check if the node is part of a contour of a Derived Parameter
+								If: (Thickness.UString_Thickness=ParamName)|(UString_POR=ParamName)|(UString_QIN=ParamName)|(UString_UIN=ParamName)|(UString_QUIN=ParamName)|(UString_PBC=ParamName)|(UString_pUBC=ParamName)|(UString_UBC=ParamName)
+									Start a new line
+										Set Variable: DerParamName:= EstimParamNumber + "_" + NodeNumber()
+										Export expression: DerParamName [G0]
+										If: Length(DerParamName)>12
+											Alert: "Warning: UCODE_2005 only supports derived parameter names of up to 12 characters. You may try to reduce the number of nodes, elements or defined parameters in this simulation."
+										End if
+										Loop for: Variable BlankIndex from: Length(ParamName) to: 13 step: 1
+											Export expression: " " [G0]
+										End loop
+										If: Sutra_ParamExpressionUsesXY(EstimParamNumber)
+											Export expression: Sutra_SubstitutedParamExpression(EstimParamNumber,X(),Y()) [G0]
+										Else
+											Export expression: Sutra_ParameterExpression(EstimParamNumber) [G0]
+										End if
+									End line
+								End if
+							End loop
+						End if
+						# Check if the derived parameter is element-distributed
+						If: SUTRA_L_PositionInNamedStringList("ElementParameterNames", ParamName)>= 0
+							Loop for: Elements
+								# here we check if the element is part of a contour of a Derived Parameter
+								If: (UString_PMAX=ParamName)|(UString_PMIN=ParamName)|(UString_ANGLE1=ParamName)|(UString_ALMAX=ParamName)|(UString_ALMIN=ParamName)|(UString_ATMAX=ParamName)|(UString_ATMIN=ParamName)
+									Start a new line
+										Set Variable: DerParamName:= EstimParamNumber + "_" + ElementNumber()
+										Export expression: DerParamName [G0]
+										If: Length(DerParamName)>12
+											Alert: "Warning: UCODE_2005 only supports derived parameter names of up to 12 characters. You may try to reduce the number of nodes, elements or defined parameters in this simulation."
+										End if
+										Loop for: Variable BlankIndex from: Length(ParamName) to: 13 step: 1
+											Export expression: " " [G0]
+										End loop
+										If: Sutra_ParamExpressionUsesXY(EstimParamNumber)
+											Export expression: Sutra_SubstitutedParamExpression(EstimParamNumber,X(),Y()) [G0]
+										Else
+											Export expression: Sutra_ParameterExpression(EstimParamNumber) [G0]
+										End if
+									End line
+								End if
+							End loop
+						End if
+						# 					End if
+					Else
+						# ParamName is a derived parameter not defined in any SUTRA layer
+						Alert: "Error: The derived parameter '" + ParamName + "' has not been defined in any SUTRA layer"
+						Set Variable: OK:= 0
+					End If
+				End if
+			End if
+		End loop
+		Start a new line
+			Export expression: "END DERIVED_PARAMETERS" [G0]
+		End line
+		# End .udp file
+	End file
+End if
+# 
+# HERE, WE WRITE THE LIST OF PRIOR INFORMATION IN A SEPARATE FILE
+If: @adePriorInfoEquationCount@>0
+	Redirect output to: @edRoot@.upi
+		# Writing the file head
+		Start a new line
+			Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+		End line
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "# UCODE_2005 PRIOR INFORMATION input file"; [G0]
+		End line
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "# Model Name:"; [G0]
+			Export expression: "@edModelName@"; [G0]
+		End line
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+		End line
+		# Writing the LINEAR_PRIOR_INFORMATION input block
+		Start a new line
+			Export expression: " "; [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------;" [G0]
+		End line
+		Start a new line
+			Export expression: "# PRIOR information"; [G0]
+		End line
+		Start a new line
+			Export expression: "# -----------------------------------"; [G0]
+		End line
+		Start a new line
+			Export expression: " "; [G0]
+		End line
+		# prior information list of expressions
+		Start a new line
+			Export expression: " "; [G0]
+		End line
+		Start a new line
+			Export expression: "BEGIN LINEAR_PRIOR_INFORMATION Table"; [G0]
+		End line
+		Start a new line
+			Export expression: "nrow=" [G0]
+			Export expression: @adePriorInfoEquationCount@; [I10]
+			Export expression: "ncol=6   ColumnLabels"; [G0]
+		End line
+		Start a new line
+			Export expression: "PriorName            Equation   PriorInfoValue   Statistic   StatFlag   GroupName"; [G0]
+		End line
+		Loop for: Variable PriorInfoIndex from: 1 to: @adePriorInfoEquationCount@ step: 1
+			Start a new line
+				Export expression: Sutra_PriorInfoName(PriorInfoIndex) [G0]
+				Loop for: Variable BlankIndex from: Length(Sutra_PriorInfoName(PriorInfoIndex)) to: 20 step: 1
+					Export expression: " " [G0]
+				End loop
+				Export expression: Sutra_PriorInfoEqExpression(PriorInfoIndex); [G0]
+				Export expression: Sutra_PriorInfoEqValue(PriorInfoIndex); [G0]
+				Export expression: Sutra_PriorInfoStatistic(PriorInfoIndex); [F10.6]
+				Export expression: Sutra_PriorInfoStatFlag(PriorInfoIndex); [G0]
+				If: Sutra_PriorInfoUseFlag(PriorInfoIndex)
+					Export expression: "IsUsed"; [G0]
+				Else
+					Export expression: "NotUsed"; [G0]
+				End if
+			End line
+		End loop
+		Start a new line
+			Export expression: "END LINEAR_PRIOR_INFORMATION"; [G0]
+		End line
+		# End .upi file
+	End file
+End if
+# 
+# HERE, WE WRITE THE LIST OF OUTPUT FILES IN A SEPARATE FILE
+Redirect output to: @edRoot@.uof
+	# Writing the file head
+	Start a new line
+		Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# UCODE_2005 OUTPUT FILES input file"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# Model Name:"; [G0]
+		Export expression: "@edModelName@"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+	End line
+	# Writing the MODEL_OUTPUT_FILES input block
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: "# Model OUTPUT FILES"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN MODEL_OUTPUT_FILES Keywords"; [G0]
+	End line
+	Start a new line
+		Export expression: "ModOutFile=" [G0]
+		Export expression: "@edRoot@" [G0]
+		Export expression: ".obs"; [G0]
+	End line
+	Start a new line
+		Export expression: "InstructionFile=" [G0]
+		Export expression: "@edRoot@" [G0]
+		Export expression: ".ext"; [G0]
+	End line
+	Start a new line
+		Export expression: "Category=Obs"; [G0]
+	End line
+# ##MAY BE WILL NEED TO ADD HERE THE SUTRA .LST FILE TO EXTRACT FLUX OBSERVATIONS
+	Start a new line
+		Export expression: "END MODEL_OUTPUT_FILES"; [G0]
+	End line
+End file
+

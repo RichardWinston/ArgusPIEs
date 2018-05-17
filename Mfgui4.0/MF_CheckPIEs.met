@@ -1,0 +1,34 @@
+# 
+Set Variable: PIEVersionOK:= MODFLOW_L_CheckVersion(1, 9, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW List PIE is not installed!")
+Else
+	If: !PIEVersionOK
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW List PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it.")
+	End if
+End if
+Set Variable: PIEVersionOK:= MODFLOW_BL_CheckVersion(1, 8, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW BlockList PIE is not installed!")
+Else
+	If: !PIEVersionOK
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW BlockList PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it.")
+	End if
+End if
+Set Variable: PIEVersionOK:= MODFLOW_JF_CheckVersion(1, 9, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW JoinFiles PIE is not installed!")
+Else
+	If: !PIEVersionOK
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW JoinFiles PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it.")
+	End if
+End if
+Set Variable: PIEVersionOK:= MODFLOW_RF_CheckVersion(1, 0, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW ReadFileValue PIE is not installed!")
+Else
+	If: !PIEVersionOK
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: MODFLOW ReadFileValue PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it.")
+	End if
+End if
+

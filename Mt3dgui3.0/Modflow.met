@@ -1,0 +1,152 @@
+# 
+# modflow.met
+# Template modified from:
+# MODFLOW/MOC3D Export Template Version 3.0
+# Modified by Richard Winston 3/8/99
+# 
+# Remove all files from ReadFileValues PIE.
+Evaluate expression: MODFLOW_RF_Clear_Files()
+# 
+# The following "pie command" command causes the MODFLOW PIE to replace the line
+# containing the name of a file with the contents of that file when the template
+# is run by the PIE.
+#
+# pie command: begin_to_replace_files
+# pie command: replace_file MF_DefineVariables.met
+# begin modification
+# pie command: replace_file MF_DefineNewVariables.met
+# end modification
+# pie command: replace_file MF_SetVariables.met
+# begin modification
+# pie command: replace_file MF_SetNewVariables.met
+# end modification
+# pie command: replace_file MF_SetOutputBudget.met
+# begin modification
+# pie command: replace_file MF_NewSetOutputBudget.met
+# pie command: replace_file MF_NewSetCalcElev.met
+# end modification
+# pie command: replace_file MF_SetCalcElev.met
+# pie command: replace_file MF_InitializeProgressBar.met
+# pie command: replace_file MF_CheckPIEs.met
+# pie command: replace_file MF_CacheData.met
+# pie command: stop_replacing_files
+# 
+# ----------------------------------------------------
+# Specification of NameFile so that MODFLOW will run without prompting from screen.
+# ----------------------------------------------------
+If: ContinueSimulation
+	Redirect output to: modflow.bf
+		Start a new line
+			Export expression: FileName [G0]
+		End line
+	End file
+End if
+# 
+# 
+# The following "pie command" command causes the MODFLOW PIE to replace the line
+# containing the name of a file with the contents of that file when the template
+# is run by the PIE.
+#
+# pie command: begin_to_replace_files
+# pie command: replace_file MF_Name.met
+# pie command: replace_file MF_MOC_ini.met
+# pie command: replace_file MF_BAS.met
+# pie command: replace_file MF_OC.met
+# pie command: replace_file MF_BCF.met
+# pie command: replace_file MF_RCH.met
+# pie command: replace_file MF_EVT.met
+# pie command: replace_file MF_GHB.met
+# pie command: replace_file MF_RIV.met
+# pie command: replace_file MF_DRN.met
+# pie command: replace_file MF_WEL.met
+# pie command: replace_file MF_STR.met
+# pie command: replace_file MF_HFB.met
+# pie command: replace_file MF_FHB.met
+# begin modification
+# pie command: replace_file MF_SPG.met
+# pie command: replace_file MF_GeoTLAK.met
+# end modification
+# pie command: replace_file MF_SOL.met
+# pie command: replace_file MF_MOC3D.met
+# pie command: replace_file MF_Err.met
+# pie command: stop_replacing_files
+# 
+# 
+# ----------------------------------------------------
+# Run MODFLOW.EXE
+# ----------------------------------------------------
+# batch file to run MODFLOW
+Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Run MODFLOW or MOC3D")
+Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+If: ContinueSimulation
+	If: !RunMOC3D
+		Redirect output to: MODFLOW.BAT
+			Start a new line
+				Export expression: "@adeMODFLOWPath@"; [G0]
+				Export expression: "/wait"; [G0]
+			End line
+			If: UseCalibration
+				Start a new line
+					Export expression: GetMyDirectory() [G0]
+					Export expression: "WaitForMe.exe"; [G0]
+				End line
+				Start a new line
+					Export expression: GetMyDirectory() [G0]
+					Export expression: "SelectChar.exe"; [G0]
+				End line
+			Else
+				Start a new line
+					Export expression: "Pause" [G0]
+				End line
+			End if
+		End file
+	Else
+		# batch file to run MOC3D
+		Redirect output to: MOC3D.BAT
+			Start a new line
+				Export expression: "@adeMOC3DPath@" [G0]
+			End line
+			If: UseCalibration
+				Start a new line
+					Export expression: GetMyDirectory() [G0]
+					Export expression: "WaitForMe.exe"; [G0]
+				End line
+				Start a new line
+					Export expression: GetMyDirectory() [G0]
+					Export expression: "SelectChar.exe"; [G0]
+				End line
+			Else
+				Start a new line
+					Export expression: "Pause" [G0]
+				End line
+			End if
+		End file
+	End if
+End if
+# 
+If: ContinueSimulation&RunMODFLOW
+	If: !RunMOC3D
+		Execute external code: "MODFLOW.BAT"
+	Else
+		Execute external code: "MOC3D.BAT"
+	End if
+End if
+Set Variable: LineCount:= MODFLOW_ProgressBarSaveToFile("@adeFileName@.err")
+If: (LineCount>1)&ShowWarnings
+	Alert: "Errors or Warnings while exporting!  See error file (@adeFileName@.err)"
+End if
+If: (LineCount<0)&ShowWarnings
+	Alert: "Error when attempting to save (@adeFileName@.err) to disk."
+End if
+Evaluate expression: MODFLOW_ProgressBarFree()
+Evaluate expression: MODFLOW_RF_Save_Files()
+Evaluate expression: MODFLOW_RF_Clear_Files()
+If: (MODFLOW_L_GetErrorCount()>0)&ShowWarnings
+	Alert: "Error: There were errors in the List PIE. These could be due to unit thicknesses that were less than zero. If not, contact the PIE developer for assistance."
+End if
+If: (MODFLOW_BL_GetErrorCount()>0)&ShowWarnings
+	Alert: "Error: There were errors in the BlockList PIE. Contact the PIE developer for assistance."
+End if
+Evaluate expression: MODFLOW_BL_FreeAllBlockLists()
+Evaluate expression: MODFLOW_L_FreeAllLists()
+

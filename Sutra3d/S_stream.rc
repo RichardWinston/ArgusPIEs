@@ -1,0 +1,15 @@
+/* Secrets of Delphi 2, by Ray Lischner. (1996, Waite Group Press).
+   Chapter 3: Streams and File I/O
+ */
+
+S_Stream S_StringTable
+BEGIN
+  1, "\012Seek error"
+  2, "\030Invalid seek origin (%d)"
+  3, "\020Putback overflow"
+  4, "\024Cannot find resource"
+  5, "\026Cannot access resource"
+  6, "\040Seek past end of resource stream"
+  7, "\041Cannot write to a resource stream"
+  0
+END

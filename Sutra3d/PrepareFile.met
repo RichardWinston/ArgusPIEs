@@ -1,0 +1,450 @@
+# Editable SUTRA TEMPLATE for UCODE UNIVERSAL (.uni) input file goes here
+Define Variable: EstimParamNumber [Integer]
+Define Variable: PriorInfoIndex [Integer]
+Define Variable: ParamName [String]
+Define Variable: CommaIndex [Integer]
+# 
+Define Variable: DefinedSearchStrings [String]
+Define Variable: ICount [Integer]
+Define Variable: ParameterIndex [Real]
+Define Variable: SutraDimensions [Integer]
+If: (@rgDimensions@=1)
+	Set Variable: SutraDimensions:= 3
+Else
+	Set Variable: SutraDimensions:= 2
+End if
+# 
+Redirect output to: @edRoot@.pre
+	# INITIALIZING THE EXPORTABLE FILE
+	# Writing the FILE HEAD
+	Start a new line
+		Export expression: "#*******************************************" [G0]
+	End line
+	Start a new line
+		Export expression: "#  THIS IS THE PREPARE INPUT FILE (.pre)   *" [G0]
+	End line
+	Start a new line
+		Export expression: "#*******************************************" [G0]
+	End line
+	# Writing the FILE FORMAT DIRECTIONS
+	Start a new line
+		Export expression: "#MAIN DIRECTIONS for the PREPARE Input File" [G0]
+	End line
+	Start a new line
+		Export expression: "#-Indicator codes are used in the very first column of each line to indicate its purpose (#,F,<,>,/ and P)." [G0]
+	End line
+	Start a new line
+		Export expression: "#-Comments can be included by placing a # sign ONLY in the very first column." [G0]
+	End line
+	Start a new line
+		Export expression: "#-Blank lines are ignored." [G0]
+	End line
+	# Writing the FUNCTION FILE OPTION
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****READ A FUNCTION FILE(.fnc)" [G0]
+	End line
+	Start a new line
+		Export expression: "#(F yes=use a function file, F no=do not use a function file)" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "F " [G0]
+		Export expression: "yes" [G0]
+	End line
+	# Writing the NAMES OF ASSOCIATED FILES
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****LIST TEMPLATE FILES AND ASSOCIATED APPLICATION MODEL INPUT FILES, IN PAIRS" [G0]
+	End line
+	Start a new line
+		Export expression: "#(< root-a.tpl=name of the template file which contains symbols for which values are to be substituted)" [G0]
+	End line
+	Start a new line
+		Export expression: "#(> root-b.inp=name of the application model input file that is created by substituting numbers into the preceding template file)" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "#template for sutra input file" [G0]
+	End line
+	Start a new line
+		Export expression: "< " [G0]
+		Export expression: "@edRoot@.tpl" [G0]
+	End line
+	Start a new line
+		Export expression: "> " [G0]
+		Export expression: "@edRoot@.inp" [G0]
+	End line
+	# Writing the PARAMETER INFORMATION
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****PARAMETER INFORMATION" [G0]
+	End line
+	Start a new line
+		Export expression: "#Use one line for each parameter considered; each line contains 8 items separated by one or more blank spaces, of the type:" [G0]
+	End line
+	Start a new line
+		Export expression: "#(/ search-string start-value reasonable-minimum reasonable-maximum perturbation format log-transform estimate)" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#-SEARCH-STRING; a parameter name, of the type !name,!" [G0]
+	End line
+	Start a new line
+		Export expression: "#(any combination of upper and lower case letters, and numerals can be used; more than one comas can be used before the last '!' sign)" [G0]
+	End line
+	Start a new line
+		Export expression: "#(important!: the total # of characters of search-string, including both '!' signs, defines the # of spaces used to insert numbers into template files)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-START-VALUE; parameter value with which the parameter-estimation iterations begin." [G0]
+	End line
+	Start a new line
+		Export expression: "#-REASONABLE-MIN; for phase=11, native value of the lower limit of the range over which the parameter value is varied." [G0]
+	End line
+	Start a new line
+		Export expression: "#-REASONABLE-MAX; for phase=11, native value of the upper limit of the range over which the parameter value is varied." [G0]
+	End line
+	Start a new line
+		Export expression: "#-PERTURBATION; for most phases, the fractional amount the parameter is perturbed to calculate sensitivities." [G0]
+	End line
+	Start a new line
+		Export expression: "#(for phase=11 a value greater than 1 is needed, for all othe phases, use values lower than one)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-FORMAT; the format needs to be compatible with the format specified for the input file in the application model documentation." [G0]
+	End line
+	Start a new line
+		Export expression: "#(to specify the format, C language formatting rules are used; d=integer #, f=real #, e=real # in exponential notation)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-LOG-TRANSFORM; choose wether to use native or log-transformed for parameter values." [G0]
+	End line
+	Start a new line
+		Export expression: "#(1=use log-transform pararmeters, 0=use native values; 1 is recommended for parameters for which negative values are not reasonable)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-ESTIMATE; for phase=3, 1=estimate the parameter by including it in the regression, 2= leave the parameter at the specified value throughout the regression. " [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "#/ search-string     start-val        reas-min        reas-max   perturb   format  log-transf  estimate" [G0]
+	End line
+	# HERE, CHECKING THE PARAMETER SEARCH-STRINGS DEFINED IN THE PARAMETER LAYERS
+	Set Variable: DefinedSearchStrings:= "DefinedSearchStrings"
+	# 	Evaluate expression: SUTRA_L_FreeNamedStringLists()
+	# 
+	If: SutraDimensions=2
+		# DATA SET #9 - FLUID PROPERTIES
+		# COMPFL - fluid compressibility
+		If: Sutra_ParameterIndex("COMPFL")
+			Set Variable: ParamName:= "COMPFL"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# CW - Specific heat (leave blank for solute transport)
+		If: Sutra_ParameterIndex("CW")
+			Set Variable: ParamName:= "CW"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# SIGMAW
+		# - For solute: diffusivity of solute in fluid including tortuosity
+		# - For energy: thermal conductivity of fluid
+		If: Sutra_ParameterIndex("SIGMAW")
+			Set Variable: ParamName:= "SIGMAW"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# VISC0
+		# - for solute transport: FLUID VISCOSITY
+		# - for energy transport: scales from MKS units to units of choice
+		If: Sutra_ParameterIndex("VISC0")
+			Set Variable: ParamName:= "VISC0"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# DATA SET #10 - SOLID MATRIX PROPERTIES
+		# COMPMA - Solid matrix compressibility
+		If: Sutra_ParameterIndex("COMPMA")
+			Set Variable: ParamName:= "COMPMA"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# CS - Solid grain specific heat (leave blank for solute transport)
+		If: Sutra_ParameterIndex("CS")
+			Set Variable: ParamName:= "CS"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# SIGMAS - Solid grain diffusivity
+		# - For solute: leave blank
+		# - For energy: thermal conductivity of grains
+		If: Sutra_ParameterIndex("SIGMAS")
+			Set Variable: ParamName:= "SIGMAS"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# RHOS - Solid grain density
+		If: Sutra_ParameterIndex("RHOS")
+			Set Variable: ParamName:= "RHOS"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# DATA SET #11 - ADSORPTION PARAMETERS
+		If: @comboADSMOD@>0
+			# CHI1 - Value of linear, Freundlich or Langmuir distribution coefficient
+			If: Sutra_ParameterIndex("CHI1")
+				Set Variable: ParamName:= "CHI1"
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+			End if
+			If: @comboADSMOD@>1
+				# CHI2 - Value of Freundlich or Langmuir coefficient
+				If: Sutra_ParameterIndex("CHI2")
+					Set Variable: ParamName:= "CHI2"
+					Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+				End if
+			End if
+		End if
+		# DATA SET #12 - PRODUCTION OF ENERGY OR SOLUTE MASS
+		# PRODFO - zero-order rate of production in fluid for energy
+		# or solute mass
+		If: Sutra_ParameterIndex("PRODF0")
+			Set Variable: ParamName:= "PRODF0"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# PRODSO -  zero-order rate of production in the immobile phase
+		# for energy or adsorbate mass
+		If: Sutra_ParameterIndex("PRODS0")
+			Set Variable: ParamName:= "PRODS0"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# PRODF1 - first-order rate of solute mass production in fluid
+		# (leave blank for energy transport)
+		If: Sutra_ParameterIndex("PRODF1")
+			Set Variable: ParamName:= "PRODF1"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		# PRODS1 - first-order rate of production of adsorbate mass in
+		# immobile phase (leave blank for energy transport)
+		If: Sutra_ParameterIndex("PRODS1")
+			Set Variable: ParamName:= "PRODS1"
+			Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, ParamName)
+		End if
+		###
+		Loop for: Nodes
+			# DATA SET 14B - NODEWISE DATA
+			If: (SUTRA Mesh.UString_POR!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_POR)
+			End if
+		End loop
+		Loop for: Elements
+			# DATA SET #15B - ELEMENTWISE DATA
+			If: (SUTRA Mesh.UString_PMAX!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_PMAX)
+			End if
+			If: (SUTRA Mesh.UString_PMIN!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_PMIN)
+			End if
+			If: (SUTRA Mesh.UString_ANGLE1!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_ANGLE1)
+			End if
+			If: (SUTRA Mesh.UString_ALMAX!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_ALMAX)
+			End if
+			If: (SUTRA Mesh.UString_ALMIN!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_ALMIN)
+			End if
+			If: (SUTRA Mesh.UString_ATMAX!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_ATMAX)
+			End if
+			If: (SUTRA Mesh.UString_ATMIN!="")
+				Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_ATMIN)
+			End if
+		End loop
+		Loop for: Nodes
+			# DATA SET #17 - DATA FOR FLUID SOURCES AND SINKS
+			If: IsNumber(SUTRA Mesh.QIN)
+				If: (SUTRA Mesh.UString_QIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_QIN)
+				End if
+				If: SUTRA Mesh.QIN>=0
+					If: IsNumber(SUTRA Mesh.UIN)
+						If: (SUTRA Mesh.UString_UIN!="")
+							Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_UIN)
+						End if
+					End if
+				End if
+			End if
+			# DATA SET #18 DATA FOR ENERGY OR SOLUTE MASS SOURCES AND SINKS
+			If: IsNumber(SUTRA Mesh.QUIN)
+				If: (SUTRA Mesh.UString_QUIN!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_QUIN)
+				End if
+			End if
+			# DATA SET #19 - DATA FOR SPECIFIED PRESSURE NODES
+			If: IsNumber(SUTRA Mesh.PBC)
+				If: (SUTRA Mesh.UString_PBC!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_PBC)
+				End if
+				If: (SUTRA Mesh.UString_pUBC!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_pUBC)
+				End if
+			End if
+			# DATA SET #20 DATA FOR SPECIFIED CONCENTRATION OR TEMPERATURE NODES
+			If: IsNumber(SUTRA Mesh.UBC)
+				If: (SUTRA Mesh.UString_UBC!="")
+					Evaluate expression: SUTRA_L_AddToNamedStringList(DefinedSearchStrings, SUTRA Mesh.UString_UBC)
+				End if
+			End if
+		End loop
+	End if
+	# HERE, THE LIST OF PARAMETERS WITH THE DEFINED INFORMATION
+	If: @adeParameterCount@>0
+		Loop for: Variable EstimParamNumber from: 1 to: @adeParameterCount@ step: 1
+			Set Variable: ParamName:= Sutra_EstimatedParameter(EstimParamNumber)
+			If: SUTRA_L_PositionInNamedStringList(DefinedSearchStrings,ParamName)!=-1
+				Start a new line
+					If: !Sutra_IsEstimated(EstimParamNumber)
+						Export expression: "#" [G0]
+					End if
+					Export expression: "/!" [G0]
+					Export expression: ParamName [G0]
+					If: Length(ParamName)<11
+						Loop for: Variable CommaIndex from: Length(ParamName) to: 10 step: 1
+							Export expression: "," [G0]
+						End loop
+					End if
+					Export expression: "!" [G0]
+					Export expression: "   " [G0]
+					Export expression: Sutra_InitialGuessParamValue(EstimParamNumber) [G13]
+					Export expression: "   " [G0]
+					Export expression: Sutra_MinimumParamValue(EstimParamNumber) [G13]
+					Export expression: "   " [G0]
+					Export expression: Sutra_MaximumParamValue(EstimParamNumber) [G13]
+					Export expression: "     " [G0]
+					Export expression: Sutra_PerturbationParameter(EstimParamNumber) [G0]
+					Export expression: "   " [G0]
+					Export expression: "%13.6e" [G0]
+					Export expression: "           " [G0]
+					If: Sutra_LogTransformedParmeter(EstimParamNumber)
+						Export expression: "1" [G0]
+					Else
+						Export expression: "0" [G0]
+					End if
+					Export expression: "         " [G0]
+					If: Sutra_IsEstimated(EstimParamNumber)
+						Export expression: "1" [G0]
+					Else
+						Export expression: "0" [G0]
+					End if
+				End line
+			Else
+				Alert: "Warning: '"+ParamName+"' Search-String is not associated to any Parameter Layer and was not exported to the Prepare file."
+			End if
+		End loop
+	End if
+	# Writing the PRIOR INFORMATION
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****PRIOR INFORMATION ON PARAMETERS" [G0]
+	End line
+	Start a new line
+		Export expression: "#Important!: Search-strings for all parameters must be specified before'." [G0]
+	End line
+	Start a new line
+		Export expression: "#Use one line for each definition of prior information; each line contains 4 items separated by one or more blank spaces, of the type:" [G0]
+	End line
+	Start a new line
+		Export expression: "#(equation stat stat-flag plot-symbol)" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#-EQUATION; equation defining how the prior information is related to the parameters defined in section 'parameter information', of the type:" [G0]
+	End line
+	Start a new line
+		Export expression: "#(pvalue = C1 x P1 & C2 x P2)" [G0]
+	End line
+	Start a new line
+		Export expression: "#(pvalue=the prior information native value, C1,C2=coefficients with user defined values, P1,P2='search-string' parameter names, &=+)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-STAT; statistic value used to calculate the weight for the prior information (type 'stat' before the value)." [G0]
+	End line
+	Start a new line
+		Export expression: "#(important!: when using log-transf. parameters, specify the log-transf. statitistic, even though PVALUE is a native value)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-STAT-FLAG; indicate what is 'statistic' refered to.(type 'flag' before the value)." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0=variance, 1=standard deviation, 2=coeff. of variation)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-PLOT-SYMBOL; an integrer printed in the output files only for graphical analyses. use different values for different prior information types." [G0]
+	End line
+	Start a new line
+		Export expression: "#(type 'plot' before the value)" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "# P   /   equation   /   stat   /   stat-flag   /   plot-symbol" [G0]
+	End line
+	If: @adePriorInfoEquationCount@ > 0
+		Loop for: Variable PriorInfoIndex from: 1 to: @adePriorInfoEquationCount@ step: 1
+			Start a new line
+				Export expression: Sutra_PriorInformationEquation(PriorInfoIndex) [G0]
+			End line
+		End loop
+	End if
+	# Writing the END OF FILE
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "END" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+End file
+

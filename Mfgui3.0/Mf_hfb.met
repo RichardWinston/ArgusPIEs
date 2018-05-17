@@ -1,0 +1,111 @@
+# 
+# MF_HFB.met
+# ----------------------------------------------------
+# Horizontal Flow Barrier Package
+# ----------------------------------------------------
+If: ContinueSimulation&HFBChoice&ExportHFB
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Horizontal Flow Barrier Package")
+	Evaluate expression: MODFLOW_Delete_File("temphfb1")
+	Evaluate expression: MODFLOW_Delete_File("temphfb2")
+	Evaluate expression: MODFLOW_Delete_File("temphfb3")
+	Redirect output to: @adeFileName@.hfb
+	End file
+	Set Variable: TotalBarrierCount:= 0
+	Evaluate expression: MODFLOW_BL_InitializeGridInformation("MODFLOW FD Grid")
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+			Redirect output to: TempHFB3
+				Evaluate expression: MODFLOW_BL_ReInitializeVertexList()
+				Evaluate expression: MODFLOW_BL_AddVertexLayer("Horizontal Flow Barrier Unit" + LayIndex)
+				Set Variable: CurrentBarrierCount:= 0
+				If: MODFLOW_BL_GetCountOfCrossColumnLists()
+					Set Variable: BarrierIndex:= -1
+					Loop for: Objects in layer: Horizontal Flow Barrier Unit[LayIndex]
+						Set Variable: BarrierIndex:= BarrierIndex + 1
+						If: MODFLOW_BL_GetCountOfACrossColumnList(BarrierIndex)
+							Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACrossColumnList(BarrierIndex)-1 step: 1
+								Set Variable: Row1:= MODFLOW_BL_GetCrossColumnRow(BarrierIndex, CellIndex)
+								Set Variable: Row2:= MODFLOW_BL_GetCrossColumnNeighborRow(BarrierIndex, CellIndex)
+								Set Variable: Column1:= MODFLOW_BL_GetCrossColumnColumn(BarrierIndex, CellIndex)
+								Set Variable: Column2:= Column1
+								If: !((Row2>RowCount)|(Row2<1))
+									If: (MODFLOW_LAYCON(LayIndex)=0)|(MODFLOW_LAYCON(LayIndex)=2)
+										# need to take into account multiple layer per unit
+										Set Variable: AverageCellThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column1, Row1, LayIndex)
+										Set Variable: HYDCHR:= Barrier Hydraulic Conductivity * AverageCellThickness / Barrier Thickness
+									Else
+										Set Variable: HYDCHR:= Barrier Hydraulic Conductivity / Barrier Thickness
+									End if
+									Set Variable: HYDCHR:= HYDCHR * Abs(MODFLOW_BL_GetCrossColumnCompositeX(BarrierIndex, CellIndex) / MODFLOW_BL_GetCrossColumnCompositeLength(BarrierIndex, CellIndex))
+									Set Variable: CurrentBarrierCount:= CurrentBarrierCount + 1
+									Start a new line
+										Export expression: Row1 [I10]
+										Export expression: Column1 [I10]
+										Export expression: Row2 [I10]
+										Export expression: Column2 [I10]
+										Export expression: HYDCHR [G10]
+									End line
+								End if
+							End loop
+						End if
+					End loop
+				End if
+				If: MODFLOW_BL_GetCountOfCrossRowLists()
+					Set Variable: BarrierIndex:= -1
+					Loop for: Objects in layer: Horizontal Flow Barrier Unit[LayIndex]
+						Set Variable: BarrierIndex:= BarrierIndex + 1
+						If: MODFLOW_BL_GetCountOfACrossRowList(BarrierIndex)
+							Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACrossRowList(BarrierIndex)-1 step: 1
+								Set Variable: Row1:= MODFLOW_BL_GetCrossRowRow(BarrierIndex, CellIndex)
+								Set Variable: Row2:= Row1
+								Set Variable: Column1:= MODFLOW_BL_GetCrossRowColumn(BarrierIndex, CellIndex)
+								Set Variable: Column2:= MODFLOW_BL_GetCrossRowNeighborColumn(BarrierIndex, CellIndex)
+								If: !((Column2>ColumnCount)|(Column2<1))
+									If: (MODFLOW_LAYCON(LayIndex)=0)|(MODFLOW_LAYCON(LayIndex)=2)
+										Set Variable: AverageCellThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column1, Row1, LayIndex)
+										Set Variable: HYDCHR:= Horizontal Flow Barrier Unit[LayIndex].Barrier Hydraulic Conductivity * AverageCellThickness / Horizontal Flow Barrier Unit[LayIndex].Barrier Thickness
+									Else
+										Set Variable: HYDCHR:= Horizontal Flow Barrier Unit[LayIndex].Barrier Hydraulic Conductivity / Horizontal Flow Barrier Unit[LayIndex].Barrier Thickness
+									End if
+									Set Variable: HYDCHR:= HYDCHR * Abs(MODFLOW_BL_GetCrossRowCompositeY(BarrierIndex, CellIndex) / MODFLOW_BL_GetCrossRowCompositeLength(BarrierIndex, CellIndex))
+									Set Variable: CurrentBarrierCount:= CurrentBarrierCount + 1
+									Start a new line
+										Export expression: Row1 [I10]
+										Export expression: Column1 [I10]
+										Export expression: Row2 [I10]
+										Export expression: Column2 [I10]
+										Export expression: HYDCHR [G10]
+									End line
+								End if
+							End loop
+						End if
+					End loop
+				End if
+				Evaluate expression: MODFLOW_BL_ReInitializeVertexList()
+			End file
+			Redirect output to: temphfb2
+				Start a new line
+					Export expression: CurrentBarrierCount [I10]
+				End line
+			End file
+			Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+				Set Variable: TotalBarrierCount:= TotalBarrierCount + CurrentBarrierCount
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.hfb", "temphfb2", "@adeFileName@.hfb")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.hfb", "temphfb3", "@adeFileName@.hfb")
+			End loop
+		End if
+	End loop
+	If: ContinueSimulation
+		Redirect output to: temphfb1
+			Start a new line
+				Export expression: TotalBarrierCount [I10]
+			End line
+		End file
+		Evaluate expression: MODFLOW_Join_Files("temphfb1", "@adeFileName@.hfb", "@adeFileName@.hfb")
+		Evaluate expression: MODFLOW_Delete_File("temphfb1")
+		Evaluate expression: MODFLOW_Delete_File("temphfb2")
+		Evaluate expression: MODFLOW_Delete_File("temphfb3")
+	End if
+End if
+# 

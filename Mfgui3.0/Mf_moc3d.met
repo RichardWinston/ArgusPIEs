@@ -1,0 +1,751 @@
+# 
+# MF_MOC3D.met
+# ----------------------------------------------------
+# Solute Transport section
+# ----------------------------------------------------
+If: ContinueSimulation&(TransportFlag=1) & RunMoc3d
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Solute Transport")
+	# ----------------------------------------------------
+	# MOC3D Transport
+	# ----------------------------------------------------
+	If: Transport>0
+		# MOC3D Name File
+		Set Variable: j:= 0
+		Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+			If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)=0
+				Set Variable: j:= 1
+				If: ShowWarnings
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Layer " + LayIndex + " is non-simulated. Non simulated layers are not allowed in the MOC3D subgrid!")
+				End if
+			End if
+		End loop
+		If: j=1
+			Set Variable: err_moc_1:= 1
+			# Alert: "Non simulated layers are not allowed in the MOC3D subgrid!"
+		End if
+		If: ContinueSimulation
+			Redirect output to: @adeFileName@.mcn
+				Start a new line
+					# File for LISTING results of MOC3D simulation
+					Export expression: "CLST 71 "+FileName+".out" [G0]
+				End line
+				If: Transport=1
+					Start a new line
+						# File for reading main MOC3D input data file
+						Export expression: "MOC 72 "+FileName+".moc" [G0]
+					End line
+				Else
+					If: Transport=2
+						Start a new line
+							# File for reading main MOCIMP input data file
+							Export expression: "MOCIMP 72 "+FileName+".moc" [G0]
+						End line
+					End if
+				End if
+				If: RechargeChoice=1
+					Start a new line
+						# File for reading concentrations in recharge
+						Export expression: "CRCH 73 "+FileName+".crc" [G0]
+					End line
+				End if
+				If: MOC_CNC_OPT=1 | MOC_CNC_OPT=3
+					Start a new line
+						# File for writing concentration output (text)
+						If: PrintMOC3DLocations
+							Export expression: "CNCA 74 "+FileName+".cn2" [G0]
+						Else
+							Export expression: "CNCA 74 "+FileName+".cna" [G0]
+						End if
+					End line
+				End if
+				If: MOC_CNC_OPT=2 | MOC_CNC_OPT=3
+					Start a new line
+						# File for writing concentration output (binary)
+						Export expression: "CNCB 75 "+FileName+".cnb" [G0]
+					End line
+				End if
+				If: MOC_VEL_OPT=1 | MOC_VEL_OPT=3
+					Start a new line
+						# File for writing velocity output (text)
+						Export expression: "VELA 76 "+FileName+".vla" [G0]
+					End line
+				End if
+				If: MOC_VEL_OPT=2 | MOC_VEL_OPT=3
+					Start a new line
+						# File for writing velocity output (binary)
+						Export expression: "VELB 77 "+FileName+".vlb" [G0]
+					End line
+				End if
+				If: MOC_PRT_OPT=1 | MOC_PRT_OPT=3
+					Start a new line
+						# File for writing paricle location output (text)
+						Export expression: "PRTA 78 "+FileName+".pta" [G0]
+					End line
+				End if
+				If: MOC_PRT_OPT=2 | MOC_PRT_OPT=3
+					Start a new line
+						# File for writing paricle location output (binary)
+						Export expression: "PRTB 79 "+FileName+".ptb" [G0]
+					End line
+				End if
+				If: AgeChoice
+					Start a new line
+						Export expression: "AGE 81 " + FileName + ".age" [G0]
+					End line
+				End if
+				If: DualPorosityChoice
+					Start a new line
+						Export expression: "DP 82 " + FileName + ".dp" [G0]
+					End line
+				End if
+				If: SimpleReactionChoice
+					Start a new line
+						Export expression: "DK 83 " + FileName + ".dk" [G0]
+					End line
+				End if
+				If: MOC_NUMOBS>0
+					Start a new line
+						# File for reading OBS package information
+						Export expression: "OBS 80 "+FileName+".obs" [G0]
+					End line
+					If: MOC_IOBSFL>0
+						Start a new line
+							# File for writing observation well data (one file, IOBSFL must be > 0)
+							Export expression: "DATA 100 "+FileName+".oba" [G0]
+						End line
+					Else
+						Loop for: Variable i from: 1 to: MOC_NUMOBS step: 1
+							Start a new line
+								Export expression: "DATA "+(99+i)+" "+FileName+i+".oba" [G0]
+							End line
+						End loop
+					End if
+				End if
+			End file
+		End if
+		# MOC3D Package:
+		If: ContinueSimulation&(ExportTRANS!=0)
+			Redirect output to: @adeFileName@.moc
+# Data Set 1
+				Start a new line
+					Export expression: Heading1 [G0]
+				End line
+# Data Set 2
+				Start a new line
+					Export expression: Heading2 [G0]
+				End line
+# Data Set 3
+				Start a new line
+					Export expression: FirstLay [I5]
+					Export expression: LastLay [I5]
+					Export expression: MOC_ISROW1 [I5]
+					Export expression: MOC_ISROW2 [I5]
+					Export expression: MOC_ISCOL1 [I5]
+					Export expression: MOC_ISCOL2 [I5]
+				End line
+# Data Set 4
+				Start a new line
+					Export expression: MOC_NODISP [I5]
+					Export expression: MOC_DECAY [E13.5]
+					Export expression: MOC_DIFFUS [E13.5]
+				End line
+# Data Set 5
+				Start a new line
+					Export expression: MOC_NPMAX [I5]
+					Export expression: if(MOC_NPCUST,-1,1)*MOC_NPTPND [I5]
+				End line
+# Data Set 6
+				If: MOC_NPCUST
+					# Custom particle positioning
+					Loop for: Variable i from: 1 to: MOC_NPTPND step: 1
+						Start a new line
+							Export expression: MODFLOW_MOC_PNEWL(i) [E13.5]
+							Export expression: MODFLOW_MOC_PNEWR(i) [E13.5]
+							Export expression: MODFLOW_MOC_PNEWC(i) [E13.5]
+						End line
+					End loop
+				End if
+# Data Set 7
+				Start a new line
+					Export expression: MOC_CELDIS [E13.5]
+					Export expression: MOC_FZERO [E13.5]
+					Export expression: MOC_INTRPL [I5]
+				End line
+				If: Transport=2
+					Start a new line
+						Export expression: MOC_FDTMTH [E13.5]
+						Export expression: MOC_NCXIT [I5]
+						Export expression: MOC_IDIREC [I5]
+						Export expression: MOC_EPSSLV [E13.5]
+						Export expression: MOC_MAXIT [I5]
+					End line
+				End if
+# Data Set 8
+				Start a new line
+					Export expression: if(MOC_NPNTCL<3,MOC_NPNTCL-2,MOC_NPNTCLN) [I5]
+					If: PrintMOC3DLocations
+						Export expression: -1 [I5]
+					Else
+						Export expression: 0 [I5]
+					End if
+					Export expression: if(MOC_NPNTVL<2,MOC_NPNTVL-1,MOC_NPNTVLN) [I5]
+					Export expression: 0 [I5]
+					Export expression: if(MOC_NPNTDL<3,MOC_NPNTDL-2,MOC_NPNTDLN) [I5]
+					Export expression: 0 [I5]
+					Export expression: if(!MOC_PRT_OPT,0,if(MOC_NPNTPL<3,MOC_NPNTPL-2,MOC_NPNTPLN)) [I5]
+				End line
+# Data Set 9
+				Start a new line
+					Export expression: MOC_CNOFLO [E13.5]
+				End line
+# Data Set 10
+				Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Start a new line
+								Export expression: "INTERNAL 1 (FREE)" [G0]
+								Export expression: 0 [I5]
+							End line
+							# only export the subgrid
+							Set Variable: n:= 0
+							Loop for: Blocks
+								If: Row()>=MOC_ISROW1 & Row()<=MOC_ISROW2 & Column()>=MOC_ISCOL1 & Column()<=MOC_ISCOL2
+									If: ((n=NColsSub)|(n=0))
+										Export expression: MODFLOW FD Grid.Init Concentration Unit[LayIndex] [E13.5]
+										Set Variable: n:= 0
+									Else
+										Export expression: MODFLOW FD Grid.Init Concentration Unit[LayIndex] [E13.5]
+									End if
+									Set Variable: n:= n+1
+									If: (n=NColsSub)
+										Start a new line
+										End line
+									End if
+								End if
+							End loop
+						End loop
+					End if
+				End loop
+				# cinfl array: size depends on subgrid existance and positioning
+# Data Set 11
+				If: ContinueSimulation&((MOC_ISROW1>1)|(MOC_ISROW2<NumRows())|(MOC_ISCOL1>1)|(MOC_ISCOL2<NumColumns())|(FirstMoc3DUnit>1)|(LastMoc3DUnit<MODFLOW_NLAY()))
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 1 [I5]
+					End line
+					Start a new line
+						If: (MOC_ISROW1>1)|(MOC_ISROW2<NumRows())|(MOC_ISCOL1>1)|(MOC_ISCOL2<NumColumns())
+							Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+								If: MODFLOW_SIMUL(LayIndex)!=0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										Export expression: MODFLOW_MOC_CINFL(LayIndex) [8E13.5]
+									End loop
+								End if
+							End loop
+						End if
+						If: FirstMoc3DUnit>1
+							Export expression: MODFLOW_MOC_CINFL(FirstMoc3DUnit-1) [8E13.5]
+						End if
+						If: LastMoc3DUnit<MODFLOW_NLAY()
+							Export expression: MODFLOW_MOC_CINFL(LastMoc3DUnit+1) [8E13.5]
+						End if
+					End line
+				End if
+# Data Set 12
+				Start a new line
+					Export expression: MODFLOW_L_GetListSize(ConcentrationList) [I5]
+				End line
+				If: MODFLOW_L_GetListSize(ConcentrationList)>0
+					Loop for: Variable i from: 1 to: MODFLOW_L_GetListSize(ConcentrationList) step: 1
+						Start a new line
+							Export expression: -i [I5]
+							Export expression: MODFLOW_L_GetFromList(ConcentrationList, i-1) [E13.5]
+						End line
+					End loop
+				End if
+# Data Set 13
+				Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Start a new line
+								Export expression: "INTERNAL 1 (FREE)" [G0]
+								Export expression: 7 [I5]
+							End line
+							# only export the subgrid
+							Set Variable: n:= 0
+							Loop for: Blocks
+								If: Row()>=MOC_ISROW1 & Row()<=MOC_ISROW2 & Column()>=MOC_ISCOL1 & Column()<=MOC_ISCOL2
+									If: ((n=NColsSub)|(n=0))
+										Export expression: MODFLOW FD Grid.Particle Regeneration Unit[LayIndex] [I5]
+										Set Variable: n:= 0
+									Else
+										Export expression: MODFLOW FD Grid.Particle Regeneration Unit[LayIndex] [I5]
+									End if
+									Set Variable: n:= n+1
+									If: (n=NColsSub)
+										Start a new line
+										End line
+									End if
+								End if
+							End loop
+						End loop
+					End if
+				End loop
+# Data Set 14
+				If: MOC_NODISP=0
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 1 [I5]
+					End line
+					Start a new line
+						Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Export expression: MODFLOW_MOC_ALONG(LayIndex) [8E13.5]
+								End loop
+							End if
+						End loop
+					End line
+# Data Set 15
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 1 [I5]
+					End line
+					Start a new line
+						Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Export expression: MODFLOW_MOC_ATRANH(LayIndex) [8E13.5]
+								End loop
+							End if
+						End loop
+					End line
+# Data Set 16
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 1 [I5]
+					End line
+					Start a new line
+						Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+							If: MODFLOW_SIMUL(LayIndex)!=0
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Export expression: MODFLOW_MOC_ATRANV(LayIndex) [8E13.5]
+								End loop
+							End if
+						End loop
+					End line
+				End if
+# Data Set 17
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 1 [I5]
+				End line
+				Start a new line
+					Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+						If: MODFLOW_SIMUL(LayIndex)!=0
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								Export expression: MODFLOW_MOC_RF(LayIndex) [8E13.5]
+							End loop
+						End if
+					End loop
+				End line
+# Data Set 18
+				Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+# Data Set 18A
+							Start a new line
+								Export expression: "INTERNAL 1 (FREE)" [G0]
+								Export expression: 0 [I5]
+							End line
+							# only export the subgrid
+							Set Variable: n:= 0
+							Loop for: Blocks
+								If: Row()>=MOC_ISROW1 & Row()<=MOC_ISROW2 & Column()>=MOC_ISCOL1 & Column()<=MOC_ISCOL2
+									If: ((n=NColsSub)|(n=0))
+										Export expression: MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [E13.5]
+										Set Variable: n:= 0
+									Else
+										Export expression: MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [E13.5]
+									End if
+									Set Variable: n:= n+1
+									If: (n=NColsSub)
+										Start a new line
+										End line
+									End if
+								End if
+							End loop
+# Data Set 18B
+							Start a new line
+								Export expression: "INTERNAL 1 (FREE)" [G0]
+								Export expression: 5 [I5]
+							End line
+							# only export the subgrid
+							Set Variable: n:= 0
+							Loop for: Blocks
+								If: Row()>=MOC_ISROW1 & Row()<=MOC_ISROW2 & Column()>=MOC_ISCOL1 & Column()<=MOC_ISCOL2
+									If: ((n=NColsSub)|(n=0))
+										Export expression: MODFLOW FD Grid.Porosity Unit[LayIndex] [E13.5]
+										Set Variable: n:= 0
+									Else
+										Export expression: MODFLOW FD Grid.Porosity Unit[LayIndex] [E13.5]
+									End if
+									Set Variable: n:= n+1
+									If: (n=NColsSub)
+										Start a new line
+										End line
+									End if
+								End if
+							End loop
+						End loop
+					End if
+				End loop
+			End file
+			# Evaluate expression: MODFLOW_MOC_EndZones()
+			#  MOC3D Concentrations in recharge
+			If: RechargeChoice!=0
+				Redirect output to: @adeFileName@.crc
+					Start a new line
+						Export expression: 0 [I5]
+					End line
+					# Export Recharge concentrations for stress period 1
+					Start a new line
+						Export expression: "INTERNAL 1.0  (FREE)" [G0]
+						Export expression: 0 [I5]
+					End line
+					# only export the subgrid
+					Set Variable: n:= 0
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					If: ContinueSimulation
+						Loop for: Blocks
+							If: Row()>=MOC_ISROW1 & Row()<=MOC_ISROW2 & Column()>=MOC_ISCOL1 & Column()<=MOC_ISCOL2
+								If: ((n=NColsSub)|(n=0))
+									Export expression: Recharge Concentration.Concentration1 [E13.5]
+									Set Variable: n:= 0
+								Else
+									Export expression: Recharge Concentration.Concentration1 [E13.5]
+								End if
+								Set Variable: n:= n+1
+								If: (n=NColsSub)
+									Start a new line
+									End line
+								End if
+							End if
+						End loop
+					End if
+					Loop for: Variable PeriodIndex from: 2 to: MODFLOW_NPER() step: 1
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+						If: ContinueSimulation
+							Start a new line
+								Export expression: MOC_INCRCH [I5]
+							End line
+							If: MOC_INCRCH=0
+								Start a new line
+									Export expression: "INTERNAL 1.0  (FREE)" [G0]
+									Export expression: 0 [I5]
+								End line
+								# only export the subgrid
+								Set Variable: n:= 0
+								Loop for: Blocks
+									If: Row()>=MOC_ISROW1 & Row()<=MOC_ISROW2 & Column()>=MOC_ISCOL1 & Column()<=MOC_ISCOL2
+										If: ((n=NColsSub)|(n=0))
+											Export expression: Recharge Concentration.Concentration[PeriodIndex] [E13.5]
+											Set Variable: n:= 0
+										Else
+											Export expression: Recharge Concentration.Concentration[PeriodIndex] [E13.5]
+										End if
+										Set Variable: n:= n+1
+										If: (n=NColsSub)
+											Start a new line
+											End line
+										End if
+									End if
+								End loop
+							End if
+						End if
+					End loop
+				End file
+			End if
+		End if
+		# MOC3D Observation well file
+		If: ExportOBS!=0
+			If: MOC_NUMOBS>0
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("MOC3D Observation well file")
+				If: ContinueSimulation
+					Redirect output to: @adeFileName@.obs
+						Start a new line
+							Export expression: MOC_NUMOBS [I5]
+							Export expression: MOC_IOBSFL [I5]
+						End line
+						Set Variable: n:= 1
+						Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+							# Set Variable: ContinueSimulation:=  MODFLOW_ProgressBarAdvance()
+							If: ContinueSimulation
+								If: LayIndex=FirstMoc3DUnit
+									Set Variable: M:= FirstMoc3DUnit-1
+								Else
+									Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+								End if
+							End if
+							If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Loop for: Blocks
+										Set Variable: DumRow:= Row()
+										Set Variable: DumCol:= Column()
+										Set Variable: DumLay:= M+DivIndex
+										Loop for: Objects in layer: MOC3D Observation Wells
+											Set Variable: LayerTop:= Elevation Top Unit[LayIndex]
+											Set Variable: LayerThickness:= (LayerTop - Elevation Bottom Unit[LayIndex]) / MODFLOW_NDIV(LayIndex)
+											Loop for: Variable i from: 1 to: 5 step: 1
+												Set Variable: WD:= MOC3D Observation Wells.Elevation[i]
+												If: WD!=$N/A
+													Set Variable: TML:= LayerTop-(DivIndex-1)*LayerThickness
+													Set Variable: BML:= LayerTop-DivIndex*LayerThickness
+													If: TML>WD & BML<=WD
+														Start a new line
+															Export expression: DumLay [I5]
+															Export expression: DumRow [I5]
+															Export expression: DumCol [I5]
+															Export expression: 99+n [I5]
+														End line
+														Set Variable: n:= n+1
+													End if
+												End if
+											End loop
+										End loop
+									End loop
+								End loop
+							End if
+						End loop
+					End file
+				End if
+			End if
+		End if
+		If: AgeChoice
+			Redirect output to: @adeFileName@.age
+				Start a new line
+					Export expression: AGER8 [G0]
+				End line
+			End file
+		End if
+		If: DualPorosityChoice
+			Redirect output to: @adeFileName@.dp
+				Start a new line
+					Export expression: IDPFO; [G0]
+					Export expression: IDPZO; [G0]
+					Export expression: IDPTIM; [G0]
+					Export expression: IDPPS; [G0]
+				End line
+				Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Start a new line
+							Export expression: "OPEN/CLOSE @adeFileName@.ic" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+							Export expression: 12; [G0]
+							Export expression: "DPCON" [G0]
+						End line
+						Start a new line
+							Export expression: "OPEN/CLOSE @adeFileName@.ip" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+							Export expression: 12; [G0]
+							Export expression: "DPPOR" [G0]
+						End line
+					End loop
+					Redirect output to: @adeFileName@.ic$LOOP$
+						Export matrix: Immobile Init Concentration Unit[LayIndex] [G0]
+					End file
+					Redirect output to: @adeFileName@.ip$LOOP$
+						Export matrix: Immob Porosity Unit[LayIndex] [G0]
+					End file
+				End loop
+				If: IDPTIM
+					Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+						Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DPXRAT" [G0]
+								End line
+								Export matrix: Immob Exch Coef Unit[LayIndex].Immob Exch Coef[PeriodIndex] [G0]
+								If: IDPFO
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+										Export expression: 12; [G0]
+										Export expression: "DPFO" [G0]
+									End line
+									Export matrix: Immob Decay Coef Unit[LayIndex].Immob Decay Coef[PeriodIndex] [G0]
+								End if
+								If: IDPZO
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+										Export expression: 12; [G0]
+										Export expression: "DPZO" [G0]
+									End line
+									Export matrix: Immob Growth Rate Unit[LayIndex].Immob Growth Rate[PeriodIndex] [G0]
+								End if
+							End loop
+						End loop
+					End loop
+				Else
+					Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Start a new line
+								Export expression: "OPEN/CLOSE @adeFileName@.li" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+								Export expression: 12; [G0]
+								Export expression: "DPXRAT" [G0]
+							End line
+							If: IDPFO
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.de" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DPFO" [G0]
+								End line
+							End if
+							If: IDPZO
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.go" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DPZO" [G0]
+								End line
+							End if
+						End loop
+						Redirect output to: @adeFileName@.li$LOOP$
+							Export matrix: Immob Exch Coef Unit[LayIndex].Immob Exch Coef [G0]
+						End file
+						If: IDPFO
+							Redirect output to: @adeFileName@.de$LOOP$
+								Export matrix: Immob Decay Coef Unit[LayIndex].Immob Decay Coef [G0]
+							End file
+						End if
+						If: IDPZO
+							Redirect output to: @adeFileName@.go$LOOP$
+								Export matrix: Immob Growth Rate Unit[LayIndex].Immob Growth Rate [G0]
+							End file
+						End if
+					End loop
+				End if
+			End file
+		End if
+		If: SimpleReactionChoice
+			Redirect output to: @adeFileName@.dk
+				Start a new line
+					Export expression: IDKRF; [G0]
+					Export expression: IDKTIM; [G0]
+					Export expression: IDKFO; [G0]
+					Export expression: IDKFS; [G0]
+					Export expression: IDKZO; [G0]
+					Export expression: IDKZS; [G0]
+				End line
+				If: IDKRF
+					Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Start a new line
+								Export expression: "OPEN/CLOSE @adeFileName@.re" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+								Export expression: 12; [G0]
+								Export expression: "DKRF" [G0]
+							End line
+						End loop
+						Redirect output to: @adeFileName@.re$LOOP$
+							Export matrix: Retardation Unit[LayIndex] [G0]
+						End file
+					End loop
+				End if
+				If: IDKTIM
+					Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+						Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								If: IDKFO
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+										Export expression: 12; [G0]
+										Export expression: "DKFO" [G0]
+									End line
+									Export matrix: Decay Coef Unit[LayIndex].Decay Coef [G0]
+								End if
+								If: IDKFS
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+										Export expression: 12; [G0]
+										Export expression: "DKFS" [G0]
+									End line
+									Export matrix: Sorbed Decay Coef Unit[LayIndex].Sorbed Decay Coef [G0]
+								End if
+								If: IDKZO
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+										Export expression: 12; [G0]
+										Export expression: "DKZO" [G0]
+									End line
+									Export matrix: Growth Rate Unit[LayIndex].Growth Rate [G0]
+								End if
+								If: IDKZS
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)"; [G0]
+										Export expression: 12; [G0]
+										Export expression: "DKZS" [G0]
+									End line
+									Export matrix: Sorbed Growth Rate Unit[LayIndex].Sorbed Growth Rate [G0]
+								End if
+							End loop
+						End loop
+					End loop
+				Else
+					Loop for: Variable LayIndex from: FirstMoc3DUnit to: LastMoc3DUnit step: 1
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							If: IDKFO
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.dd" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DKFO" [G0]
+								End line
+							End if
+							If: IDKFS
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.ds" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DKFS" [G0]
+								End line
+							End if
+							If: IDKZO
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.gd" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DKZO" [G0]
+								End line
+							End if
+							If: IDKZS
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.gs" + (LayIndex-1) + " 1.0 (FREE)"; [G0]
+									Export expression: 12; [G0]
+									Export expression: "DKZS" [G0]
+								End line
+							End if
+						End loop
+						If: IDKFO
+							Redirect output to: @adeFileName@.dd$LOOP$
+								Export matrix: Decay Coef Unit[LayIndex].Decay Coef [G0]
+							End file
+						End if
+						If: IDKFS
+							Redirect output to: @adeFileName@.ds$LOOP$
+								Export matrix: Sorbed Decay Coef Unit[LayIndex].Sorbed Decay Coef [G0]
+							End file
+						End if
+						If: IDKZO
+							Redirect output to: @adeFileName@.gd$LOOP$
+								Export matrix: Growth Rate Unit[LayIndex].Growth Rate [G0]
+							End file
+						End if
+						If: IDKZS
+							Redirect output to: @adeFileName@.gs$LOOP$
+								Export matrix: Sorbed Growth Rate Unit[LayIndex].Sorbed Growth Rate [G0]
+							End file
+						End if
+					End loop
+				End if
+			End file
+		End if
+	End if
+End if

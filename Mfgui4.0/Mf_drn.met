@@ -1,0 +1,310 @@
+# 
+# MF_DRN.met
+# ----------------------------------------------------
+# Drain Package
+# ----------------------------------------------------
+If: ContinueSimulation&(DrainChoice!=0)&(ExportDRN!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Drain Package")
+	Redirect output to: @adeFileName@.drn
+	End file
+	Set Variable: MaxDrains:= 0
+	Set Variable: err_line:= 0
+	Set Variable: err_area1:= 0
+	Set Variable: err_area2:= 0
+	Set Variable: DRN_MXDRN:= 0
+	Set Variable: CurrentDrainCount:= 0
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: PointLayerIsEmpty:= IsLayerEmpty(Point Drain Unit[LayIndex].Conductance)
+		If: @cbCondDrn@
+			Set Variable: LineLayerIsEmpty:= IsLayerEmpty(Line Drain Unit[LayIndex].Conductance)
+			If: @cbUseAreaDrains@
+				Set Variable: AreaLayerIsEmpty:= IsLayerEmpty(Area Drain Unit[LayIndex].Conductance)
+			End if
+		Else
+			Set Variable: LineLayerIsEmpty:= IsLayerEmpty(Line Drain Unit[LayIndex].Conductance Multiplier)
+			If: @cbUseAreaDrains@
+				Set Variable: AreaLayerIsEmpty:= IsLayerEmpty(Area Drain Unit[LayIndex].Conductance Multiplier)
+			End if
+		End if
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			If: LayIndex=1
+				Set Variable: M:= 0
+			Else
+				Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+			End if
+			# 
+			If: MODFLOW_SIMUL(LayIndex)!=0
+				# 
+				Loop for: Blocks
+					If: ContinueSimulation
+						Set Variable: AreaBoundaryInBlock:= 0
+						Set Variable: DumRow:= Row()
+						Set Variable: DumCol:= Column()
+						# 
+						If: !PointLayerIsEmpty
+							Loop for: Objects in layer: Point Drain Unit[LayIndex]
+								Set Variable: ThisConductance:= Point Drain Unit[LayIndex].Conductance
+								If: ThisConductance!=0
+									Set Variable: ThisElevation:= Point Drain Unit[LayIndex].Elevation
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex)
+									If: ShowWarnings&((ThisElevation>LayerTop)|(ThisElevation<LayerBottom))
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + DumCol + ", Row " + DumRow + ", and Layer " + DumLay + ", Point drain elevation does not lie within geologic unit: Point drain is placed in nearest model layer in geologic unit.")
+									End if
+									Set Variable: DumLay:= MODFLOW_Layer(LayIndex, LayerTop, LayerBottom, ThisElevation)
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Redirect output to: TempDrainPer
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisElevation [E13.5]
+													If: Point Drain Unit[LayIndex].On or Off Stress[PeriodIndex]
+														Export expression: ThisConductance; [E13.5]
+													Else
+														Export expression: 0; [E13.5]
+													End if
+													# MODPATH
+													If: MODPATHChoice
+														Export expression: Point Drain Unit[LayIndex].IFACE[PeriodIndex] [G0]
+													End if
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+										End if
+									End loop
+								End if
+							End loop
+						End if
+						If: @cbAltDrn@
+							If: !LineLayerIsEmpty
+								If: @cbCondDrn@
+									Set Variable: ThisConductance:= SumObjectsInBlock(Line Drain Unit[LayIndex].Conductance)
+								Else
+									Set Variable: ThisConductance:= WSumObjectsInBlock(Line Drain Unit[LayIndex].Conductance Multiplier)
+								End if
+								If: ThisConductance!=0
+									Set Variable: ThisElevation:= Line Drain Unit[LayIndex].Elevation
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex)
+									If: ShowWarnings&((ThisElevation>LayerTop)|(ThisElevation<LayerBottom))
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + DumCol + ", Row " + DumRow + ", and Layer " + DumLay + ", Line drain elevation does not lie within geologic unit: Line drain is placed in nearest model layer in geologic unit.")
+									End if
+									Set Variable: DumLay:= MODFLOW_Layer(LayIndex, LayerTop, LayerBottom, ThisElevation)
+									Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+									Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+										If: !(PeriodIndex>1&SteadyDrain=0)
+											Redirect output to: TempDrainPer
+												Start a new line
+													Export expression: DumLay [I10]
+													Export expression: DumRow [I10]
+													Export expression: DumCol [I10]
+													Export expression: ThisElevation [E13.5]
+													If: Line Drain Unit[LayIndex].On or Off Stress[PeriodIndex]
+														Export expression: ThisConductance; [E13.5]
+													Else
+														Export expression: 0; [E13.5]
+													End if
+													# MODPATH
+													If: MODPATHChoice
+														Export expression: Line Drain Unit[LayIndex].IFACE[PeriodIndex] [G0]
+													End if
+												End line
+											End file
+											Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+										End if
+									End loop
+								End if
+							End if
+						Else
+							If: !LineLayerIsEmpty
+								Loop for: Objects in layer: LINE DRAIN UNIT[LayIndex]
+									Set Variable: ThisElevation:= Line Drain Unit[LayIndex].Elevation
+									Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: LayerBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex)
+									Set Variable: SegmentLength:= ContourIntersectLength()
+									If: SegmentLength>0
+										If: ShowWarnings&((ThisElevation>LayerTop)|(ThisElevation<LayerBottom))
+											Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row ", + DumRow + ", and Layer " + DumLay + ", Line drain elevation does not lie within geologic unit: Line drain is placed in nearest model layer in geologic unit.")
+										End if
+										Set Variable: DumLay:= MODFLOW_Layer(LayIndex, LayerTop, LayerBottom, ThisElevation)
+										Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyDrain=0)
+												Redirect output to: TempDrainPer
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisElevation [E13.5]
+														If: Line Drain Unit[LayIndex].On or Off Stress[PeriodIndex]
+															If: @cbCondDrn@
+																Export expression: Line Drain Unit[LayIndex].Conductance; [E13.5]
+															Else
+																Export expression: SegmentLength*Line Drain Unit[LayIndex].Conductance Multiplier; [E13.5]
+															End if
+														Else
+															Export expression: 0; [E13.5]
+														End if
+														# MODPATH
+														If: MODPATHChoice
+															Export expression: Line Drain Unit[LayIndex].IFACE[PeriodIndex] [G0]
+														End if
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+											End if
+										End loop
+									End if
+								End loop
+							End if
+							# 
+							If: @cbUseAreaDrains@
+								If: !AreaLayerIsEmpty
+									Loop for: Objects in layer: AREA DRAIN UNIT[LayIndex]
+										Set Variable: AreaBoundaryInBlock:= 1
+										Set Variable: ThisElevation:= Area Drain Unit[LayIndex].Elevation
+										Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+										Set Variable: LayerBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex)
+										If: ShowWarnings&((ThisElevation>LayerTop)|(ThisElevation<LayerBottom))
+											Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + DumCol + ", Row " + DumRow + ", and Layer " + DumLay + ", Area drain elevation does not lie within geologic unit: Area drain is placed in uppermost model layer in geologic unit.")
+										End if
+										Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+										Set Variable: ContourArea:= ContourIntersectArea()
+										Set Variable: DumLay:= MODFLOW_Layer(LayIndex, LayerTop, LayerBottom, ThisElevation)
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyDrain=0)
+												Redirect output to: TempDrainPer
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: ThisElevation [E13.5]
+														If: Area Drain Unit[LayIndex].On or Off Stress[PeriodIndex]
+															If: @cbCondDrn@
+																Export expression: Area Drain Unit[LayIndex].Conductance; [E13.5]
+															Else
+																Export expression: ContourArea*Area Drain Unit[LayIndex].Conductance Multiplier; [E13.5]
+															End if
+														Else
+															Export expression: 0; [E13.5]
+														End if
+														# MODPATH
+														If: MODPATHChoice
+															Export expression: Area Drain Unit[LayIndex].IFACE[PeriodIndex] [G0]
+														End if
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+											End if
+										End loop
+									End loop
+								End if
+							End if
+						End if
+						If: @cbUseAreaDrains@
+							If: @cbCondDrn@
+								Set Variable: ThisConductance:= AREA Drain Unit[LayIndex].Conductance
+							Else
+								Set Variable: ThisConductance:= AREA Drain Unit[LayIndex].Conductance Multiplier
+							End if
+							If: (!AreaBoundaryInBlock)&(ThisConductance!=$N/A)
+								Set Variable: ThisElevation:= Area Drain Unit[LayIndex].Elevation
+								Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+								Set Variable: LayerBottom:= MODFLOW_L_GetFromOneBased3DList(BottomElevationList, DumCol, DumRow, LayIndex)
+								If: ShowWarnings&((ThisElevation>LayerTop)|(ThisElevation<LayerBottom))
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + DumCol + ", Row " + DumRow + ", and Layer " + DumLay + ", Area drain elevation does not lie within geologic unit: Area drain is placed in uppermost model layer in geologic unit.")
+								End if
+								Set Variable: CurrentDrainCount:= CurrentDrainCount + 1
+								Set Variable: ContourArea:= BlockArea()
+								Set Variable: DumLay:= MODFLOW_Layer(LayIndex, LayerTop, LayerBottom, ThisElevation)
+								Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+									If: !(PeriodIndex>1&SteadyDrain=0)
+										Redirect output to: TempDrainPer
+											Start a new line
+												Export expression: DumLay [I10]
+												Export expression: DumRow [I10]
+												Export expression: DumCol [I10]
+												Export expression: ThisElevation [E13.5]
+												If: Area Drain Unit[LayIndex].On or Off Stress[PeriodIndex]
+													If: @cbCondDrn@
+														Export expression: ThisConductance; [E13.5]
+													Else
+														Export expression: ContourArea*ThisConductance; [E13.5]
+													End if
+												Else
+													Export expression: 0; [E13.5]
+												End if
+												# MODPATH
+												If: MODPATHChoice
+													Export expression: Area Drain Unit[LayIndex].IFACE[PeriodIndex] [G0]
+												End if
+											End line
+										End file
+										Evaluate expression: MODFLOW_Join_Files("TempDrainPer" + PeriodIndex, "TempDrainPer", "TempDrainPer" + PeriodIndex)
+									End if
+								End loop
+							End if
+						End if
+					End if
+				End loop
+			End if
+		End if
+	End loop
+	If: ContinueSimulation
+		Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+			Redirect output to: TempDrain1
+				If: PeriodIndex>1&SteadyDrain=0
+					Start a new line
+						Export expression: -1 [I5]
+					End line
+				Else
+					Start a new line
+						Export expression: CurrentDrainCount [I5]
+					End line
+				End if
+			End file
+			If: CurrentDrainCount>MaxDrains
+				Set Variable: MaxDrains:= CurrentDrainCount
+			End if
+			If: !(PeriodIndex>1&SteadyDrain=0)
+				Evaluate expression: MODFLOW_Join_Files("TempDrain1", "TempDrainPer" + PeriodIndex, "TempDrain1")
+				Evaluate expression: MODFLOW_Delete_File("TempDrainPer" + PeriodIndex)
+			End if
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.drn", "TempDrain1", "@adeFileName@.drn")
+		End loop
+		Redirect output to: TempDrain1
+			Start a new line
+				Export expression: MaxDrains [I5]
+				If: IDRNCB>0&OneCBCFile=1
+					Set Variable: BUDUnit:= MF_GetUnitNumber("BUDUnit")
+					Export expression: BUDUnit [I5]
+					# Export expression: 33 [I5]
+				End if
+				If: IDRNCB>0&OneCBCFile=0
+					Set Variable: BDRUnit:= MF_GetUnitNumber("BDRUnit")
+					Export expression: BDRUnit [I5]
+					# Export expression: 27 [I5]
+				End if
+				If: IDRNCB=0
+					Export expression: 0 [I5]
+				End if
+				# MODPATH
+				If: MODPATHChoice
+					Export expression: " AUXILIARY IFACE" [G0]
+				End if
+				# MOC3D CBC parameter
+				If: TransportFlag=1 & Transport>0
+					Export expression: " CBCALLOCATE" [G0]
+				End if
+			End line
+		End file
+		Evaluate expression: MODFLOW_Join_Files("TempDrain1", "@adeFileName@.drn", "@adeFileName@.drn")
+		Evaluate expression: MODFLOW_Delete_File("TempDrain1")
+		Evaluate expression: MODFLOW_Delete_File("TempDrainPer")
+	End if
+End if
+

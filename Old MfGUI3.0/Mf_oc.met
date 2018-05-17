@@ -1,0 +1,163 @@
+# 
+# MF_OC.met
+# ----------------------------------------------------
+# Output Control Option:
+# ----------------------------------------------------
+If: ContinueSimulation&(ExportOC!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Output Control")
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.oc
+			Start a new line
+				Export expression: "HEAD PRINT FORMAT"; [G0]
+				If: HeadPrintStyle
+					Export expression: HeadPrintFormat [I5]
+				Else
+					Export expression: -HeadPrintFormat [I5]
+				End if
+			End line
+			Start a new line
+				Export expression: "DRAWDOWN PRINT FORMAT"; [G0]
+				If: DrawdownPrintStyle
+					Export expression: DrawdownPrintFormat [I5]
+				Else
+					Export expression: -DrawdownPrintFormat [I5]
+				End if
+			End line
+			If: OutputHead=1
+				Start a new line
+					Export expression: "HEAD SAVE FORMAT" [G0]
+					Export expression: " (8E13.5) " [G0]
+					Export expression: "LABEL" [G0]
+				End line
+				Start a new line
+					Export expression: "HEAD SAVE UNIT 23" [G0]
+				End line
+			End if
+			If: OutputHead=2
+				Start a new line
+					Export expression: "HEAD SAVE UNIT 22" [G0]
+				End line
+			End if
+			If: OutputDrawdown=1
+				Start a new line
+					Export expression: "DRAWDOWN SAVE FORMAT" [G0]
+					Export expression: " (8E13.5) " [G0]
+					Export expression: "LABEL" [G0]
+				End line
+				Start a new line
+					Export expression: "DRAWDOWN SAVE UNIT 25" [G0]
+				End line
+			End if
+			If: OutputDrawdown=2
+				Start a new line
+					Export expression: "DRAWDOWN SAVE UNIT 24" [G0]
+				End line
+			End if
+			If: CompactBudget=1
+				Start a new line
+					Export expression: "COMPACT BUDGET FILES" [G0]
+				End line
+			End if
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					Loop for: Variable StepIndex from: 1 to: MODFLOW_NSTP(PeriodIndex) step: 1
+						If: FreqHeadList!=0
+							If: (FreqHeadList<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqHeadList>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqHeadList)=0))
+								Set Variable: ocflag:= 1
+							End if
+						End if
+						# Check for printing drawdown in listing file
+						If: FreqDrawdownList!=0
+							If: (FreqDrawdownList<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqDrawdownList>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqDrawdownList)=0))
+								Set Variable: ocflag:= 1
+							End if
+						End if
+						# Check for printing budget in listing file
+						If: FreqBudgetList!=0
+							If: (FreqBudgetList<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqBudgetList>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqBudgetList)=0))
+								Set Variable: ocflag:= 1
+							End if
+						End if
+						# Check for writing head to file
+						If: OutputHead!=0&FreqHeadFile!=0
+							If: (FreqHeadFile<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqHeadFile>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqHeadFile)=0))
+								Set Variable: ocflag:= 1
+							End if
+						End if
+						# Check for writing drawdown to file
+						If: OutputDrawdown!=0&FreqDrawdownFile!=0
+							If: (FreqDrawdownFile<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqDrawdownFile>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqDrawdownFile)=0))
+								Set Variable: ocflag:= 1
+							End if
+						End if
+						# Check for writing budget to file
+						If: OutputBudget=1&FreqBudgetFile!=0
+							If: (FreqBudgetFile<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqBudgetFile>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex,FreqBudgetFile)=0))
+								Set Variable: ocflag:= 1
+							End if
+						End if
+						# If ocflag=1, write items to be output for period & timestep
+						If: ocflag=1
+							Start a new line
+								Export expression: "PERIOD" [G0]
+								Export expression: PeriodIndex [I10]
+								Export expression: "   STEP" [G0]
+								Export expression: StepIndex [I10]
+							End line
+							# Check for head in listing file
+							If: FreqHeadList!=0
+								If: (FreqHeadList<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqHeadList>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqHeadList)=0))
+									Start a new line
+										Export expression: "PRINT HEAD" [G0]
+									End line
+								End if
+							End if
+							# Check for drawdown in listing file
+							If: FreqDrawdownList!=0
+								If: (FreqDrawdownList<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqDrawdownList>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqDrawdownList)=0))
+									Start a new line
+										Export expression: "PRINT DRAWDOWN" [G0]
+									End line
+								End if
+							End if
+							# Check for budget in listing file
+							If: FreqBudgetList!=0
+								If: (FreqBudgetList<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqBudgetList>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqBudgetList)=0))
+									Start a new line
+										Export expression: "PRINT BUDGET" [G0]
+									End line
+								End if
+							End if
+							# Check for head to be saved to file (formatted or binary)
+							If: OutputHead!=0&FreqHeadFile!=0
+								If: (FreqHeadFile<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqHeadFile>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqHeadFile)=0))
+									Start a new line
+										Export expression: "SAVE HEAD" [G0]
+									End line
+								End if
+							End if
+							# Check for drawdown to be saved to file (formatted or binary)
+							If: OutputDrawdown!=0&FreqDrawdownFile!=0
+								If: (FreqDrawdownFile<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqDrawdownFile>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqDrawdownFile)=0))
+									Start a new line
+										Export expression: "SAVE DRAWDOWN" [G0]
+									End line
+								End if
+							End if
+							# Check for budget to be saved to file (binary)
+							If: OutputBudget=1&FreqBudgetFile!=0
+								If: (FreqBudgetFile<0&StepIndex=MODFLOW_NSTP(PeriodIndex))|(FreqBudgetFile>0&(StepIndex=MODFLOW_NSTP(PeriodIndex)|Mod(StepIndex, FreqBudgetFile)=0))
+									Start a new line
+										Export expression: "SAVE BUDGET" [G0]
+									End line
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End file
+	End if
+End if
+

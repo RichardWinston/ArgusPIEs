@@ -1,0 +1,9 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE DP3STR__genmod
+          INTERFACE 
+            FUNCTION DP3STR(DPA) RESULT(DP3STR_0)
+              REAL(KIND=8) :: DPA(3)
+              CHARACTER(LEN=45) :: DP3STR_0
+            END FUNCTION DP3STR
+          END INTERFACE 
+        END MODULE DP3STR__genmod

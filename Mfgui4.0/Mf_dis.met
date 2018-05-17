@@ -1,0 +1,138 @@
+# 
+# MF_DIS.met
+# ----------------------------------------------------
+# Discretization
+# ----------------------------------------------------
+If: ContinueSimulation&(@cbExpDIS@!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Discretization File")
+	If: ContinueSimulation
+		Redirect output to: @edDiscretization@
+			# Data Set 1
+			Start a new line
+				Export expression: NumLay [I5]
+				Export expression: NumRows() [I5]
+				Export expression: NumColumns() [I5]
+				Export expression: MODFLOW_NPER() [I5]
+				Export expression: ITMUNI [I5]
+				Export expression: @comboLengthUnits@ [I5]
+			End line
+			# Data Set 2
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Evaluate expression: MODFLOW_L_AddToList(LayCBDList, 1)
+					End loop
+				Else
+					Evaluate expression: MODFLOW_L_AddToList(LayCBDList, 0)
+				End if
+			End loop
+			If: MODFLOW_L_GetListSize(LayCBDList) > 1
+				Loop for: Variable LayIndex from: 0 to: MODFLOW_L_GetListSize(LayCBDList)-2 step: 1
+					If: MODFLOW_L_GetFromList(LayCBDList, LayIndex)=1
+						If: MODFLOW_L_GetFromList(LayCBDList, LayIndex+1)=1
+							Start a new line
+								Export expression: 0 [G0]
+							End line
+						Else
+							Start a new line
+								Export expression: 1 [G0]
+							End line
+						End if
+					End if
+				End loop
+			End if
+			If: MODFLOW_L_GetFromList(LayCBDList, MODFLOW_L_GetListSize(LayCBDList)-1)=1
+				Start a new line
+					Export expression: 0 [G0]
+				End line
+			End if
+			# Data Set 3
+			If: ContinueSimulation
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 1 [I5]
+				End line
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Discretization File: Columns positions")
+				Loop for: Columns
+					If: $Column$<NumColumns()
+						Start a new line
+							Export expression: Abs(NthColumnPos($Column$+1)-NthColumnPos($Column$)) [E13.5]
+						End line
+					End if
+				End loop
+			End if
+			# Data Set 4
+			If: ContinueSimulation
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 1 [I5]
+				End line
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Discretization File: Row positions")
+				Loop for: Rows
+					If: $Row$<NumRows()
+						Start a new line
+							Export expression: Abs(NthRowPos($Row$+1)-NthRowPos($Row$)) [E13.5]
+						End line
+					End if
+				End loop
+			End if
+			# Data Set 5
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Discretization File: Top elevations")
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 12 [I5]
+					End line
+					# Export matrix: MODFLOW FD Grid.Elev Top Unit[LayIndex]-(DivIndex-1)*(MODFLOW FD Grid.Thickness Unit[LayIndex]/MODFLOW_NDIV(LayIndex)) [G0]
+					Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), 1) [G0]
+			End if
+			# Data Set 6
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+				If: (MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Discretization File: Bottom elevations unit " + LayIndex)
+						If: ContinueSimulation
+							# Data item 9
+							# YBI: note that the next matrix is different for each sub division!
+							Start a new line
+								Export expression: "INTERNAL 1.0 (FREE)" [G0]
+								Export expression: 12 [I5]
+							End line
+							Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-DivIndex*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+						End if
+					End loop
+				Else
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Discretization File: Bottom elevations unit " + LayIndex)
+						If: ContinueSimulation
+							Start a new line
+								Export expression: "INTERNAL 1.0 (FREE)" [G0]
+								Export expression: 12 [I5]
+							End line
+							Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+						End if
+				End if
+				End if
+			End loop
+			# Data Set 7
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					Start a new line
+						Export expression: MODFLOW_PERLEN(PeriodIndex); [G0]
+						Export expression: MODFLOW_NSTP(PeriodIndex); [I5]
+						Export expression: MODFLOW_TSMULT(PeriodIndex); [G0]
+						If: ISS=0
+							Export expression: "TR"; [G0]
+						Else
+							Export expression: "SS"; [G0]
+						End if
+					End line
+				End if
+			End loop
+		End file
+	End if
+End if
+

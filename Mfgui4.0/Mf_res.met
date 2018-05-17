@@ -1,0 +1,12 @@
+# 
+# Export Reservoir package
+If: UseReservoirs
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Reservoir Package")
+	If: ExportReservoirs
+		Set Variable: ContinueSimulation:= MF_ExportReservoirs()
+	Else
+		Set Variable: ContinueSimulation:= MF_InitializeReservoirs()
+	End if
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+End if
+

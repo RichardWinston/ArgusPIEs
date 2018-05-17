@@ -1,0 +1,41 @@
+# 
+# Export template to export the row and column numbers
+#  and the locations of the four corners of each block.
+# 
+Define Variable: X [Real]
+Define Variable: Y [Real]
+# 
+Redirect output to: $BaseName$
+	Start a new line
+		Export expression: "Row Number"; [G0]
+		Export expression: "Column Number"; [G0]
+		Export expression: "X-coord 1"; [G0]
+		Export expression: "Y-coord 1"; [G0]
+		Export expression: "X-coord 2"; [G0]
+		Export expression: "Y-coord 2"; [G0]
+		Export expression: "X-coord 3"; [G0]
+		Export expression: "Y-coord 3"; [G0]
+		Export expression: "X-coord 4"; [G0]
+		Export expression: "Y-coord 4"; [G0]
+	End line
+	Loop for: Blocks
+		Start a new line
+			Export expression: Row(); [G0]
+			Export expression: Column(); [G0]
+			Set Variable: X:= NthColumnPos(Column()-1)
+			Set Variable: Y:= NthRowPos(Row()-1)
+			Export expression: Rotated X(X, Y, GridAngle()); [G0]
+			Export expression: Rotated Y(X, Y, GridAngle()); [G0]
+			Set Variable: X:= NthColumnPos(Column())
+			Export expression: Rotated X(X, Y, GridAngle()); [G0]
+			Export expression: Rotated Y(X, Y, GridAngle()); [G0]
+			Set Variable: Y:= NthRowPos(Row())
+			Export expression: Rotated X(X, Y, GridAngle()); [G0]
+			Export expression: Rotated Y(X, Y, GridAngle()); [G0]
+			Set Variable: X:= NthColumnPos(Column()-1)
+			Export expression: Rotated X(X, Y, GridAngle()); [G0]
+			Export expression: Rotated Y(X, Y, GridAngle()); [G0]
+		End line
+	End loop
+End file
+

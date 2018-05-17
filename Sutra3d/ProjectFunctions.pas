@@ -1,0 +1,1051 @@
+unit ProjectFunctions;
+
+interface
+
+uses Windows, Forms, SysUtils, Controls, classes, Dialogs, Stdctrls, AnePIE;
+
+function GProjectNewSutra (Handle : ANE_PTR ; rPIEHandle :  ANE_PTR_PTR ;
+         rLayerTemplate : ANE_STR_PTR  ) : ANE_BOOL ; cdecl;
+
+function GEditSutraForm (aneHandle : ANE_PTR ;
+          PIEHandle  :  ANE_PTR  ) : ANE_BOOL ; cdecl;
+
+procedure GClearSutraForm(aneHandle : ANE_PTR ; PIEHandle  :  ANE_PTR  ); cdecl;
+
+procedure GSaveSutraForm(aneHandle : ANE_PTR ; PIEHandle : ANE_PTR ;
+   rSaveInfo : ANE_STR_PTR ); cdecl;
+
+procedure GLoadSutraForm(aneHandle : ANE_PTR ; rPIEHandle :  ANE_PTR_PTR ;
+  const LoadInfo : ANE_STR ); cdecl;
+
+procedure GetSutraPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+
+procedure GetSutraRestartPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+
+procedure GetSutraRootPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+
+procedure GetSutraCopyRestartPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+
+function EditForm : boolean;
+
+var
+  FormDataAsString : string;
+
+implementation
+
+uses FileCtrl, ANECB, frmSutraUnit, GlobalVariables, ANE_LayerUnit,
+  UtilityFunctions, ArgusFormUnit, ArgusDataEntry, ReadOldSutra,
+  SLLayerStructure, WarningsUnit, UpdateOldFiles, RbwDataGrid4;
+
+function EditForm : boolean;
+var
+  UnreadData : TStringlist;
+  VersionInString : string;
+begin
+  FormDataAsString := frmSutra.FormToString(nil, nil,
+    rsDeveloper);
+  frmSutra.GetLayerNodeAndElementCounts;
+  frmSutra.Cancelling := False;
+  frmSutra.reProblem.HandleNeeded;
+
+  if frmSutra.ShowModal = mrOK
+  then
+  begin
+    frmSutra.memoNotes.HandleNeeded;
+    frmSutra.SutraLayerStructure.OK(frmSutra.CurrentModelHandle);
+    result := True;
+  end
+  else // if frmMODFLOW.ShowModal = mrOK else
+  begin
+    Screen.Cursor := crHourGlass;
+
+    try
+      frmSutra.Cancelling := True;
+      frmSutra.SutraLayerStructure.Cancel;
+      UnreadData := TStringlist.Create;
+      try  // try 1
+        begin
+          frmSutra.memoDoc.HandleNeeded;
+          frmSutra.memoSutraDoc.HandleNeeded;
+          frmSutra.memoNotes.HandleNeeded;
+
+          frmSutra.LoadSutraForm(UnreadData, FormDataAsString ,
+            VersionInString );
+
+        end
+      finally
+        begin
+          UnreadData.Free;
+        end;
+      end;  // try 1
+      frmSutra.SutraLayerStructure.SetStatus(sNormal);
+      if frmSutra.rgInterpolateInitialValues.ItemIndex = 0 then
+      begin
+        FreeAndNil(frmSutra.ElementInterp);
+      end;
+
+    finally
+      Screen.Cursor := crDefault;
+      frmSutra.Cancelling := False;
+      result := False;
+    end;
+  end; // if frmMODFLOW.ShowModal = mrOK else
+end;
+
+function IniFile(Handle: HWnd) : string;
+begin
+  result := DllAppDirectory(Handle, GetDLLName);
+  if not DirectoryExists(result) then
+  begin
+    CreateDirectoryAndParents(result);
+  end;
+
+//  GetDllDirectory(GetDLLName, result);
+  result := result + '/sutra.ini.'
+end;
+
+function GProjectNewSutra (Handle : ANE_PTR ; rPIEHandle :  ANE_PTR_PTR ;
+         rLayerTemplate : ANE_STR_PTR  ) : ANE_BOOL ; cdecl;
+
+var
+  layerString : ANE_STR;
+  VersionInString : string;
+  Path : string;
+  ValFile : TStringList;
+  DefaultDir: string;
+begin
+  if EditWindowOpen  then
+
+  begin
+    MessageDlg('You can not create a new SUTRA model while exporting a ' +
+    ' project or if an edit box is open.', mtError, [mbOK], 0);
+    Result := False
+  end
+  else // if EditWindowOpen
+  begin
+      DefaultDir := GetCurrentDir;
+      EditWindowOpen := True ;
+      try  // try 3
+        begin
+//          frmSutra := TfrmSutra.Create(Application);
+          frmSutra := TfrmSutra.Create(nil);
+          frmSutra.CurrentModelHandle := Handle;
+          frmSutra.frmParameterValues.CurrentModelHandle := Handle;
+
+          frmSutra.NewProject := True;
+          try
+            begin
+              frmSutra.JustStartedProject := True;
+              frmSutra.SutraLayerStructure :=
+                TSutraLayerStructure.Create;
+              frmSutra.NewModel := True;
+//              frmMODFLOW.AssociateUnits;
+//              frmMODFLOW.AssociateTimes;
+              Path := DllAppDirectory(frmSutra.Handle, DLLName);
+              if not DirectoryExists(Path) then
+              begin
+                CreateDirectoryAndParents(Path);
+              end;
+//              if not GetDllDirectory(DLLName, Path)
+//              then
+//                begin
+//                  Beep;
+//                  ShowMessage('Unable to find ' + DLLName);
+//                end
+//              else
+//                begin
+                  Path := Path + '\sutra.val';
+                  if FileExists(Path) then
+                  begin
+                    ValFile := TStringList.Create;
+                    try
+                      begin
+                        ValFile.LoadFromFile(Path);
+                        if Pos('@TITLE1@', ValFile.Text) = 0 then
+                        begin
+                          frmSutra.ReadValFile(VersionInString, Path) ;
+                        end
+                        else
+                        begin
+                          BEEP;
+                          MessageDlg('A val file from a previous version of the '
+                            + 'SUTRA PIE has been detected. It will be ignored. '
+                            + 'You should either replace it with a new version '
+                            + 'or delete it. It is now much easier to create new '
+                            + 'val files. To find out more about val files, go to '
+                            + 'The "Advanced Options" tab of the "Edit Project Info" '
+                            + 'dialog box and read the online help for the "Save Val '
+                            + 'File" button.', mtWarning, [mbOK], 0);
+                        end;
+                      end;
+                    finally
+                      ValFile.Free;
+                    end;
+
+
+                  end;
+                  Path := IniFile(frmSutra.Handle);
+                  if FileExists(Path) then
+                  begin
+                    frmSutra.ReadValFile(VersionInString, Path) ;
+                  end;
+//                end;
+              frmSutra.Loading := False;
+              frmSutra.SutraLayerStructure.UpdateOldName;
+              if frmSutra.ShowModal = mrOK
+              then
+                begin
+                  FormDataAsString := frmSutra.SutraLayerStructure.
+                    WriteLayers(Handle);
+                  layerString := PChar(FormDataAsString);
+
+                  rPIEHandle^ := frmSutra;
+
+                  rLayerTemplate^ := layerString;
+                  frmSutra.SutraLayerStructure.SetStatus(sNormal);
+                  result := true;
+                  frmSutra.Hide;
+                  ANE_ProcessEvents(Handle);
+{                  if not CheckArgusVersion(Handle,4,2,0,'e') then
+                  begin
+                    Beep;
+                    ShowMessage('By convention, MODFLOW Grids are numbered from the '
+                      + 'top down rather than from the bottom up. To set this '
+                      + 'option, activate the MODFLOW FD Grid layer and select '
+                      + '"Edit|Grid Direction|Negative Y". This option is set '
+                      + 'automatically in Argus ONE 4.2.0e and later.');
+                  end; }
+                end
+              else
+                begin
+                  frmSutra.Free;
+                  frmSutra := nil;
+                  result := false;
+                end;  
+            end;
+          except on E: Exception do
+            begin
+              frmSutra.Free;
+              frmSutra := nil;
+              result := False;
+              Beep;
+              MessageDlg(E.Message, mtError, [mbOK], 0);
+            end;
+          end;
+        end;
+      finally
+        begin
+          EditWindowOpen := False;
+          SetCurrentDir(DefaultDir);
+        end;
+      end; // try 3
+  end; // if EditWindowOpen else
+
+end; { GSimpleExportTemplate }
+
+function GEditSutraForm (aneHandle : ANE_PTR ;
+          PIEHandle  :  ANE_PTR  ) : ANE_BOOL ; cdecl;
+//  Developer : string;
+begin
+  if EditWindowOpen then
+  begin
+    Result := False
+  end
+  else // if EditWindowOpen
+  begin
+    EditWindowOpen := True ;
+    try  // try 1
+    begin
+      try  // try 2
+      begin
+        frmSutra := PIEHandle;
+        frmSutra.CurrentModelHandle := aneHandle;
+        frmSutra.frmParameterValues.CurrentModelHandle := aneHandle;
+        frmSutra.NewProject := False;
+        frmSutra.btnRefreshNames.Enabled := True;
+        result := EditForm;
+
+      end; // try 2
+      except on E: Exception do
+        begin
+            result := False;
+            Beep;
+            MessageDlg(E.Message, MtError, [mbOK], 0);
+        end;
+      end  // try 2
+    end;
+    finally
+      begin
+        EditWindowOpen := False;
+      end;
+    end; // try 1
+  end; // if EditWindowOpen else
+
+end; { GEditForm }
+
+
+
+procedure GClearSutraForm(aneHandle : ANE_PTR ; PIEHandle  :  ANE_PTR  ); cdecl;
+begin
+  try
+    frmSutra := PIEHandle;
+    if (frmSutra <> nil) then
+    begin
+      frmSutra.CurrentModelHandle := aneHandle;
+    end;
+    frmSutra.Free;
+    frmSutra := nil;
+  except On E: Exception do
+    begin
+      MessageDlg(E.Message, mtError, [mbOK], 0);
+    end
+  end;
+
+end; { GClearForm }
+
+procedure GSaveSutraForm(aneHandle : ANE_PTR ; PIEHandle : ANE_PTR ;
+   rSaveInfo : ANE_STR_PTR ); cdecl;
+var
+  AnANE_STR : ANE_STR;
+  ModelPaths : TStringList;
+  Warning : string;
+begin
+  AnANE_STR := nil;
+  if EditWindowOpen then
+  begin
+    MessageDlg('You can not save a file while exporting a ' +
+    ' project or if an edit box is open. Save this file again after'
+    + ' correcting these problems.', mtError, [mbOK], 0);
+
+  end
+  else // if EditWindowOpen
+  begin
+    EditWindowOpen := True ;
+    try  // try 1
+    begin
+      frmSutra := PIEHandle;
+      if frmSutra <> nil then
+      begin
+        frmSutra.CurrentModelHandle := aneHandle;
+        frmSutra.memoNotes.HandleNeeded;
+        // read the data on Form to a string
+        FormDataAsString := frmSutra.FormToString(frmSutra.lblVersion,
+          frmSutra.IgnoreList, rsDeveloper);
+        AnANE_STR := PChar(FormDataAsString);
+        try  // try 2
+          begin
+            ModelPaths := TStringList.Create;
+            try // try3
+              frmSutra.ModelPaths(ModelPaths, frmSutra.lblVersion, rsDeveloper);
+              try
+                ModelPaths.SaveToFile(IniFile(frmSutra.Handle));
+              except
+              end;
+            finally
+              ModelPaths.Free;
+            end;
+          end; // try 3
+        except On E: Exception do
+          begin
+            Warning := 'The following error occured while saving the model. "'
+              + E.Message + '" Contact PIE '
+              + 'Developer';
+            if rsDeveloper <> '' then
+            begin
+              Warning := Warning + ' (' + rsDeveloper + ')';
+            end;
+            Warning := Warning + ' for assistance.';
+            Beep;
+            MessageDlg(Warning, mtError, [mbOK], 0);
+          end;
+        end;  // try 2
+
+
+      end;
+    end;
+    finally
+      begin
+        EditWindowOpen := False;
+      end;
+    end; // try 1
+  end; // if EditWindowOpen else
+  rSaveInfo^ := AnANE_STR;
+
+end;
+
+{Procedure FixOldNames(aneHandle : ANE_PTR);
+var
+  LayerHandle : ANE_PTR;
+  ParamIndex : ANE_INT32;
+//  ParamName : string;
+  OldParamName, NewParamName : string;
+  UnitIndex : integer;
+  LayerName : string;
+  OldLayerName, NewLayerName : String;
+  GridLayer : T_ANE_GridLayer;
+  AParameterList : T_ANE_IndexedParameterList;
+  AParam : T_ANE_Param;
+  Expression : string;
+begin
+  frmWarnings := ModflowTypes.GetWarningsFormType.Create(Application);
+  try
+    begin
+      frmWarnings.CurrentModelHandle := aneHandle;
+      LayerHandle := ANE_LayerGetHandleByName(aneHandle,
+        'MODFLOW Grid Density');
+      if LayerHandle <> nil then
+      begin
+        ANE_LayerRename(aneHandle, layerHandle,
+          PChar(ModflowTypes.GetDensityLayerType.ANE_LayerName));
+
+        frmWarnings.memoWarnings.Lines.Add('The layer "MODFLOW Grid Density" '
+          + 'has been changed to "'
+          + ModflowTypes.GetDensityLayerType.ANE_LayerName + '".');
+
+        ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+          'Density');
+        if ParamIndex > -1 then
+        begin
+          ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+            PChar(ModflowTypes.GetMFDensityParamType.ANE_ParamName));
+
+          frmWarnings.memoWarnings.Lines.Add('On the layer "'
+            + ModflowTypes.GetDensityLayerType.ANE_LayerName
+            + '", the parameter "Density" has been changed to "'
+            + ModflowTypes.GetMFDensityParamType.ANE_ParamName + '".');
+
+        end;
+
+        ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+          'MODFLOW Grid Density');
+        if ParamIndex > -1 then
+        begin
+          ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+            PChar(ModflowTypes.GetMFDensityParamType.ANE_ParamName));
+
+          frmWarnings.memoWarnings.Lines.Add('On the layer "'
+            + ModflowTypes.GetDensityLayerType.ANE_LayerName
+            + '", the parameter "MODFLOW Grid Density" has been changed to "'
+            + ModflowTypes.GetMFDensityParamType.ANE_ParamName + '".');
+
+        end;
+      end;
+
+      LayerHandle := ANE_LayerGetHandleByName(aneHandle,
+        'MODFLOW Grid Cell Size');
+      if LayerHandle <> nil then
+      begin
+        ANE_LayerRename(aneHandle, layerHandle,
+          PChar(ModflowTypes.GetDensityLayerType.ANE_LayerName));
+
+        frmWarnings.memoWarnings.Lines.Add('The layer "MODFLOW Cell Size" '
+          + 'has been changed to "'
+          + ModflowTypes.GetDensityLayerType.ANE_LayerName + '".');
+
+        ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+          'MODFLOW Grid Cell Size');
+        if ParamIndex > -1 then
+        begin
+          ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+            PChar(ModflowTypes.GetMFDensityParamType.ANE_ParamName));
+
+          frmWarnings.memoWarnings.Lines.Add('On the layer "'
+            + ModflowTypes.GetDensityLayerType.ANE_LayerName
+            + '", the parameter "MODFLOW Grid Cell Size" has been changed to "'
+            + ModflowTypes.GetMFDensityParamType.ANE_ParamName + '".');
+
+        end;
+
+        ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+          'MODFLOW Grid Density');
+        if ParamIndex > -1 then
+        begin
+          ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+            PChar(ModflowTypes.GetMFDensityParamType.ANE_ParamName));
+
+          frmWarnings.memoWarnings.Lines.Add('On the layer "'
+            + ModflowTypes.GetDensityLayerType.ANE_LayerName
+            + '", the parameter "MODFLOW Grid Density" has been changed to "'
+            + ModflowTypes.GetMFDensityParamType.ANE_ParamName + '".');
+
+        end;
+      end;
+
+      LayerHandle := ANE_LayerGetHandleByName(aneHandle,
+        PChar(ModflowTypes.GetMFDomainOutType.ANE_LayerName));
+      if LayerHandle <> nil then
+      begin
+
+        ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+          'Density');
+        if ParamIndex > -1 then
+        begin
+          ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+            PChar(ModflowTypes.GetMFDomDensityParamType.ANE_ParamName));
+
+          frmWarnings.memoWarnings.Lines.Add('On the layer "'
+            + ModflowTypes.GetMFDomainOutType.ANE_LayerName
+            + '", the parameter "Density" has been changed to "'
+            + ModflowTypes.GetMFDomDensityParamType.ANE_ParamName + '".');
+
+        end;
+
+        ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+          'MODFLOW Grid Density');
+        if ParamIndex > -1 then
+        begin
+          ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+            PChar(ModflowTypes.GetMFDomDensityParamType.ANE_ParamName));
+
+          frmWarnings.memoWarnings.Lines.Add('On the layer "'
+            + ModflowTypes.GetMFDomainOutType.ANE_LayerName
+            + '", the parameter "MODFLOW Grid Density" has been changed to "'
+            + ModflowTypes.GetMFDomDensityParamType.ANE_ParamName + '".');
+
+        end;
+      end;
+
+      LayerHandle := ANE_LayerGetHandleByName(aneHandle,
+        PChar(ModflowTypes.GetGridLayerType.ANE_LayerName));
+      if LayerHandle <> nil then
+      begin
+        UnitIndex := 0;
+        repeat // ParamIndex = -1 do
+        begin
+          Inc(UnitIndex);
+          OldParamName  := 'ZoneBudget Zone Unit' + IntToStr(UnitIndex);
+          ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+            PChar(OldParamName));
+
+          if ParamIndex > -1 then
+          begin
+            NewParamName := ModflowTypes.GetMFGridZoneBudgetParamType.ANE_ParamName +
+              IntToStr(UnitIndex);
+
+            ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+              PChar(NewParamName));
+
+
+            frmWarnings.memoWarnings.Lines.Add('On the layer "'
+              + ModflowTypes.GetGridLayerType.ANE_LayerName
+              + '", the parameter "' + OldParamName + '" has been changed to "'
+              + NewParamName + '".');
+
+
+            GridLayer := frmModflow.MFLayerStructure.UnIndexedLayers.GetLayerByName
+              (ModflowTypes.GetGridLayerType.ANE_LayerName) as T_ANE_GridLayer;
+
+            AParameterList := GridLayer.IndexedParamList1.
+              GetNonDeletedIndParameterListByIndex(UnitIndex -1);
+
+            AParam := AParameterList.GetParameterByName(ModflowTypes.
+              GetMFGridZoneBudgetParamType.ANE_ParamName);
+
+            Expression := AParam.Value;
+
+            ANE_LayerSetParameterExpression(aneHandle, layerHandle, ParamIndex,
+              PChar(Expression) );
+          end;
+        end;
+        until ParamIndex = -1;
+      END;
+
+      UnitIndex := 0;
+      repeat
+      begin
+        Inc(UnitIndex);
+        OldLayerName := 'ZoneBudget Unit' + IntToStr(UnitIndex);
+        LayerHandle := ANE_LayerGetHandleByName(aneHandle, PChar(OldLayerName));
+        if LayerHandle <> nil then
+        begin
+          NewLayerName := ModflowTypes.GetZoneBudLayerType.ANE_LayerName + IntToStr(UnitIndex);
+          ANE_LayerRename(aneHandle, layerHandle, PChar(NewLayerName));
+
+          frmWarnings.memoWarnings.Lines.Add('The layer "' + OldLayerName + '" '
+            + 'has been changed to "'
+            + NewLayerName + '".');
+
+        end;
+      end;
+      until LayerHandle = nil;
+
+      UnitIndex := 0;
+      repeat
+      begin
+        Inc(UnitIndex);
+        LayerName := ModflowTypes.GetMFLineRiverLayerType.ANE_LayerName + IntToStr(UnitIndex);
+        LayerHandle := ANE_LayerGetHandleByName(aneHandle, PChar(LayerName));
+        if LayerHandle <> nil then
+        begin
+
+          OldParamName  := 'Bottom';
+          ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+            PChar(OldParamName));
+
+          if ParamIndex > -1 then
+          begin
+            NewParamName := ModflowTypes.GetMFRiverBottomParamType.ANE_ParamName;
+
+            ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+              PChar(NewParamName));
+
+            frmWarnings.memoWarnings.Lines.Add('On the layer "'
+              + LayerName
+              + '", the parameter "' + OldParamName + '" has been changed to "'
+              + NewParamName + '".');
+          end;
+
+        end;
+      end;
+      until LayerHandle = nil;
+
+      UnitIndex := 0;
+      repeat
+      begin
+        Inc(UnitIndex);
+        LayerName := ModflowTypes.GetMFAreaRiverLayerType.ANE_LayerName + IntToStr(UnitIndex);
+        LayerHandle := ANE_LayerGetHandleByName(aneHandle, PChar(LayerName));
+        if LayerHandle <> nil then
+        begin
+
+          OldParamName  := 'Bottom';
+          ParamIndex := ANE_LayerGetParameterByName(aneHandle, LayerHandle,
+            PChar(OldParamName));
+
+          if ParamIndex > -1 then
+          begin
+            NewParamName := ModflowTypes.GetMFRiverBottomParamType.ANE_ParamName;
+
+            ANE_LayerRenameParameter(aneHandle, LayerHandle, ParamIndex,
+              PChar(NewParamName));
+
+            frmWarnings.memoWarnings.Lines.Add('On the layer "'
+              + LayerName
+              + '", the parameter "' + OldParamName + '" has been changed to "'
+              + NewParamName + '".');
+
+          end;
+        end;
+      end;
+      until LayerHandle = nil;
+
+    end;
+    if frmWarnings.memoWarnings.Lines.Count > 0 then
+    begin
+      Beep;
+      frmWarnings.ShowModal;
+    end;
+  finally
+    begin
+      frmWarnings.Free;
+    end;
+  end;
+
+end;   }
+
+procedure GLoadSutraForm(aneHandle : ANE_PTR ; rPIEHandle :  ANE_PTR_PTR ;
+  const LoadInfo : ANE_STR ); cdecl;
+  procedure UpdateCombos;
+  var
+    Index : integer;
+    AComboBox : TCombobox;
+  begin
+    for Index := 0 to frmSutra.ComponentCount -1 do
+    begin
+      if frmSutra.Components[Index] is TComboBox then
+      begin
+        AComboBox := TComboBox(frmSutra.Components[Index]);
+        if Assigned(AComboBox.OnChange) then
+        begin
+          AComboBox.OnChange(AComboBox);
+        end;
+      end;
+    end;
+  end;
+var
+  OldFile : boolean;
+  UnreadData : TStringlist;
+  VersionInString : string ;
+  DataToRead : string;
+  Developer : string;
+  ADE : TArgusDataEntry;
+  Index : integer;
+begin
+  if EditWindowOpen then
+  begin
+    Beep;
+    MessageDlg('Error: You must close all dialog boxes before attempting '
+      + 'to open another file! Close the dialog box in the other model. '
+      + 'Then close this file WITHOUT saving it. '
+      + 'Then you will be able to open this file.'
+      , mtError, [mbOK], 0);
+    rPIEHandle^ := nil;
+  end
+  else
+  begin
+    Developer := '';
+    try
+      begin
+        UnreadData := TStringlist.Create;
+        try
+          begin
+//            frmSutra := TfrmSutra.Create(Application);
+            frmSutra := TfrmSutra.Create(nil);
+            frmSutra.CurrentModelHandle := aneHandle;
+            frmSutra.NewProject := True;
+            rPIEHandle^ := frmSutra;
+            frmSutra.SutraLayerStructure :=
+              TSutraLayerStructure.Create;
+
+            frmSutra.SutraLayerStructure.SetStatus(sNormal);
+            frmWarnings := TfrmWarnings.Create(Application);
+            try
+              frmSutra.Loading := True;
+              DataToRead := String(LoadInfo);
+              OldFile := False;
+              if IsOldFile(DataToRead)
+              then
+              begin
+                UpdateCombos;
+                OldFile := True;
+                UpdateOldNamesAndExpressions(aneHandle);
+                frmSutra.SetTimeDepExpressions;
+                Beep;
+                MessageDlg('The SUTRA PIE needs to update your project. '
+                  + 'After this project has finished loading, select '
+                  + '"PIEs|Edit Project Info" and click the "OK" button '
+                  + 'to update your project.', mtInformation, [mbOK], 0);
+              end
+              else
+              begin
+                frmSutra.memoNotes.HandleNeeded;
+                frmSutra.LoadSutraForm(UnreadData, DataToRead ,
+                  VersionInString );
+                frmSutra.lblFileVersion.Caption := VersionInString;
+                if frmSutra.rbFishnet.Checked and
+                  frmSutra.PieIsEarlier('2.0.6.24', VersionInString,
+                  True) then
+                begin
+                  UpdateOldNamesAndExpressions2(aneHandle);
+                end;
+              end;
+
+{$IFDEF SutraIce}
+              if frmSutra.rbSatUnsat.Checked and
+                frmSutra.PieIsEarlier('2.1.5.12', VersionInString,
+                True) then
+              begin
+                RenameRegionLayerAndParameter(aneHandle);
+                (frmSutra.SutraLayerStructure as TSutraLayerStructure).
+                  SetStatus(sNormal);
+                frmSutra.SetUnsaturatedExpressions;
+                (frmSutra.SutraLayerStructure as TSutraLayerStructure).
+                  SetExpressions(aneHandle);
+              end;
+{$ENDIF}
+
+              if frmSutra.PieIsEarlier('2.2.2.9', VersionInString,
+                True) then
+              begin
+                (frmSutra.SutraLayerStructure as TSutraLayerStructure).
+                  SetStatus(sNormal);
+                frmSutra.SetTimeDepExpressions;
+                (frmSutra.SutraLayerStructure as TSutraLayerStructure).
+                  SetExpressions(aneHandle);
+              end;
+
+
+
+              if frmSutra.rdgTimeSeries.ColCount = 1 then
+              begin
+                frmSutra.rdgTimeSeries.InsertColumn(0);
+                frmSutra.rdgTimeSeries.FixedCols := 1;
+                frmSutra.rdgTimeSeries.Columns[1].Format := rcf4Real;
+              end;
+
+              frmSutra.rdgTimeSeries.Cells[1,0] := 'Elapsed Time [seconds]';
+              frmSutra.rdgTimeSeries.Cells[1,1] := '0.0';
+              for Index := 1 to frmSutra.rdgTimeSeries.RowCount  -1 do
+              begin
+                frmSutra.rdgTimeSeries.Cells[0,Index] := IntToStr(Index-1);
+              end;
+              for Index := 0 to frmSutra.ComponentCount -1 do
+              begin
+                if frmSutra.Components[Index] is TArgusDataEntry then
+                begin
+                  ADE := TArgusDataEntry(frmSutra.Components[Index]);
+                  ADE.CheckRange;
+                end;
+              end;
+              if frmSutra.rbFishnet.Checked and
+                frmSutra.PieIsEarlier('1.16.0.0', VersionInString,
+                  True) then
+              begin
+                Beep;
+                MessageDlg('The Layer for setting up a fishnet mesh has been '
+                  + 'changed from an Information layer to a QuadMesh layer.  '
+                  + 'You will need to redraw the information on the new layer '
+                  + 'to run the model.  The new layer will be '
+                  + 'created when you select "PIEs|Edit Project Info..." '
+                  + 'and then click on the "OK" button.  '
+                  + '(The old information '
+                  + 'layer will still present but it will not be used.)',
+                  mtInformation, [mbOK], 0);
+
+              end;
+
+              {Path := IniFile;
+              if FileExists(Path) then
+              begin
+                frmSutra.ReadValFile(VersionInString, Path) ;
+              end; }
+
+              frmSutra.SutraLayerStructure.FreeByStatus(sDeleted);
+              frmSutra.SutraLayerStructure.SetStatus(sNormal);
+              frmSutra.SutraLayerStructure.UpdateIndicies;
+              frmSutra.SutraLayerStructure.UpdateOldIndicies;
+
+              if OldFile and frmSutra.rbGeneral.Checked then
+              begin
+                with frmSutra.SutraLayerStructure as TSutraLayerStructure do
+                begin
+                  UpdateOldLayersAndParameters;
+                  UpdateExpressions;
+                  SetExpressions(aneHandle);
+                end;
+              end;
+
+              frmSutra.SutraLayerStructure.UpdateOldName;
+
+              if frmWarnings.memoWarnings.Lines.Count > 0 then
+              begin
+                Beep;
+                frmWarnings.ShowModal;
+              end;
+
+              if not OldFile  and not frmSutra.PieIsEarlier(VersionInString,
+                '2.0.6.39', False) then
+              begin
+                Beep;
+                MessageDlg('You need to select "PIEs|Edit Project Info..." and '
+                  + 'then hit the OK button to update your project.',
+                  mtInformation, [mbOK], 0);
+              end
+              else if not OldFile  and not frmSutra.PieIsEarlier(VersionInString,
+                '2.2.2.5', False) and (frmSutra.rgDimensions.ItemIndex = 0) then
+              begin
+                Beep;
+                MessageDlg('You need to select "PIEs|Edit Project Info..." and '
+                  + 'then hit the OK button to update your project.',
+                  mtInformation, [mbOK], 0);
+              end;
+
+              frmSutra.reProblem.Lines.Assign(UnreadData);
+              If frmSutra.reProblem.Lines.Count > 0 then
+              begin
+                Beep;
+                Developer := frmSutra.PIEDeveloper;
+                if Developer <> '' then
+                begin
+                  Developer := ' (' + Developer + ')';
+                end;
+                MessageDlg('Unable to read some of the information in this model. '
+                  + 'Contact PIE developer ' + Developer + ' for assistance.',
+                  mtWarning, [mbOK], 0);
+              end;
+              frmSutra.Loading := False;
+              frmSutra.NewProject := False;
+            finally
+              frmWarnings.Free;
+            end;
+          end;
+        finally;
+          begin
+            UnreadData.Free;
+          end;
+        end;
+      end;
+    except on E: Exception do
+      begin
+        Beep;
+        MessageDlg('The following error occured while reading File. "' + E.Message +
+          '" Close this file WITHOUT saving it. ' +
+          'Contact PIE developer ' + Developer + ' for assistance.', mtError,
+          [mbOK], 0);
+      end;
+    end;
+  end;
+
+end;
+
+var
+  SutraPath: string;
+  RestartPath: string;
+  Root: string;
+  CopyRestartPath: string;
+
+procedure GetSutraPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+var
+  result : ANE_STR;
+begin
+  if EditWindowOpen then
+  begin
+    Beep;
+    MessageDlg('You can not export a ' +
+    ' project if an edit box is open. Try again after'
+    + ' correcting this problems.', mtError, [mbOK], 0);
+  end
+  else // if EditWindowOpen
+  begin
+    EditWindowOpen := True ;
+    try  // try 1
+    begin
+
+      frmSutra := TArgusForm.GetFormFromArgus(funHandle)
+        as TfrmSutra;
+
+      SutraPath := Trim(frmSutra.edRunSutra.Text);
+      SutraPath := StringReplace(SutraPath, '\T', '\\T', [rfReplaceAll]);
+      SutraPath := StringReplace(SutraPath, '\t', '\\t', [rfReplaceAll]);
+
+      result := PChar(SutraPath);
+
+      ANE_STR_PTR(reply)^ := result;
+
+    end;
+    finally
+      begin
+        EditWindowOpen := False;
+      end;
+    end; // try 1
+  end; // if EditWindowOpen else
+end;
+
+procedure GetSutraRestartPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+var
+  result : ANE_STR;
+begin
+  if EditWindowOpen then
+  begin
+    Beep;
+    MessageDlg('You can not export a ' +
+    ' project if an edit box is open. Try again after'
+    + ' correcting this problems.', mtError, [mbOK], 0);
+  end
+  else // if EditWindowOpen
+  begin
+    EditWindowOpen := True ;
+    try  // try 1
+    begin
+
+      frmSutra := TArgusForm.GetFormFromArgus(funHandle)
+        as TfrmSutra;
+
+
+      RestartPath := Trim(frmSutra.framWarmRestart.edFilePath.Text);
+
+
+      result := PChar(RestartPath);
+
+      ANE_STR_PTR(reply)^ := result;
+
+    end;
+    finally
+      begin
+        EditWindowOpen := False;
+      end;
+    end; // try 1
+  end; // if EditWindowOpen else
+end;
+
+procedure GetSutraRootPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+var
+  result : ANE_STR;
+begin
+  if EditWindowOpen then
+  begin
+    Beep;
+    MessageDlg('You can not export a ' +
+    ' project if an edit box is open. Try again after'
+    + ' correcting this problems.', mtError, [mbOK], 0);
+  end
+  else // if EditWindowOpen
+  begin
+    EditWindowOpen := True ;
+    try  // try 1
+    begin
+
+      frmSutra := TArgusForm.GetFormFromArgus(funHandle)
+        as TfrmSutra;
+
+
+      Root := Trim(frmSutra.edRoot.Text);
+
+
+      result := PChar(Root);
+
+      ANE_STR_PTR(reply)^ := result;
+
+    end;
+    finally
+      begin
+        EditWindowOpen := False;
+      end;
+    end; // try 1
+  end; // if EditWindowOpen else
+end;
+
+procedure GetSutraCopyRestartPath (const refPtX : ANE_DOUBLE_PTR;
+  const refPtY : ANE_DOUBLE_PTR; numParams : ANE_INT16;
+  const parameters : ANE_PTR_PTR; funHandle : ANE_PTR; reply : ANE_PTR); cdecl;
+var
+  result : ANE_STR;
+begin
+  if EditWindowOpen then
+  begin
+    Beep;
+    MessageDlg('You can not export a ' +
+    ' project if an edit box is open. Try again after'
+    + ' correcting this problems.', mtError, [mbOK], 0);
+  end
+  else // if EditWindowOpen
+  begin
+    EditWindowOpen := True ;
+    try  // try 1
+    begin
+
+      frmSutra := TArgusForm.GetFormFromArgus(funHandle)
+        as TfrmSutra;
+
+
+      CopyRestartPath := Trim(frmSutra.edRestartFile.Text);
+
+
+      result := PChar(CopyRestartPath);
+
+      ANE_STR_PTR(reply)^ := result;
+
+    end;
+    finally
+      begin
+        EditWindowOpen := False;
+      end;
+    end; // try 1
+  end; // if EditWindowOpen else
+end;
+
+end.

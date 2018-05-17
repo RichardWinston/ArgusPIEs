@@ -1,0 +1,278 @@
+# 
+# MF_Name.met
+# ----------------------------------------------------
+# Name file
+# ----------------------------------------------------
+# Unit Numbers Used
+# 10 MODFLOW Listing file
+# 11 Basic Package File
+# 12 Output Control File
+# 13 BCF File
+# 14 Recharge File
+# 15 River File
+# 16 Well File
+# 17 Drain File
+# 18 GHB File
+# 19 EVT File
+# 20 SIP File
+# 21 SOR File
+# 22 binary head file
+# 23 formatted head file
+# 24 binary drawdown file
+# 25 formatted drawdown file
+# 27 River budget file
+# 28 Recharge budget file
+# 29 Well budget file
+# 30 Drain budget file
+# 31 EVT budget file
+# 32 GHB budget file
+# 33 budget file
+# 34 PCG File
+# 35 DE4 File
+# 36 Stream budget file 1
+# 37 Stream budget file 2
+# 38 HFB file
+# 39 FHB budget file
+# 40 FHB file
+# 41 Stream file
+# 70 MOC3D information file
+If: ContinueSimulation
+	Redirect output to: @adeFileName@
+		# The NameFile is the list of filenames being used in the MODFLOW simulation. These filenames are for specifying where output is to bewritten and where information is to be read.
+		Start a new line
+			# File for LISTING results of MODFLOW simulation
+			Export expression: "LIST 10 "+FileName+".lst" [G0]
+		End line
+		Start a new line
+			# File for reading BASIC package information
+			Export expression: "BAS 11 "+FileName+".bas" [G0]
+		End line
+		Start a new line
+			# File for reading OUTPUT CONTROL information
+			Export expression: "OC 12 "+FileName+".oc" [G0]
+		End line
+		Start a new line
+			# File for reading BCF package information
+			Export expression: "BCF 13 "+FileName+".bcf" [G0]
+		End line
+		# 
+		If: WellChoice=1
+			Start a new line
+				# File for reading WEL package information
+				Export expression: "WEL 16 "+FileName+".wel" [G0]
+			End line
+		End if
+		# 
+		If: RechargeChoice=1
+			Start a new line
+				# File for reading RCH package information
+				Export expression: "RCH 14 "+FileName+".rch" [G0]
+			End line
+		End if
+		# 
+		If: DrainChoice=1
+			Start a new line
+				# File for reading DRN package information
+				Export expression: "DRN 17 "+FileName+".drn" [G0]
+			End line
+		End if
+		# 
+		If: RiverChoice=1
+			Start a new line
+				# File for reading RIV package information
+				Export expression: "RIV 15 "+FileName+".riv" [G0]
+			End line
+		End if
+		# 
+		If: EvapotranspirationChoice=1
+			Start a new line
+				# File for reading EVT package information
+				Export expression: "EVT 19 "+FileName+".evt" [G0]
+			End line
+		End if
+		# 
+		If: GeneralHeadChoice=1
+			Start a new line
+				# File for reading GHB package information
+				Export expression: "GHB 18 "+FileName+".ghb" [G0]
+			End line
+		End if
+		# 
+		If: HFBChoice=1
+			Start a new line
+				# File for reading HFB package information
+				Export expression: "HFB 38 "+FileName+".hfb" [G0]
+			End line
+		End if
+		# 
+		If: FlowHeadChoice=1
+			Start a new line
+				# File for reading HFB package information
+				Export expression: "FHB 40  "+FileName+".fhb" [G0]
+			End line
+		End if
+		# 
+		If: StreamChoice
+			Start a new line
+				# file for the stream package
+				Export expression: "STR 41 " + Filename + ".str" [G0]
+			End line
+		End if
+		If: SolverChoice=0
+			Start a new line
+				# File for reading SIP package information
+				Export expression: "SIP 20 "+FileName+".sip" [G0]
+			End line
+		End if
+		# 
+		If: SolverChoice=3
+			Start a new line
+				# File for reading SOR package information
+				Export expression: "SOR 21 "+FileName+".sor" [G0]
+			End line
+		End if
+		# 
+		If: SolverChoice=2
+			Start a new line
+				# File for reading PCG information:
+				Export expression: "PCG 34 "+FileName+".pcg" [G0]
+			End line
+		End if
+		# 
+		If: SolverChoice=1
+			Start a new line
+				# File for reading DE4 information:
+				Export expression: "DE4 35 "+FileName+".de4" [G0]
+			End line
+		End if
+		# 
+		If: TransportFlag=1
+			If: Transport>0
+				If: RunMoc3d!=0
+					Start a new line
+						# File for reading MOC3D information:
+						Export expression: "CONC 70 "+FileName+".mcn" [G0]
+					End line
+				Else
+					Start a new line
+						# File for reading MOC3D information:
+						Export expression: "#CONC 70 "+FileName+".mcn" [G0]
+					End line
+				End if
+			End if
+		End if
+		# 
+		If: OutputHead=1
+			Start a new line
+				# File for writing heads in text format
+				Export expression: "DATA 23 "+FileName+".fhd" [G0]
+			End line
+		End if
+		# 
+		If: OutputHead=2
+			Start a new line
+				# File for writing heads in binary format
+				Export expression: "DATA(BINARY) 22 "+FileName+".bhd" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bhd")
+			End line
+		End if
+		# 
+		If: OutputDrawdown=1
+			Start a new line
+				# File for writing drawdown in text format
+				Export expression: "DATA 25 "+FileName+".fdn" [G0]
+			End line
+		End if
+		# 
+		If: OutputDrawdown=2
+			Start a new line
+				# File for writing drawdown in binary format
+				Export expression: "DATA(BINARY) 24 "+FileName+".bdn" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bdn")
+			End line
+		End if
+		# 
+		If: (OneCBCFile=1 & (IBCFCB=1|(WellChoice=1&IWELCB=1)|(RechargeChoice=1&IRCHCB=1)|(DrainChoice=1&IDRNCB=1)|(RiverChoice=1&IRIVCB=1)|(EvapotranspirationChoice=1&IEVTCB=1)|(GeneralHeadChoice=1&IGHBCB=1)|(StreamChoice=1&ISTCB1=1)| (FlowHeadChoice&IFHBCB>0)))
+			Start a new line
+				# File for writing binary cell by cell flows
+				Export expression: "DATA(BINARY) 33 "+FileName+".bud" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bud")
+			End line
+		Else
+			If: IBCFCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 33 "+FileName+".bud" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bud")
+				End line
+			End if
+			If: WellChoice=1&IWELCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 29 "+FileName+".bwe" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bwe")
+				End line
+			End if
+			If: RechargeChoice=1&IRCHCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 28 "+FileName+".brc" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".brc")
+				End line
+			End if
+			If: DrainChoice=1&IDRNCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 30 "+FileName+".bdr" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bdr")
+				End line
+			End if
+			If: RiverChoice=1&IRIVCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 27 "+FileName+".bri" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bri")
+				End line
+			End if
+			If: EvapotranspirationChoice=1&IEVTCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 31 "+FileName+".bev" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bev")
+				End line
+			End if
+			If: GeneralHeadChoice=1&IGHBCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 32 "+FileName+".bgh" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bgh")
+				End line
+			End if
+			If: FlowHeadChoice&IFHBCB>0
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: IFHBCB; [G0]
+					Export expression: FileName+".bfh" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bfh")
+				End line
+			End if
+			If: StreamChoice=1&ISTCB1=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Export expression: "DATA(BINARY) 36 "+FileName+".bs1" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bs1")
+				End line
+			End if
+		End if
+		If: StreamChoice=1&ISTCB2=1
+			Start a new line
+				# File for writing binary cell by cell flows
+				Export expression: "DATA(BINARY) 37 "+FileName+".bs2" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bs2")
+			End line
+		End if
+	End file
+End if
+# 
+

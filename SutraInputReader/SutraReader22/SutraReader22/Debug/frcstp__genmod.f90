@@ -1,0 +1,9 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE FRCSTP__genmod
+          INTERFACE 
+            FUNCTION FRCSTP(TIME) RESULT(FRCSTP_0)
+              REAL(KIND=8) :: TIME
+              REAL(KIND=8) :: FRCSTP_0
+            END FUNCTION FRCSTP
+          END INTERFACE 
+        END MODULE FRCSTP__genmod

@@ -1,0 +1,80 @@
+EXAMPLES FOR EXTRACT FILE, DEPENDING ON THE TYPE OF OBSERVATION
+
+Position in *.obs file: line 37
+Observation name: RestonWell
+Number of observations at contour-observations: 2
+Interpolation Factors for Contour-observation interpolation (nodes 1 and 2): 0.32, 0.68
+Factor for Temporal interpolation: 0.4, 0.6
+
+POINT-OBSERVATION at time-step boundary
+
++37
+
+o RestonWell/p/&1/1
+c47_53
+
+
+POINT-OBSERVATION OFF of time-step boundary
+
++37
+
+o RestonWell/p/&1/1
+i2
+c47_53_0.4
++1
+c47_53_0.6
+-1
+
+
+CONTOUR-OBSERVATION at time-step boundary
+
++37
+
+o RestonWell/p/1/1
+c47_53
+
+o RestonWell/p/&2/1
+c84_96
+
+
+CONTOUR-OBSERVATION OFF of time-step boundary
+
++37
+
+o RestonWell/p/1/1
+i2
+c47_53_0.4
++1
+c47_53_0.6
+-1
+
+o RestonWell/p/&2/1
+i2
+c84_96_0.4
++1
+c84_96_0.6
+-1
+
+
+CONTOUR-OBSERVATION (& "Move to Node" Option) at time-step boundary
+
++37
+
+o RestonWell/p/+1/1
+i2
+c47_53_0.32
+c84_96_0.68
+
+
+CONTOUR-OBSERVATION (& "Move to Node" Option) OFF of time-step boundary
+
++37
+
+o RestonWell/p/+1/1
+i4
+c47_53_0.128
+c84_96_0.272
++1
+c47_53_0.192
+c84_96_0.408
+-1

@@ -1,0 +1,98 @@
+# 
+# MF_TLK.met
+# ----------------------------------------------------
+# Transient Leakage Package
+# ----------------------------------------------------
+# 
+If: ContinueSimulation&(UseTLK&ExportTLK)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Transient Leakage Package")
+	Redirect output to: @adeFileName@.tlk
+		Set Variable: MODFLOWLayer:= 0
+		Set Variable: NUMC:= 0
+		Set Variable: TlkCount:= 0
+		Set Variable: ModflowLayer:= 0
+		Set Variable: TLK_String:= ""
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			If: MODFLOW_SIMUL(LayIndex)
+				Set Variable: MODFLOWLayer:= MODFLOWLayer + MODFLOW_NDIV(LayIndex)
+			End if
+			If: (!MODFLOW_SIMUL(LayIndex))&MF_UseTLK(LayIndex)
+				Set Variable: TLK_Layer:= MODFLOWLayer
+				If: TLK_Layer < 10
+					Set Variable: TLK_String:= TLK_String + " " + TLK_Layer
+				Else
+					Set Variable: TLK_String:= TLK_String + TLK_Layer
+				End if
+				Set Variable: NUMC:= NUMC + 1
+				Set Variable: TlkCount:= TlkCount + 1
+				If: TlkCount=40
+					Start a new line
+						Export expression: IBQ_String [G0]
+						Set Variable: IBQ_String:= ""
+						Set Variable: TlkCount:= 0
+					End line
+				End if
+			End if
+		End loop
+		If: TlkCount!=0
+			Start a new line
+				Export expression: TLK_String [G0]
+			End line
+		End if
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: (!MODFLOW_SIMUL(LayIndex))&MF_UseTLK(LayIndex)&ContinueSimulation
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Transient Leakage Package Kz Unit " + LayIndex)
+				If: ContinueSimulation
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 9 [G0]
+					End line
+					Export matrix: Kz Unit[LayIndex] [G0]
+				End if
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Transient Leakage Package thickness Unit " + LayIndex)
+				If: ContinueSimulation
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 9 [G0]
+					End line
+					Export matrix: MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [G0]
+				End if
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Transient Leakage Package specific storage Unit " + LayIndex)
+				If: ContinueSimulation
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 9 [G0]
+					End line
+					Export matrix: Sp_Storage Unit[LayIndex] [G0]
+				End if
+			End if
+		End loop
+	End file
+	Redirect output to: TLK_Temp
+		Start a new line
+			Export expression: NUMC [I10]
+				If: ITLKCB>0&OneCBCFile=1
+					Set Variable: BUDUnit:= MF_GetUnitNumber("BUDUnit")
+					Export expression: BUDUnit [I5]
+					# Export expression: 33 [I5]
+				End if
+				If: ITLKCB>0&OneCBCFile=0
+					Set Variable: TLKBudgetUnit:= MF_GetUnitNumber("TLKBudgetUnit")
+					Export expression: TLKBudgetUnit [I5]
+					# Export expression: 27 [I5]
+				End if
+				If: ITLKCB=0
+					Export expression: 0 [I5]
+				End if
+			# Export expression: TLKBudgetUnit [I10]
+			# Export expression: ITLKCB [I10]
+			Export expression: NTM1 [I10]
+			Export expression: ITLKSV [I10]
+			Export expression: ITLKRS [I10]
+		End line
+	End file
+	Evaluate expression: MODFLOW_Join_Files("TLK_Temp", "@adeFileName@.tlk", "@adeFileName@.tlk")
+	Evaluate expression: MODFLOW_Delete_File("TLK_Temp")
+End if
+

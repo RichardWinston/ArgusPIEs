@@ -1,0 +1,13 @@
+		If: LakeChoice=1&ILKCBC>0
+			Start a new line
+				# File for writing binary cell by cell flows
+				Export expression: "DATA(BINARY) 66 "+FileName+".blk" [G0]
+			End line
+		End if
+		If: SeepageChoice&ISPGCB
+			Start a new line
+				# File for writing binary cell by cell flows
+				Export expression: "DATA(BINARY) 69 "+FileName+".bsp" [G0]
+			End line
+		End if
+

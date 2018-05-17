@@ -1,0 +1,86 @@
+		// Pane1:
+
+@TITLE1@ SUTRA Model created using ArgusONE
+@TITLE2@ USGS example
+@SIMULA@ SUTRA SOLUTE TRANSPORT
+
+		// Pane2:
+	
+@IUNSAT@ 
+@ISSFLO@ 1
+@ISSTRA@ 1
+@IREAD@ 1
+@UP@
+@GNUP@ 0.1
+@GNUU@ 1.0
+
+		// Pane3:
+
+@ITMAX@ 1
+@DELT@ 1
+@TMAX@ 1.0
+@ITCYC@ 9999
+@DTMULT@ 1.0
+@DTMAX@ 1
+@NPCYC@ 1
+@NUCYC@ 1
+@TSTART@
+
+		// Pane4:
+
+@NPRINT@ 9999
+@KNODAL@
+@KELMNT@
+@KINCID@
+@KVEL@ 1
+@KBUDG@ 1
+@ISTORE@ 9999
+@KPLOTP@
+@KPLOTU@
+@NOBCYC@
+
+		// Pane5:
+
+@ITRMAX@ 1
+@RPMAX@		
+@RUMAX@		
+
+		// Pane6:
+
+@COMPFL@
+@CW@ 1
+@SIGMAW@
+@RHOW0@ 1
+@URHOW0@
+@DRWDU@	
+@VISCO@ 1
+
+		// Pane7:
+
+@COMPMA@	
+@CS@
+@SIGMAS@
+@RHOS@ 2600.0
+@ADSMOD@ NONE      
+@CHI1@	
+@CHI2@
+
+		// Pane8:
+
+@PRODF0@	
+@PRODS0@	
+@PRODF1@	
+@PRODS1@	
+@GRAVX@
+@GRAVY@	
+
+		// Misc:
+
+@NTOBS@
+
+@IDIRECT@;	
+@NCHAPI@		
+@NCHAPL@		
+@NLINPI@		
+@PBASE@		
+@UBASE@		

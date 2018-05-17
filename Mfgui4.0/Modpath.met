@@ -1,0 +1,2005 @@
+# 
+# MODPATH.met
+# 
+# ----------------------------------------------------
+# 1. Define variables.
+# ----------------------------------------------------
+# 
+# ----------------------------------------------------
+# 1A. MODPATH export template variables
+# ----------------------------------------------------
+# If MF2000 is true, this is for MODFLOW-2000 or MODFLOW-2005
+Define Variable: MF2000 [Boolean]
+# 
+# if ContinueSimulation is False, the export will be aborted.
+Define Variable: ContinueSimulation [Boolean]
+# 
+# if RunMODPATH is true, MODPATH will be run after creating the input files.
+Define Variable: RunMODPATH [Boolean]
+# 
+# if No particles is True, no particles have been set up for MODPATH and a warning message will be displayed.
+Define Variable: NoParticles [Boolean]
+# 
+# LayIndex is an index to geologic units
+Define Variable: LayIndex [Integer]
+# 
+# DivIndex is an index to vertical subdivisions of a geologic unit
+Define Variable: DivIndex [Integer]
+# 
+# PeriodIndex is an index to stress periods
+Define Variable: PeriodIndex [Integer]
+# 
+# NumLay is the number of layers in a model
+Define Variable: NumLay [Integer]
+# 
+# if ShowWarnings is true, error and warning messages will be displayed
+Define Variable: ShowWarnings [Boolean]
+# 
+# LineCount is the number of lines in the file saved by the Progress Bar PIE. If LineCount > 1, at least one error or warning occured.
+Define Variable: LineCount [Integer]
+# 
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: WellChoice [Integer]
+Define Variable: RechargeChoice [Integer]
+Define Variable: DrainChoice [Integer]
+Define Variable: RiverChoice [Integer]
+Define Variable: EvapotranspirationChoice [Integer]
+Define Variable: GeneralHeadChoice [Integer]
+Define Variable: StreamChoice [Boolean]
+# 
+# Define flag for output of head into an external file (0 = none, 1 = formatted, 2 = binary):
+Define Variable: OutputHead [Integer]
+# 
+# TopElevationList is the index to the 3D list holding top elevations of units
+Define Variable: TopElevationList [Integer]
+# 
+# BottomElevationList is the index to the 3D list holding bottom elevations of units
+Define Variable: BottomElevationList [Integer]
+# 
+# ThicknessList is the index to the 3D list holding thicknesses of MODFLOW layers within geologic units
+Define Variable: ThicknessList [Integer]
+# 
+# TopSimul is the uppermost simulated unit.
+Define Variable: TopSimul [Integer]
+# 
+# BotSimul is the lowermost simulated unit.
+Define Variable: BotSimul [Integer]
+# 
+# UseProgressBar tells whether the progress bar PIE
+# is used.
+Define Variable: UseProgressBar [Boolean]
+# 
+# ProgressMax is the maximum value reaced by the progress bar.
+Define Variable: ProgressMax [Integer]
+# 
+# Root filename for MODFLOW files:
+Define Variable: FileName [String]
+# index to MODFLOW layers
+Define Variable: MFLayer [Integer]
+# Store Modpath zones
+Define Variable: MpZoneList [Integer]
+# 
+# ----------------------------------------------------
+# Response File variables
+# ----------------------------------------------------
+# For steady state models, if StopComputingPathsSS is true, the particle tracking will stop after a specified stopping time.
+Define Variable: StopComputingPathsSS [Boolean]
+# 
+# For transient models, if StopComputingPathsTran is true, the particle tracking will stop after a specified tracking time.
+Define Variable: StopComputingPathsTran [Boolean]
+# 
+# For steady state models, MaxTrackingTimeSS is the stopping time
+Define Variable: MaxTrackingTimeSS [Real]
+# 
+# For transient models, MaxTrackingTimeTran is the maximum tracking time
+Define Variable: MaxTrackingTimeTran [Real]
+# 
+# SpecRefTime specifies the method used to specify the starting time.
+Define Variable: SpecRefTime [Integer]
+# 
+# RefTime is the reference time for releasing particles.
+Define Variable: RefTime [Real]
+# 
+# RefStressPeriod is the reference stress period for releasing particles.
+Define Variable: RefStressPeriod [Integer]
+# 
+# RefTimeStep is the reference time step for releasing particles.
+Define Variable: RefTimeStep [Integer]
+# 
+# RefFracTimeStep is the fraction of the reference time step for releasing particles.
+Define Variable: RefFracTimeStep [Real]
+# 
+# MODE sets whether enpoints, pathlines or time series files are generated.
+Define Variable: MODE [Integer]
+# 
+# flag to compute locations at specified times
+Define Variable: ComputeSpecifiedTimes [Boolean]
+# 
+# Method of specifying times for output
+Define Variable: TimeIntervalChoice [Integer]
+# 
+# time interval for output
+Define Variable: TimeInterval [Real]
+# 
+# Maximum number of time points allowed
+Define Variable: MaxTimePoints [Integer]
+# 
+# factor used to convert units. Set to 1 here.
+Define Variable: UnitsConversionFactor [Real]
+# 
+# StartLocationsChoice is set to 1.
+Define Variable: StartLocationsChoice [Integer]
+# 
+# StoreStartLocations is set to 0.
+Define Variable: StoreStartLocations [Boolean]
+# 
+# Direction of particle tracking; 1=forward, 2=backward
+Define Variable: TrackingDirectionChoice [Integer]
+# 
+# Treatment of particles that enter weak sinks
+# Pass through weak sink cells (1)
+# Stop at weak sink cells (2)
+# Stop at weak sink cells that exceed a specified strength (3)
+Define Variable: WeakCellsChoice [Integer]
+# 
+# Limit of fraction of flow discharged that will stop particles
+Define Variable: WeakCellsFraction [Real]
+# 
+# Stop particles if they enter a specific zone
+Define Variable: StopParticlesChoice [Boolean]
+# 
+# Zone in which particles will stop (must be > 1)
+Define Variable: StopParticlesZone [Integer]
+# 
+# Record Endpoints for all particles (1)
+# Record Endpoints only for particles teminating in specified zone (2)
+Define Variable: EndPointsChoice [Integer]
+# 
+# Compute volumetric budgets for all cells
+Define Variable: UseVolBud [Boolean]
+# 
+# Error tolerance (%)
+Define Variable: ErrorTolerance [Real]
+# 
+# Check data cell by cell
+# Define Variable: CheckData [Boolean]
+# 
+# Summarize final status of particles in summary.pth file
+Define Variable: Summarize [Boolean]
+# 
+# ----------------------------------------------------
+# MODPATH Variables
+# ----------------------------------------------------
+# Define ISS (0=transient, 1=steady-state)
+Define Variable: ISS [Integer]
+# HNOFLO is the head assigned to inactive cells.
+Define Variable: LAYCON [Integer]
+Define Variable: HNOFLO [Real]
+Define Variable: HDRY [Real]
+Define Variable: MODFLOWLayer [Integer]
+Define Variable: MODPATHChoice [Boolean]
+Define Variable: NCBL [Integer]
+Define Variable: PreviousLayerSimulated [Boolean]
+Define Variable: MAXSIZ [Integer]
+Define Variable: NPART [Integer]
+Define Variable: NCONList [Integer]
+Define Variable: TBEGIN [Real]
+Define Variable: ModflowLayerIndex [Integer]
+Define Variable: BeginPeriod [Integer]
+Define Variable: BeginStep [Integer]
+Define Variable: EndPeriod [Integer]
+Define Variable: EndStep [Integer]
+Define Variable: NumColumns [Integer]
+Define Variable: NumRows [Integer]
+Define Variable: MaxReleaseTimes [Integer]
+Define Variable: DumRow [Integer]
+Define Variable: DumCol [Integer]
+Define Variable: LocalDeltaX [Real]
+Define Variable: LocalDeltaY [Real]
+Define Variable: LocalDeltaZ [Real]
+Define Variable: XIndex [Integer]
+Define Variable: YIndex [Integer]
+Define Variable: ZIndex [Integer]
+Define Variable: XLimit [Integer]
+Define Variable: YLimit [Integer]
+Define Variable: ZLimit [Integer]
+Define Variable: XPosition [Real]
+Define Variable: YPosition [Real]
+Define Variable: ZPosition [Real]
+Define Variable: ReleaseTimeIndex [Integer]
+Define Variable: MODPATHNvalues [Integer]
+# Define Variable: IBOUND3DList [Integer]
+Define Variable: MODPATHTimeIndex [Integer]
+Define Variable: RechargeITOP [Integer]
+Define Variable: EvapITOP [Integer]
+# 
+# ----------------------------------------------------
+# Variables related to MODPATH OPTIONS
+# ----------------------------------------------------
+Define Variable: COMPACT [Boolean]
+Define Variable: BINARY [Integer]
+Define Variable: OPTIONS [String]
+# variable to test that the elevation is OK for exporting particles.
+Define Variable: ElevationOK [Boolean]
+Define Variable: UpperModpathElevation [Real]
+Define Variable: LowerModpathElevation [Real]
+Define Variable: StoredUpperModpathElevation [Real]
+Define Variable: StoredLowerModpathElevation [Real]
+Define Variable: UpperElevation [Real]
+Define Variable: LowerElevation [Real]
+Define Variable: LayerTop [Real]
+Define Variable: LayerBottom [Real]
+Define Variable: LayerThickness [Real]
+Define Variable: ZElevation [Real]
+# 
+# 
+# ----------------------------------------------------
+# 2. Set variables.
+# ----------------------------------------------------
+# Set variables for choice of stress packages and output control:
+# 
+Set Variable: MF2000:= @rbMODFLOW2000@ | @rbModflow2005@
+Set Variable: ShowWarnings:= @cbShowWarnings@
+Set Variable: RunMODPATH:= @rbMPATHRun@
+Set Variable: NoParticles:= 1
+Set Variable: WellChoice:= @cbWEL@&@cbWELRetain@
+Set Variable: RechargeChoice:= @cbRCH@&@cbRCHRetain@
+Set Variable: DrainChoice:= @cbDRN@&@cbDRNRetain@
+Set Variable: RiverChoice:= @cbRIV@&@cbRIVRetain@
+Set Variable: EvapotranspirationChoice:= @cbEVT@&@cbEVTRetain@
+Set Variable: GeneralHeadChoice:= @cbGHB@&@cbGHBRetain@
+Set Variable: StreamChoice:= @cbSTR@&@cbSTRRetain@
+Set Variable: OutputHead:= @comboExportHead@
+Set Variable: ISS:= MODFLOW_ModpathSteadyState()
+Set Variable: HNOFLO:= @adeHNOFLO@
+Set Variable: HDRY:= @adeHDRY@
+Set Variable: TopSimul:= 0
+Set Variable: BotSimul:= 0
+# 
+If: !MF2000
+	Set Variable: TopElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+	Set Variable: BottomElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+	Set Variable: ThicknessList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+End if
+# 
+Set Variable: StopComputingPathsSS:= @cbMPATHStopTime@
+Set Variable: MaxTrackingTimeSS:= @adeMODPATHStopTime@
+Set Variable: SpecRefTime:= @comboMPATHStartTimeMethod@+1
+Set Variable: RefTime:= @adeMPATHRefTime@
+Set Variable: RefStressPeriod:= @adeMPATHRefPeriod@
+Set Variable: RefTimeStep:= @adeMPATHRefStep@
+Set Variable: RefFracTimeStep:= @adeMPATHRefTimeInStep@
+Set Variable: StopComputingPathsTran:= @cbMPATHTrackStop@
+Set Variable: MaxTrackingTimeTran:= @adeMPATHMaxTrack@
+Set Variable: MODE:= @comboMPATHOutMode@+1
+Set Variable: ComputeSpecifiedTimes:= @cbMPATHComputeLoc@
+Set Variable: TimeIntervalChoice:= @comboMPATHTimeMethod@+1
+Set Variable: TimeInterval:= @adeMPATHTimeInt@
+Set Variable: MaxTimePoints:= @adeMPATHMaxTimes@
+Set Variable: UnitsConversionFactor:= 1
+Set Variable: StartLocationsChoice:= 1
+Set Variable: StoreStartLocations:= 0
+Set Variable: TrackingDirectionChoice:= @comboMPATHDirection@+1
+Set Variable: WeakCellsChoice:= @comboMPATHSinkTreatment@+1
+Set Variable: WeakCellsFraction:= @adeMPATHSinkStrength@
+Set Variable: StopParticlesChoice:= @cbMPATHStop@
+Set Variable: StopParticlesZone:= @adeMPATHStopZone@
+Set Variable: EndPointsChoice:= @comboMPATHWhichParticles@+1
+Set Variable: UseVolBud:= @cbMPathBudget@
+Set Variable: ErrorTolerance:= @adeMPathErrorTolerance@
+# Set Variable: CheckData:= @cbMPathCheck@
+Set Variable: Summarize:= @cbMPathSummarize@
+Set Variable: FileName:= "@adeFileName@"
+Set Variable: MODPATHChoice:= @cbMODPATH@
+Set Variable: RechargeITOP:= @comboMODPATH_RechargeITOP@
+Set Variable: EvapITOP:= @comboMODPATH_EvapITOP@
+# 
+Set Variable: NumLay:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	Set Variable: NumLay:= NumLay+MODFLOW_SIMUL(LayIndex)*MODFLOW_NDIV(LayIndex)
+End loop
+Set Variable: NCONList:= MODFLOW_L_CreateNewList()
+Evaluate expression: MODFLOW_L_SetListSize(NCONList, NumLay)
+# 
+# 
+Set Variable: MAXSIZ:= @adeModpathMAXSIZ@
+Set Variable: NPART:= @adeModpathNPART@
+Set Variable: COMPACT:= @cbModpathCOMPACT@
+Set Variable: BINARY:= @cbModpathBINARY@
+Set Variable: TBEGIN:= @adeModpathTBEGIN@
+Set Variable: BeginPeriod:= @adeModpathBeginPeriod@
+Set Variable: BeginStep:= @adeModpathBeginStep@
+Set Variable: EndPeriod:= @adeModpathEndPeriod@
+If: EndPeriod=0
+	Set Variable: EndPeriod:= MODFLOW_NPER()
+End if
+Set Variable: EndStep:= @adeModpathEndStep@
+If: EndStep=0
+	Set Variable: EndStep:= MODFLOW_NSTP(EndPeriod)
+End if
+Set Variable: MaxReleaseTimes:= @adeMODPATHMaxReleaseTime@
+If: @comboMPATHDirection@=1
+	Set Variable: MaxReleaseTimes:= 1
+End if
+Set Variable: MODPATHNvalues:= @adeMODPATHOutputTimeCount@
+# 
+# 
+If: !MODFLOW_SIMUL(1)|!MODFLOW_SIMUL(MODFLOW_NLAY())
+	Alert: Error: both the top and bottom unit must be simulated.
+End if
+Set Variable: NumLay:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	Set Variable: NumLay:= NumLay+MODFLOW_SIMUL(LayIndex)*MODFLOW_NDIV(LayIndex)
+End loop
+# 
+# ----------------------------------------------------
+# 3. Start progress bar
+# ----------------------------------------------------
+Set Variable: UseProgressBar:= @cbProgressBar@
+# 
+If: UseProgressBar
+	Set Variable: ProgressMax:= 0
+	If: @cbMPA@
+		If: MF2000
+			Set Variable: ProgressMax:= MODFLOW_NLAY()*2 + 1
+		Else
+			Set Variable: ProgressMax:= MODFLOW_NLAY()*7 + 1
+		End if
+	End if
+	If: @cbPRT@
+		Set Variable: ProgressMax:= ProgressMax + MODFLOW_NLAY() + NumLay
+	End if
+	Evaluate expression: MODFLOW_ProgressBarInitialize(ProgressMax, 1)
+End if
+If: UseProgressBar&ShowWarnings&MODFLOW_ModpathTimeProblem()
+	Evaluate expression: MODFLOW_ProgressBarAddLine("Error: Either some stress periods between BeginPeriod and EndPeriod are steady-state and others are transient or else the Reference Time for MODPATH is invalid.  If any stress periods in the model are transient only the transient stress periods can be used with MODPATH.  The Reference time must be between BeginPeriod|BeginStep and EndPeriod|EndStep.")
+End if
+# 
+# ----------------------------------------------------
+# 4. Determine the top and bottom simulated units
+# ----------------------------------------------------
+# 
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	If: MODFLOW_SIMUL(LayIndex)!=0&TopSimul=0
+		Set Variable: TopSimul:= LayIndex
+	End if
+End loop
+# 
+Loop for: Variable LayIndex from: MODFLOW_NLAY() to: 1 step: -1
+	If: MODFLOW_SIMUL(LayIndex)!=0&BotSimul=0
+		Set Variable: BotSimul:= LayIndex
+	End if
+End loop
+# 
+# ----------------------------------------------------
+# 5. Write the name file
+# ----------------------------------------------------
+# 
+# Unit Numbers Used
+# 10 MODPATH main file
+# 11 Basic Package File
+# 12 Output Control File
+# 13 BCF File
+# 14 Recharge File
+# 15 River File
+# 16 Well File
+# 17 Drain File
+# 18 GHB File
+# 19 EVT File
+# 20 SIP File
+# 21 SOR File
+# 22 binary head file
+# 23 formatted head file
+# 24 binary drawdown file
+# 25 formatted drawdown file
+# 27 River budget file
+# 28 Recharge budget file
+# 29 Well budget file
+# 30 Drain budget file
+# 31 EVT budget file
+# 32 GHB budget file
+# 33 budget file
+# 34 PCG File
+# 35 DE4 File
+# 36 Stream budget file 1
+# 37 Stream budget file 2
+# 38 HFB file
+# 39 FHB budget file
+# 40 FHB file
+# 41 Stream file
+# 70 MODPATH NAME file
+# 71 DIS file
+Redirect output to: @adeFileName@.pnm
+	# The NameFile is the list of filenames being used in the MODFLOW simulation. These filenames are for specifying where output is to bewritten and where information is to be read.
+	Start a new line
+		# MODPATH summary output file
+		Export expression: "LIST 47 "+FileName+".mli" [G0]
+	End line
+	Start a new line
+		# MODPATH main input file
+		Export expression: "MAIN 10 "+FileName+".mpa" [G0]
+	End line
+	Start a new line
+		# MODFLOW budget file
+		Export expression: "BUDGET 33 "+FileName+".bud" [G0]
+	End line
+	If: MF2000
+		Start a new line
+			# MODFLOW budget file
+			Export expression: "DIS 71 "+FileName+".dis" [G0]
+		End line
+	End if
+	If: !MF2000
+		If: WellChoice=1
+			Start a new line
+				# File for reading WEL package information
+				Export expression: "WEL 16 "+FileName+".wel" [G0]
+			End line
+		End if
+		# 
+		If: RechargeChoice=1
+			Start a new line
+				# File for reading RCH package information
+				Export expression: "RCH 14 "+FileName+".rch" [G0]
+			End line
+		End if
+		# 
+		If: DrainChoice=1
+			Start a new line
+				# File for reading DRN package information
+				Export expression: "DRN 17 "+FileName+".drn" [G0]
+			End line
+		End if
+		# 
+		If: RiverChoice=1
+			Start a new line
+				# File for reading RIV package information
+				Export expression: "RIV 15 "+FileName+".riv" [G0]
+			End line
+		End if
+		# 
+		If: EvapotranspirationChoice=1
+			Start a new line
+				# File for reading EVT package information
+				Export expression: "EVT 19 "+FileName+".evt" [G0]
+			End line
+		End if
+		# 
+		If: GeneralHeadChoice=1
+			Start a new line
+				# File for reading GHB package information
+				Export expression: "GHB 18 "+FileName+".ghb" [G0]
+			End line
+		End if
+		# 
+		If: StreamChoice
+			Start a new line
+				# file for the stream package
+				Export expression: "STR 41 " + Filename + ".str" [G0]
+			End line
+		End if
+	End if
+	If: OutputHead=1
+		Start a new line
+			# File for writing heads in text format
+			Export expression: "HEAD 23 "+FileName+".fhd" [G0]
+		End line
+	End if
+	# 
+	If: OutputHead=2
+		Start a new line
+			# File for writing heads in binary format
+			Export expression: "HEAD(BINARY) 22 "+FileName+".bhd" [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "BUDGET 45 "+FileName+".bud" [G0]
+	End line
+	If: ISS=0
+		Start a new line
+			Export expression: "CBF 42 "+FileName+".mpo" [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "LOCATIONS 43 "+FileName+".prt" [G0]
+	End line
+	Start a new line
+		Export expression: "TIME 44 "+FileName+".tim" [G0]
+	End line
+	Start a new line
+		Export expression: "ENDPOINT 46 "+FileName+".end" [G0]
+		Evaluate expression: MODFLOW_Delete_File(FileName+".end")
+	End line
+	If: MODE=2
+		Start a new line
+			# MODPATH pathline file
+			Export expression: "PATHLINE 48 "+FileName+".lin" [G0]
+			Evaluate expression: MODFLOW_Delete_File(FileName+".lin")
+		End line
+	End if
+	If: MODE=3
+		Start a new line
+			# MODPATH time-series file
+			Export expression: "TIME-SERIES 48 "+FileName+".tse" [G0]
+			Evaluate expression: MODFLOW_Delete_File(FileName+".tse")
+		End line
+	End if
+	# 
+End file
+# 
+# ----------------------------------------------------
+# 6. Store the top and bottom elevations and the layer thicknesses
+# ----------------------------------------------------
+# 
+Set Variable: ContinueSimulation:= 1
+If: @cbMPA@
+	If: !MF2000
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			End if
+			If: ContinueSimulation
+				Redirect output to: Dummy
+					Start a new line
+						Export expression: "Top of layer; [G0]
+						Export expression: LayIndex; [G0]
+					End line
+					Export matrix: MODFLOW_L_SetOneBased3DListItem(TopElevationList, Column(), Row(), LayIndex, Elev Top Unit[LayIndex]) [G0]
+				End file
+				Evaluate expression: MODFLOW_Delete_File("Dummy")
+			End if
+		End loop
+		If: ContinueSimulation
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Bottom Elevations")
+			End if
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				End if
+				If: ContinueSimulation
+					Redirect output to: Dummy
+						Start a new line
+							Export expression: "Bottom of layer; [G0]
+							Export expression: LayIndex; [G0]
+						End line
+						Export matrix: MODFLOW_L_SetOneBased3DListItem(BottomElevationList, Column(), Row(), LayIndex, Elev Bot Unit[LayIndex]) [G0]
+						If: MODFLOW_SIMUL(LayIndex)
+							Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex))/MODFLOW_NDIV(LayIndex)) [G0]
+						Else
+							Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex))) [G0]
+						End if
+						If: UseProgressBar&ShowWarnings
+							Export matrix: If((MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)<=0)&IBOUND Unit[LayIndex], MODFLOW_ProgressBarAddLine("Negative or zero unit thickness at Unit " + LayIndex + "; Column: " + Column() + "; Row: " + Row()), 0) [G0]
+						End if
+					End file
+					Evaluate expression: MODFLOW_Delete_File("Dummy")
+				End if
+			End loop
+		End if
+		# 
+		# ----------------------------------------------------
+		# 7. Check elevations
+		# ----------------------------------------------------
+		# 
+		If: ContinueSimulation&ShowWarnings&UseProgressBar
+			If: MODFLOW_NLAY() > 1
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY()-1 step: 1
+					Start a new line
+						Export expression: "Checking layer; [G0]
+						Export expression: LayIndex; [G0]
+					End line
+					Redirect output to: Dummy
+						Export matrix: If(MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)!=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex + 1)&IBOUND Unit[LayIndex]&IBOUND Unit[LayIndex+1], MODFLOW_ProgressBarAddLine("Bottom elevation at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + "is different from the top elevation of the unit beneath it."), 0) [G0]
+					End file
+					Evaluate expression: MODFLOW_Delete_File("Dummy")
+				End loop
+			End if
+		End if
+	End if
+	# 
+	# 
+	# ----------------------------------------------------
+	#  8.Write MODPATH input file
+	# ----------------------------------------------------
+	# main input file
+	If: !MF2000
+		If: ContinueSimulation
+			Set Variable: NCBL:= 0
+			Set Variable: ModflowLayerIndex:= 0
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Determining the number of non-simulated units.")
+			End if
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				End if
+				If: ContinueSimulation
+					If: MODFLOW_SIMUL(LayIndex)
+						Set Variable: PreviousLayerSimulated:= 1
+						Set Variable: ModflowLayerIndex:= ModflowLayerIndex + MODFLOW_NDIV(LayIndex)
+					Else
+						If: PreviousLayerSimulated
+							Set Variable: NCBL:= NCBL + 1
+							Evaluate expression: MODFLOW_L_SetListItem(NCONList, ModflowLayerIndex - 1, 1)
+						End if
+						Set Variable: PreviousLayerSimulated:= 0
+					End if
+				End if
+			End loop
+		End if
+	End if
+	# 
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.mpa
+			Start a new line
+				If: MF2000
+					Export expression: MAXSIZ [G0]
+					Export expression: " " [G0]
+					Export expression: HNOFLO [G0]
+					Export expression: " " [G0]
+					Export expression: HDRY [G0]
+					Export expression: " " [G0]
+					Export expression: NPART [G0]
+					Export expression: " " [G0]
+					Export expression: @comboMODPATH_RechargeITOP@ [G0]
+					Export expression: " " [G0]
+					Export expression: @comboMODPATH_EvapITOP@ [G0]
+					Export expression: " " [G0]
+				Else
+					Export expression: NumColumns() [G0]
+					Export expression: " " [G0]
+					Export expression: NumRows() [G0]
+					Export expression: " " [G0]
+					Export expression: NumLay [G0]
+					Export expression: " " [G0]
+					Export expression: NCBL [G0]
+					Export expression: " " [G0]
+					Export expression: 0 [G0]
+					Export expression: " " [G0]
+					Export expression: MODFLOW_NPER() * (1 - ISS) [G0]
+					Export expression: " " [G0]
+					Export expression: MAXSIZ [G0]
+					Export expression: " " [G0]
+					Export expression: HNOFLO [G0]
+					Export expression: " " [G0]
+					Export expression: HDRY [G0]
+					Export expression: " " [G0]
+					Export expression: NPART [G0]
+					Export expression: " " [G0]
+				End if
+			End line
+			Set Variable: OPTIONS:= ""
+			If: COMPACT
+				Set Variable: OPTIONS:= OPTIONS + "COMPACT "
+			End if
+			If: BINARY
+				Set Variable: OPTIONS:= OPTIONS + "BINARY "
+			End if
+			Start a new line
+				Export expression: OPTIONS [G0]
+			End line
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Exporting LAYCON")
+			End if
+			If: ContinueSimulation
+				# Start a new line
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: UseProgressBar
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					End if
+					If: ContinueSimulation
+						If: MODFLOW_SIMUL(LayIndex)!=0
+							Set Variable: LAYCON:= MODFLOW_LAYCON(LayIndex)
+							If: (@rgFlowPackage@ > 0)&(LAYCON > 0)
+								Set Variable: LAYCON:= 3
+							End if
+							If: LAYCON=1&LayIndex!=TopSimul
+								Set Variable: err_bcf_1:= 1
+								# Alert: "Only the top simulated geologic unit can be unconfined!"
+								If: UseProgressBar&ShowWarnings
+									Evaluate expression: MODFLOW_ProgressBarAddLine("Layer " + LayIndex + " is unconfined but only the top simulated geologic unit can be unconfined!")
+								End if
+							End if
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								Start a new line
+									If: LAYCON=1&DivIndex!=1
+										Export expression: 3 [I2]
+									Else
+										Export expression: LAYCON [I2]
+									End if
+								End line
+							End loop
+						End if
+					End if
+				End loop
+				# End line
+			End if
+			If: !MF2000
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Exporting NCON")
+				End if
+				If: ContinueSimulation
+					If: NCBL>0
+						Start a new line
+							Loop for: Variable LayIndex from: 0 to: MODFLOW_L_GetListSize(NCONList)-1 step: 1
+								If: UseProgressBar
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+								End if
+								If: ContinueSimulation
+									Export expression: MODFLOW_L_GetFromList(NCONList, LayIndex) [I2]
+								End if
+							End loop
+						End line
+					Else
+						Loop for: Variable LayIndex from: 0 to: MODFLOW_L_GetListSize(NCONList)-1 step: 1
+							If: UseProgressBar
+								Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+							End if
+						End loop
+					End if
+				End if
+				If: ContinueSimulation
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 1 [I5]
+					End line
+				End if
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Columns positions")
+				End if
+				If: ContinueSimulation
+					Loop for: Columns
+						If: $Column$<NumColumns()
+							Start a new line
+								Export expression: Abs(NthColumnPos($Column$+1)-NthColumnPos($Column$)) [E13.5]
+							End line
+						End if
+					End loop
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 1 [I5]
+					End line
+				End if
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Row positions")
+				End if
+				If: ContinueSimulation
+					Loop for: Rows
+						If: $Row$<NumRows()
+							Start a new line
+								Export expression: Abs(NthRowPos($Row$+1)-NthRowPos($Row$)) [E13.5]
+							End line
+						End if
+					End loop
+				End if
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Exporting Top and bottom elevations")
+				End if
+				If: ContinueSimulation
+					Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+						If: UseProgressBar
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+						End if
+						If: ContinueSimulation
+							If: MODFLOW_SIMUL(LayIndex)
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									If: (MODFLOW_LAYCON(LayIndex)=1&DivIndex!=1)|(MODFLOW_LAYCON(LayIndex)!=1)
+										Start a new line
+											Export expression: "INTERNAL 1.0 (FREE)" [G0]
+											Export expression: 12 [I5]
+										End line
+										Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-(DivIndex-1)*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [E13.5]
+									End if
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)" [G0]
+										Export expression: 12 [I5]
+									End line
+									Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-DivIndex*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [E13.5]
+								End loop
+							End if
+						End if
+					End loop
+				End if
+			End if
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Exporting MODPATH Zones")
+			End if
+			If: ContinueSimulation
+				# The resevoir and lake packages modify the IBOUND array. That needs to be taken into account.
+				If: (@cbLAK@ & @cbLAKRetain@) | (@cbRES@ & @cbRESRetain@)
+					If: (@cbLAK@ & @cbLAKRetain@)
+						Evaluate expression: MF_InitializeLakes()
+					End if
+					If: (@cbRES@ & @cbRESRetain@)
+						Evaluate expression: MF_InitializeReservoirs()
+					End if
+					Set Variable: MpZoneList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), 2)
+					Set Variable: MFLayer:= 0
+					Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+						If: UseProgressBar
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+						End if
+						If: ContinueSimulation
+							If: MODFLOW_SIMUL(LayIndex)
+								Redirect output to: Dummy
+									Export matrix: MODFLOW_L_SetOneBased3DListItem(MpZoneList, Column(), Row(), 1, MPATH Zone Unit[LayIndex]) [G0]
+									Export matrix: If(MODFLOW FD Grid.MPATH Zone Unit[LayIndex]>=1000, MODFLOW_ProgressBarAddLine("Error: MODPATH Zone at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + "is greater than or equal to 1000."), 0) [G0]
+								End file
+								Evaluate expression: MODFLOW_Delete_File("Dummy")
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Set Variable: MFLayer:= MFLayer + 1
+									Redirect output to: Dummy
+										Export matrix: MODFLOW_L_SetOneBased3DListItem(MpZoneList, Column(), Row(), 2, If(MF_GetIbound(Column(), Row(), MFLayer)=0, 0, MODFLOW_L_GetFromOneBased3DList(MpZoneList, Column(), Row(), 1))) [G0]
+									End file
+									Evaluate expression: MODFLOW_Delete_File("Dummy")
+									Start a new line
+										Export expression: "INTERNAL 1 (FREE)" [G0]
+										Export expression: 5 [I5]
+									End line
+									Export matrix: MODFLOW_L_GetFromOneBased3DList(MpZoneList, Column(), Row(), 2) [I10]
+								End loop
+							End if
+						End if
+					End loop
+				Else
+					Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+						If: UseProgressBar
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+						End if
+						If: ContinueSimulation
+							If: MODFLOW_SIMUL(LayIndex)
+								Redirect output to: @adeFileName@.a$LOOP$
+									Export matrix: MODFLOW FD Grid.MPATH Zone Unit[LayIndex] [I5]
+									Redirect output to: Dummy
+										Export matrix: If(MODFLOW FD Grid.MPATH Zone Unit[LayIndex]>=1000, MODFLOW_ProgressBarAddLine("Error: MODPATH Zone at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + "is greater than or equal to 1000."), 0) [G0]
+									End file
+									Evaluate expression: MODFLOW_Delete_File("Dummy")
+								End file
+								Evaluate expression: MODFLOW_Rename_File("@adeFileName@.a" + $LOOP$, "@adeFileName@.a" + MODFLOW_Int2Str(LayIndex-1))
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Start a new line
+										Export expression: "OPEN/CLOSE @adeFileName@.a" + MODFLOW_Int2Str(LayIndex-1) + " 1 (FREE)" [G0]
+										Export expression: 5 [I5]
+									End line
+								End loop
+							End if
+						End if
+					End loop
+				End if
+			End if
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Exporting Porosity")
+			End if
+			If: ContinueSimulation
+				Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+					If: UseProgressBar
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					End if
+					If: ContinueSimulation
+						# If: MODFLOW_SIMUL(LayIndex)
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Start a new line
+								Export expression: "INTERNAL 1 (FREE)" [G0]
+								Export expression: 5 [I5]
+							End line
+							Export matrix: MODFLOW FD Grid.Porosity Unit[LayIndex] [E13.5]
+						End loop
+					End if
+					# End if
+				End loop
+			End if
+			If: ContinueSimulation
+				If: !ISS
+					Start a new line
+						Export expression: TBEGIN [G0]
+					End line
+					If: !MF2000
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							Start a new line
+								Export expression: MODFLOW_PERLEN(PeriodIndex) [G0]
+								Export expression: " " [G0]
+								Export expression: MODFLOW_NSTP(PeriodIndex) [G0]
+								Export expression: " " [G0]
+								Export expression: MODFLOW_TSMULT(PeriodIndex) [G0]
+								Export expression: " " [G0]
+							End line
+						End loop
+					End if
+					Start a new line
+						Export expression: BeginPeriod [G0]
+						Export expression: " " [G0]
+						Export expression: BeginStep [G0]
+						Export expression: " " [G0]
+						Export expression: EndPeriod [G0]
+						Export expression: " " [G0]
+						Export expression: EndStep [G0]
+						Export expression: " " [G0]
+					End line
+				End if
+			End if
+		End file
+	End if
+End if
+# 
+# 
+# If: ContinueSimulation
+# 	Set Variable: NumColumns:= NumColumns()
+# 	Set Variable: NumRows:= NumRows()
+# 	Set Variable: IBOUND3DList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+# End if
+# If: UseProgressBar
+# 	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Storing IBOUND")
+# End if
+# If: ContinueSimulation
+# 	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+# 		If: UseProgressBar
+# 			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+# 		End if
+# 		If: ContinueSimulation
+# 			If: MODFLOW_SIMUL(LayIndex)
+# 				Redirect output to: Dummy
+# 					Export matrix: MODFLOW_L_SetOneBased3DListItem(IBOUND3DList, Column(), Row(), LayIndex, IBOUND Unit[LayIndex]) [G0]
+# 				End file
+# 				Evaluate expression: MODFLOW_Delete_File("Dummy")
+# 			End if
+# 		End if
+# 	End loop
+# End if
+# ----------------------------------------------------
+# 9. Write MODPATH particles file
+# ----------------------------------------------------
+# particles
+If: @cbPRT@
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.prt
+			Set Variable: MODFLOWLayer:= 0
+			If: UseProgressBar
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Exporting Particles")
+			End if
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				If: UseProgressBar
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				End if
+				If: ContinueSimulation
+					If: MODFLOW_SIMUL(LayIndex)
+						Loop for: Blocks
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							If: @cbMpathElevations@
+								Set Variable: StoredUpperModpathElevation:= MODPATH Particles Unit[LayIndex].Upper Elevation
+								Set Variable: StoredLowerModpathElevation:= MODPATH Particles Unit[LayIndex].Lower Elevation
+								Set Variable: UpperElevation:= Elev Top Unit[LayIndex]
+								Set Variable: LowerElevation:= Elevation Bottom Unit[LayIndex]
+								Set Variable: LayerThickness:= (UpperElevation-LowerElevation)/MODFLOW_NDIV(LayIndex)
+							End if
+							Loop for: Objects in layer: MODPATH Particles Unit[LayIndex]
+								If: @cbMpathElevations@ & (ContourType()<3)
+									Set Variable: UpperModpathElevation:= MODPATH Particles Unit[LayIndex].Upper Elevation
+									Set Variable: LowerModpathElevation:= MODPATH Particles Unit[LayIndex].Lower Elevation
+								Else
+									Set Variable: UpperModpathElevation:= StoredUpperModpathElevation
+									Set Variable: LowerModpathElevation:= StoredLowerModpathElevation
+								End if
+								If: X Particle Count <= 0
+									Set Variable: LocalDeltaX:= 1
+									Set Variable: XLimit:= 1
+								Else
+									Set Variable: LocalDeltaX:= 1 / (X Particle Count)
+									Set Variable: XLimit:= X Particle Count
+								End if
+								If: Y Particle Count <= 0
+									Set Variable: LocalDeltaY:= 1
+									Set Variable: YLimit:= 1
+								Else
+									Set Variable: LocalDeltaY:= 1 / (Y Particle Count)
+									Set Variable: YLimit:= Y Particle Count
+								End if
+								If: Z Particle Count <= 0
+									Set Variable: LocalDeltaZ:= 1
+									Set Variable: ZLimit:= 1
+								Else
+									Set Variable: LocalDeltaZ:= 1 / (Z Particle Count)
+									Set Variable: ZLimit:= Z Particle Count
+								End if
+								If: (IFACE>6)|(IFACE=0)
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable YIndex from: 1 to: YLimit step: 1
+													Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+														If: @cbMpathElevations@
+															Set Variable: ZElevation:= (ZIndex * LocalDeltaZ)*LayerThickness+LayerBottom
+															Set Variable: ElevationOK:= (LowerModpathElevation<=ZElevation)
+															If: ElevationOK
+																Set Variable: ZElevation:= ZElevation-LayerThickness
+																Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)
+															End if
+														Else
+															Set Variable: ElevationOK:= 1
+														End if
+														If: ElevationOK
+															Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+																If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																	Set Variable: NoParticles:= 0
+																	Start a new line
+																		Export expression: DumCol [G0]
+																		Export expression: " " [G0]
+																		Export expression: DumRow [G0]
+																		Export expression: " " [G0]
+																		Export expression: MODFLOWLayer + DivIndex [G0]
+																		Export expression: " " [G0]
+																		Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																		Export expression: " " [G0]
+																		Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																		Export expression: " " [G0]
+																		Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																		Export expression: " " [G0]
+																		Export expression: 0 [G0]
+																		Export expression: " " [G0]
+																		Export expression: 0 [G0]
+																		Export expression: " " [G0]
+																		Export expression: 0 [G0]
+																		Export expression: " " [G0]
+																		If: @comboMPATHDirection@=1
+																			Export expression: 0 [G0]
+																		Else
+																			Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																		End if
+																		Export expression: " " [G0]
+																	End line
+																End if
+															End loop
+														End if
+													End loop
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: (IFACE=1)|(IFACE=2)
+									If: IFACE=1
+										Set Variable: XPosition:= 0
+									Else
+										Set Variable: XPosition:= 1
+									End if
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable YIndex from: 1 to: YLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= (ZIndex * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (LowerModpathElevation<=ZElevation)
+														If: ElevationOK
+															Set Variable: ZElevation:= ZElevation-LayerThickness
+															Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)
+														End if
+														# If: @cbMpathElevations@ & (ZLimit > 1)
+														# 	Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														# 	Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: XPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: (IFACE=3)|(IFACE=4)
+									If: IFACE=3
+										Set Variable: YPosition:= 0
+									Else
+										Set Variable: YPosition:= 1
+									End if
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= (ZIndex * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (LowerModpathElevation<=ZElevation)
+														If: ElevationOK
+															Set Variable: ZElevation:= ZElevation-LayerThickness
+															Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)
+														End if
+														# If: @cbMpathElevations@ & (ZLimit > 1)
+														# 	Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														# 	Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																	Export expression: " " [G0]
+																	Export expression: YPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: (IFACE=5)|(IFACE=6)
+									If: IFACE=5
+										Set Variable: ZPosition:= 0
+									Else
+										Set Variable: ZPosition:= 1
+									End if
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ZElevation:= ZPosition*LayerThickness+LayerBottom
+											Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable YIndex from: 1 to: YLimit step: 1
+													Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+														If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+															Set Variable: NoParticles:= 0
+															Start a new line
+																Export expression: DumCol [G0]
+																Export expression: " " [G0]
+																Export expression: DumRow [G0]
+																Export expression: " " [G0]
+																Export expression: MODFLOWLayer + DivIndex [G0]
+																Export expression: " " [G0]
+																Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																Export expression: " " [G0]
+																Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																Export expression: " " [G0]
+																Export expression: ZPosition [G0]
+																Export expression: " " [G0]
+																Export expression: 0 [G0]
+																Export expression: " " [G0]
+																Export expression: 0 [G0]
+																Export expression: " " [G0]
+																Export expression: 0 [G0]
+																Export expression: " " [G0]
+																If: @comboMPATHDirection@=1
+																	Export expression: 0 [G0]
+																Else
+																	Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																End if
+																Export expression: " " [G0]
+															End line
+														End if
+													End loop
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: IFACE<0
+									Set Variable: XPosition:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable YIndex from: 1 to: YLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= (ZIndex * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (LowerModpathElevation<=ZElevation)
+														If: ElevationOK
+															Set Variable: ZElevation:= ZElevation-LayerThickness
+															Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)
+														End if
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: XPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+									Set Variable: XPosition:= 1
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable YIndex from: 1 to: YLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: XPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+									Set Variable: YPosition:= 0
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																	Export expression: " " [G0]
+																	Export expression: YPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+									Set Variable: YPosition:= 1
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																	Export expression: " " [G0]
+																	Export expression: YPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+							End loop
+						End loop
+						Set Variable: MODFLOWLayer:= MODFLOWLayer + MODFLOW_NDIV(LayIndex)
+					Else
+						Loop for: Blocks
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							If: @cbMpathElevations@
+								Set Variable: UpperModpathElevation:= MODPATH Particles Unit[LayIndex].Upper Elevation
+								Set Variable: LowerModpathElevation:= MODPATH Particles Unit[LayIndex].Lower Elevation
+								Set Variable: UpperElevation:= Elev Top Unit[LayIndex]
+								Set Variable: LowerElevation:= Elevation Bottom Unit[LayIndex]
+								Set Variable: LayerThickness:= (UpperElevation-LowerElevation)/MODFLOW_NDIV(LayIndex)
+							End if
+							Loop for: Objects in layer: MODPATH Particles Unit[LayIndex]
+								Set Variable: LocalDeltaX:= 1 / (X Particle Count)
+								Set Variable: LocalDeltaY:= 1 / (Y Particle Count)
+								Set Variable: LocalDeltaZ:= 1 / (Z Particle Count)
+								Set Variable: XLimit:= X Particle Count
+								Set Variable: YLimit:= Y Particle Count
+								Set Variable: ZLimit:= Z Particle Count
+								If: (IFACE=0)|(IFACE>6)
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable YIndex from: 1 to: YLimit step: 1
+													Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+														If: @cbMpathElevations@
+															Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+															Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+														Else
+															Set Variable: ElevationOK:= 1
+														End if
+														If: ElevationOK
+															Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+																If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																	Set Variable: NoParticles:= 0
+																	Start a new line
+																		Export expression: DumCol [G0]
+																		Export expression: " " [G0]
+																		Export expression: DumRow [G0]
+																		Export expression: " " [G0]
+																		Export expression: MODFLOWLayer + DivIndex [G0]
+																		Export expression: " " [G0]
+																		Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																		Export expression: " " [G0]
+																		Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																		Export expression: " " [G0]
+																		Export expression: (ZIndex-0.5) * LocalDeltaZ - 1 [G0]
+																		Export expression: " " [G0]
+																		Export expression: 0 [G0]
+																		Export expression: " " [G0]
+																		Export expression: 0 [G0]
+																		Export expression: " " [G0]
+																		Export expression: 0 [G0]
+																		Export expression: " " [G0]
+																		If: @comboMPATHDirection@=1
+																			Export expression: 0 [G0]
+																		Else
+																			Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																		End if
+																		Export expression: " " [G0]
+																	End line
+																End if
+															End loop
+														End if
+													End loop
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: (IFACE=1)|(IFACE=2)
+									If: IFACE=1
+										Set Variable: XPosition:= 0
+									Else
+										Set Variable: XPosition:= 1
+									End if
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable YIndex from: 1 to: YLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: XPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ -1 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: (IFACE=3)|(IFACE=4)
+									If: IFACE=3
+										Set Variable: YPosition:= 0
+									Else
+										Set Variable: YPosition:= 1
+									End if
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ElevationOK:= (LayerTop >= LowerModpathElevation)&(LayerBottom<=UpperModpathElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable ZIndex from: 1 to: ZLimit step: 1
+													If: @cbMpathElevations@
+														Set Variable: ZElevation:= ((ZIndex-0.5) * LocalDeltaZ)*LayerThickness+LayerBottom
+														Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+													Else
+														Set Variable: ElevationOK:= 1
+													End if
+													If: ElevationOK
+														Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+															If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+																Set Variable: NoParticles:= 0
+																Start a new line
+																	Export expression: DumCol [G0]
+																	Export expression: " " [G0]
+																	Export expression: DumRow [G0]
+																	Export expression: " " [G0]
+																	Export expression: MODFLOWLayer + DivIndex [G0]
+																	Export expression: " " [G0]
+																	Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																	Export expression: " " [G0]
+																	Export expression: YPosition [G0]
+																	Export expression: " " [G0]
+																	Export expression: (ZIndex-0.5) * LocalDeltaZ -1 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	Export expression: 0 [G0]
+																	Export expression: " " [G0]
+																	If: @comboMPATHDirection@=1
+																		Export expression: 0 [G0]
+																	Else
+																		Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																	End if
+																	Export expression: " " [G0]
+																End line
+															End if
+														End loop
+													End if
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+								If: (IFACE=5)|(IFACE=6)
+									If: IFACE=5
+										Set Variable: ZPosition:= 0
+									Else
+										Set Variable: ZPosition:= 1
+									End if
+									Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+										If: @cbMpathElevations@
+											Set Variable: LayerTop:= UpperElevation - (LayerThickness * (DivIndex-1))
+											Set Variable: LayerBottom:= LayerTop - LayerThickness
+											Set Variable: ZElevation:= ZPosition*LayerThickness+LayerBottom
+											Set Variable: ElevationOK:= (UpperModpathElevation>=ZElevation)&(LowerModpathElevation<=ZElevation)
+										Else
+											Set Variable: ElevationOK:= 1
+										End if
+										If: ElevationOK
+											Loop for: Variable XIndex from: 1 to: XLimit step: 1
+												Loop for: Variable YIndex from: 1 to: YLimit step: 1
+													Loop for: Variable ReleaseTimeIndex from: 1 to: MaxReleaseTimes step: 1
+														If: (MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex]!=$N/A)
+															Set Variable: NoParticles:= 0
+															Start a new line
+																Export expression: DumCol [G0]
+																Export expression: " " [G0]
+																Export expression: DumRow [G0]
+																Export expression: " " [G0]
+																Export expression: " " [G0]
+																Export expression: MODFLOWLayer + DivIndex [G0]
+																Export expression: " " [G0]
+																Export expression: (XIndex-0.5) * LocalDeltaX [G0]
+																Export expression: " " [G0]
+																Export expression: (YIndex-0.5) * LocalDeltaY [G0]
+																Export expression: " " [G0]
+																Export expression: ZPosition -1 [G0]
+																Export expression: " " [G0]
+																Export expression: 0 [G0]
+																Export expression: " " [G0]
+																Export expression: 0 [G0]
+																Export expression: " " [G0]
+																Export expression: 0 [G0]
+																Export expression: " " [G0]
+																If: @comboMPATHDirection@=1
+																	Export expression: 0 [G0]
+																Else
+																	Export expression: MODPATH Particles Unit[LayIndex].Release time[ReleaseTimeIndex] [G0]
+																End if
+																Export expression: " " [G0]
+															End line
+														End if
+													End loop
+												End loop
+											End loop
+										End if
+									End loop
+								End if
+							End loop
+						End loop
+					End if
+				End if
+			End loop
+		End file
+	End if
+	If: ContinueSimulation&UseProgressBar&ShowWarnings
+		If: NoParticles
+			Evaluate expression: MODFLOW_ProgressBarAddLine("Error: No particles defined on any of the MODPATH Particles Unit[i] layers! MODPATH will abort.")
+		End if
+	End if
+End if
+# ----------------------------------------------------
+# 10. Write MODPATH Times file
+# ----------------------------------------------------
+# Times
+If: ContinueSimulation
+	Redirect output to: @adeFileName@.tim
+		Start a new line
+			Export expression: MODPATHNvalues [G0]
+			Export expression: " " [G0]
+			Export expression: 1 [G0]
+			Export expression: " " [G0]
+		End line
+		Loop for: Variable MODPATHTimeIndex from: 1 to: MODPATHNvalues step: 1
+			Start a new line
+				Export expression: MODFLOW_ModpathTime(MODPATHTimeIndex) [G0]
+			End line
+		End loop
+	End file
+End if
+# ----------------------------------------------------
+# 11. Write MODPATH Responses
+# ----------------------------------------------------
+If: ContinueSimulation
+	Redirect output to: @adeFileName@.rsp
+		Start a new line
+		End line
+		Start a new line
+			Export expression: "@adeFileName@.pnm" [G0]
+		End line
+		If: ISS=1
+			Start a new line
+				If: StopComputingPathsSS
+					Export expression: "Y" [G0]
+				Else
+					Export expression: "N" [G0]
+				End if
+			End line
+			If: StopComputingPathsSS
+				Start a new line
+					Export expression: MaxTrackingTimeSS [G0]
+					Export expression: " " [G0]
+					Export expression: UnitsConversionFactor [G0]
+				End line
+			End if
+		Else
+			Start a new line
+				Export expression: SpecRefTime [G0]
+			End line
+			If: SpecRefTime=2
+				Start a new line
+					Export expression: RefTime [G0]
+					Export expression: " " [G0]
+					Export expression: UnitsConversionFactor [G0]
+				End line
+			Else
+				Start a new line
+					Export expression: RefStressPeriod [G0]
+					Export expression: " " [G0]
+					Export expression: RefTimeStep [G0]
+				End line
+				Start a new line
+					Export expression: RefFracTimeStep [G0]
+				End line
+			End if
+			Start a new line
+				If: StopComputingPathsTran
+					Export expression: "Y" [G0]
+				Else
+					Export expression: "N" [G0]
+				End if
+			End line
+			If: StopComputingPathsTran
+				Start a new line
+					Export expression: MaxTrackingTimeTran [G0]
+					Export expression: " " [G0]
+					Export expression: UnitsConversionFactor [G0]
+				End line
+			End if
+			Start a new line
+				Export expression: 1 [G0]
+			End line
+		End if
+		Start a new line
+			Export expression: MODE [G0]
+		End line
+		If: (MODE=2)|(MODE=3)
+			If: (MODE=2)
+				Start a new line
+					If: ComputeSpecifiedTimes
+						Export expression: "Y" [G0]
+					Else
+						Export expression: "N" [G0]
+					End if
+				End line
+			Else
+				If: (MODE=3)
+					Set Variable: ComputeSpecifiedTimes:= 1
+				End if
+			End if
+			If: ComputeSpecifiedTimes
+				Start a new line
+					Export expression: TimeIntervalChoice [G0]
+				End line
+				If: TimeIntervalChoice=2
+				Else
+					Start a new line
+						Export expression: TimeInterval [G0]
+						Export expression: " " [G0]
+						Export expression: UnitsConversionFactor [G0]
+					End line
+					Start a new line
+						Export expression: MaxTimePoints [G0]
+					End line
+				End if
+			End if
+		End if
+		Start a new line
+			Export expression: StartLocationsChoice [G0]
+		End line
+		If: StartLocationsChoice=2
+			Start a new line
+				If: StoreStartLocations
+					Export expression: "Y" [G0]
+				Else
+					Export expression: "N" [G0]
+				End if
+			End line
+		End if
+		Start a new line
+			Export expression: TrackingDirectionChoice [G0]
+		End line
+		Start a new line
+			Export expression: WeakCellsChoice [G0]
+		End line
+		If: WeakCellsChoice=3
+			Start a new line
+				Export expression: WeakCellsFraction [G0]
+			End line
+		End if
+		Start a new line
+			If: StopParticlesChoice
+				Export expression: "Y" [G0]
+			Else
+				Export expression: "N" [G0]
+			End if
+		End line
+		If: StopParticlesChoice
+			Start a new line
+				Export expression: StopParticlesZone [G0]
+			End line
+			If: MODE=1
+				Start a new line
+					Export expression: EndPointsChoice [G0]
+				End line
+			End if
+		End if
+		If: @cbLargeMPATH_Budget@
+			# if large file, continue
+			Start a new line
+				Export expression: 1 [G0]
+			End line
+		End if
+		If: StopParticlesChoice
+			Start a new line
+				# renumber zones
+				Export expression: "N" [G0]
+			End line
+		End if
+		Start a new line
+			If: UseVolBud
+				Export expression: "Y" [G0]
+			Else
+				Export expression: "N" [G0]
+			End if
+		End line
+		If: UseVolBud
+			Start a new line
+				Export expression: ErrorTolerance [G0]
+			End line
+		End if
+		Start a new line
+			# If: CheckData
+			# 	Export expression: "Y" [G0]
+			# Else
+			Export expression: "N" [G0]
+			# End if
+		End line
+		Start a new line
+			If: Summarize
+				Export expression: "Y" [G0]
+			Else
+				Export expression: "N" [G0]
+			End if
+		End line
+	End file
+End if
+# ----------------------------------------------------
+# 12. Run MODPATH.EXE
+# ----------------------------------------------------
+# batch file to run MODPATH
+If: UseProgressBar
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Run MODPATH")
+End if
+If: ContinueSimulation
+	If: UseProgressBar
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+	End if
+	Redirect output to: modpath.bat
+		Start a new line
+			If: MF2000
+				Export expression: "@adeMODPATH41Path@" [G0]
+			Else
+				Export expression: "@adeMODPATHPath@" [G0]
+			End if
+			Export expression: " <" [G0]
+			Export expression: "@adeFileName@.rsp" [G0]
+		End line
+		If: @cbOpenOutputInNotepad@
+			Start a new line
+				Export expression: "Start Notepad "+FileName+".mli" [G0]
+			End line
+		End if
+		Start a new line
+			Export expression: "Pause" [G0]
+		End line
+	End file
+End if
+# 
+If: ContinueSimulation
+	If: RunMODPATH
+		Execute external code: "MODPATH.BAT"
+	End if
+End if
+# ----------------------------------------------------
+# 13. Free memory
+# ----------------------------------------------------
+If: (MODFLOW_L_GetErrorCount()>0)&ShowWarnings
+	Alert: "Error: There were errors in the List PIE. Contact the PIE developer for assistance."
+End if
+Evaluate expression: MF_FreeBlocks()
+Evaluate expression: MODFLOW_L_FreeAllLists()
+If: UseProgressBar
+	Set Variable: LineCount:= MODFLOW_ProgressBarSaveToFile("@adeFileName@.err")
+End if
+If: (LineCount>1)&ShowWarnings
+	Alert: "Error found while exporting!  See error file (@adeFileName@.err)"
+End if
+If: (LineCount<0)&ShowWarnings
+	Alert: "Error when attempting to save (@adeFileName@.err) to disk."
+End if
+If: UseProgressBar
+	Evaluate expression: MODFLOW_ProgressBarFree()
+End if
+

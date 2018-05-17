@@ -1,0 +1,68 @@
+# 
+Define Variable: UnitIndex [Integer]
+Define Variable: TimeIndex [Integer]
+# 
+Redirect output to: $BaseName$
+	Start a new line
+		Export expression: "A real number = " [G0]
+		Export expression: @adeReal@ [G0]
+	End line
+	Start a new line
+		Export expression: "An integer = " [G0]
+		Export expression: "@adeInteger@" [G0]
+	End line
+	Start a new line
+		Export expression: "A string = " [G0]
+		Export expression: "@edString@" [G0]
+	End line
+	Start a new line
+		Export expression: "Element parameters" [G0]
+	End line
+	Loop for: Elements
+		Start a new line
+			Export expression: My Element Parameter [G0]
+		End line
+	End loop
+	Start a new line
+		Export expression: "Node Parameters" [G0]
+	End line
+	Loop for: Nodes
+		Start a new line
+			Export expression: My Node Parameter [G0]
+		End line
+	End loop
+	Start a new line
+		Export expression: "Layer Variables at nodes" [G0]
+	End line
+	Loop for: Variable UnitIndex from: 1 to: Number_of_Units() step: 1
+		Start a new line
+			Export expression: "Layer for Unit " + UnitIndex [G0]
+		End line
+		Loop for: Nodes
+			Start a new line
+				Loop for: Variable TimeIndex from: 1 to: Number_of_Times() step: 1
+					Export expression: My Information Layer[UnitIndex].My Time Parameter[TimeIndex]; [G0]
+					If: @cbOptionalParameter@
+						Export expression: My Information Layer[UnitIndex].My Optional Time Parameter[TimeIndex]; [G0]
+					End if
+				End loop
+			End line
+		End loop
+		If: @cbOptionalLayers@
+			Start a new line
+				Export expression: "Optional Layer for Unit " + UnitIndex [G0]
+			End line
+			Loop for: Nodes
+				Start a new line
+					Loop for: Variable TimeIndex from: 1 to: Number_of_Times() step: 1
+						Export expression: My Optional Information Layer[UnitIndex].My Time Parameter[TimeIndex]; [G0]
+						If: @cbOptionalParameter@
+							Export expression: My Optional Information Layer[UnitIndex].My Optional Time Parameter[TimeIndex]; [G0]
+						End if
+					End loop
+				End line
+			End loop
+		End if
+	End loop
+End file
+

@@ -1,0 +1,538 @@
+# 
+# MF_DefineVariables.met
+# --------------------------
+# Define Variables
+# --------------------------
+# 
+# Variables used in more than one package
+Define Variable: NumUnits [Integer]
+Define Variable: PIEVersionOK [Boolean]
+Define Variable: PointLayerIsEmpty [Boolean]
+Define Variable: LineLayerIsEmpty [Boolean]
+Define Variable: AreaLayerIsEmpty [Boolean]
+Define Variable: ContinueSimulation [Boolean]
+Define Variable: ThisConductance [Real]
+Define Variable: AreaBoundaryInBlock [Boolean]
+Define Variable: CurrentColumn [Integer]
+Define Variable: CurrentRow [Integer]
+Define Variable: Dummy [Real]
+Define Variable: LayIndex [Integer]
+Define Variable: DivIndex [Integer]
+Define Variable: PeriodIndex [Integer]
+Define Variable: StepIndex [Integer]
+Define Variable: ConcentrationList [Integer]
+Define Variable: TopElevationList [Integer]
+Define Variable: BottomElevationList [Integer]
+Define Variable: ThicknessList [Integer]
+Define Variable: KzList [Integer]
+Define Variable: CellThickness [Real]
+Define Variable: LayerThickness [Real]
+Define Variable: LayerTop [Real]
+Define Variable: LayerBottom [Real]
+Define Variable: ThisElevation [Real]
+Define Variable: ProgressMax [Integer]
+# Define error flags
+Define Variable: err_geo [Integer]
+# Define root filename for MODFLOW files:
+Define Variable: FileName [String]
+# Define flag for writing file of cell-by-cell flows (0 = separate files, 1 = single file);
+Define Variable: OneCBCFile [Integer]
+# Define total number of model layers
+Define Variable: NumLay [Integer]
+# Define number of geologic units in simulation
+Define Variable: NumGeo [Integer]
+Define Variable: TopSimul [Integer]
+Define Variable: BotSimul [Integer]
+# Define dummy variables for looping and checking
+Define Variable: i [Integer]
+Define Variable: j [Integer]
+Define Variable: k [Integer]
+Define Variable: n [Integer]
+Define Variable: ocflag [Integer]
+Define Variable: M [Integer]
+Define Variable: TempValue1 [Real]
+Define Variable: TempValue2 [Real]
+Define Variable: TempValue3 [Real]
+Define Variable: TempValue4 [Real]
+Define Variable: WD [Real]
+Define Variable: WT [Real]
+Define Variable: WB [Real]
+Define Variable: TML [Real]
+Define Variable: BML [Real]
+Define Variable: SegmentLength [Real]
+Define Variable: ContourArea [Real]
+Define Variable: L [Integer]
+Define Variable: Lay_Flag [Integer]
+Define Variable: Block_Num [Integer]
+Define Variable: Block_Flag [Integer]
+Define Variable: ok [Integer]
+Define Variable: Test [Real]
+Define Variable: err_point [Integer]
+Define Variable: err_line [Integer]
+Define Variable: err_area1 [Integer]
+Define Variable: err_area2 [Integer]
+Define Variable: DumRow [Integer]
+Define Variable: DumCol [Integer]
+Define Variable: DumLay [Integer]
+# 
+# 
+# Variables used only outside of packages
+Define Variable: LineCount [Integer]
+Define Variable: UseCalibration [Boolean]
+Define Variable: ShowWarnings [Boolean]
+Define Variable: CalcElev [Boolean]
+Define Variable: RunMODFLOW [Integer]
+# 
+# Basic package variables
+# Define heading for export
+Define Variable: Heading1 [String]
+Define Variable: Heading2 [String]
+# define export choice variable
+Define Variable: ExportBAS [Integer]
+# Define ITMUNI, IAPART & ISTRT
+Define Variable: ITMUNI [Integer]
+Define Variable: IAPART [Integer]
+Define Variable: ISTRT [Integer]
+# Define variable OPTION (FREE=none, FREE CHTOCH=flow between adjacent constant head cells is calculated)
+Define Variable: OPTION [String]
+Define Variable: CHTOCH [Boolean]
+Define Variable: InitialHeadName [String]
+Define Variable: InitialHeadChoice [Boolean]
+# 
+# Variables used in output control option
+Define Variable: HeadPrintStyle [Boolean]
+Define Variable: DrawdownPrintStyle [Boolean]
+Define Variable: HeadPrintFormat [Integer]
+Define Variable: DrawdownPrintFormat [Integer]
+# define export choice variable
+Define Variable: ExportOC [Integer]
+# Define HNOFLO
+Define Variable: HNOFLO [Real]
+# Define flag for output of head into an external file (0 = none, 1 = formatted, 2 = binary):
+Define Variable: OutputHead [Integer]
+# Define flag for output of drawdown into an external file (0 = none, 1 = formatted, 2 = binary):
+Define Variable: OutputDrawdown [Integer]
+# Define flag for printing compact budget files (0 = regular, 1 = compact)
+Define Variable: CompactBudget [Integer]
+Define Variable: OutputBudget [Integer]
+# Define flag for frequency of printing head, drawdown and budget information in external files (0 = none, -1 = last timestep of stress period, N = every Nth timestep):
+Define Variable: FreqHeadFile [Integer]
+Define Variable: FreqDrawdownFile [Integer]
+Define Variable: FreqBudgetFile [Integer]
+# Define flags for frequency of output in listing file (0 = none, -1 = last timestep of stress period, N = every Nth timestep):
+Define Variable: FreqHeadList [Integer]
+Define Variable: FreqDrawdownList [Integer]
+Define Variable: FreqBudgetList [Integer]
+Define Variable: FreqHeadFileChoice [Integer]
+Define Variable: FreqDrawdownFileChoice [Integer]
+Define Variable: FreqBudFileChoice [Integer]
+Define Variable: FreqHeadListChoice [Integer]
+Define Variable: FreqDrawdownListChoice [Integer]
+Define Variable: FreqBudListChoice [Integer]
+# 
+# 
+# 
+# BCF Variables
+Define Variable: TempThickListStart [Integer]
+Define Variable: TempThickIndex [Integer]
+Define Variable: TempKzListStart [Integer]
+Define Variable: TempKzListIndex [Integer]
+Define Variable: ResultList [Integer]
+# define export choice variable
+Define Variable: ExportBCF [Integer]
+# Define error flags
+Define Variable: err_bcf_1 [Integer]
+# Define ISS (0=transient, 1=steady-state)
+Define Variable: ISS [Integer]
+# Define variables and flags for rewetting package (HDRY, IWDFLG, WETFCT, IWETIT, IHDWET)
+Define Variable: HDRY [Real]
+Define Variable: IWDFLG [Integer]
+Define Variable: WETFCT [Real]
+Define Variable: IWETIT [Integer]
+Define Variable: IHDWET [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IBCFCB [Integer]
+# 
+# Well Package Variables
+Define Variable: CurrentWellCount [Integer]
+Define Variable: MaxWells [Integer]
+Define Variable: CurrentRiverCount [Integer]
+Define Variable: MaxRivers [Integer]
+# define export choice variable
+Define Variable: ExportWEL [Integer]
+# Define error flags
+Define Variable: err_wel_1 [Integer]
+Define Variable: err_wel_2 [Integer]
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: WellChoice [Integer]
+# Define flags for steady or transient stresses (0=steady, 1=transient)
+Define Variable: SteadyWell [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IWELCB [Integer]
+Define Variable: WEL_MXWELL [Integer]
+# 
+# Drain Package Variables
+Define Variable: CurrentDrainCount [Integer]
+Define Variable: MaxDrains [Integer]
+# define export choice variable
+Define Variable: ExportDRN [Integer]
+# Define error flags
+Define Variable: err_drn_1 [Integer]
+Define Variable: err_drn_2 [Integer]
+Define Variable: err_drn_3 [Integer]
+Define Variable: err_drn_4 [Integer]
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: DrainChoice [Integer]
+# Define flags for steady or transient stresses (0=steady, 1=transient)
+Define Variable: SteadyDrain [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IDRNCB [Integer]
+Define Variable: DRN_MXDRN [Integer]
+# 
+# GHB Variables
+Define Variable: CurrentGHBCount [Integer]
+Define Variable: MaxGHBs [Integer]
+# define export choice variable
+Define Variable: ExportGHB [Integer]
+# Define error flags
+Define Variable: err_ghb_1 [Integer]
+Define Variable: err_ghb_2 [Integer]
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: GeneralHeadChoice [Integer]
+# Define flags for steady or transient stresses (0=steady, 1=transient)
+Define Variable: SteadyGHB [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IGHBCB [Integer]
+Define Variable: GHB_MXBND [Integer]
+# 
+# River package variables
+# define export choice variable
+Define Variable: ExportRIV [Integer]
+# Define error flags
+Define Variable: err_riv_1 [Integer]
+Define Variable: err_riv_2 [Integer]
+Define Variable: err_riv_3 [Integer]
+Define Variable: err_riv_4 [Integer]
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: RiverChoice [Integer]
+# Define flags for steady or transient stresses (0=steady, 1=transient)
+Define Variable: SteadyRiver [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IRIVCB [Integer]
+Define Variable: RIV_MXRIVR [Integer]
+# 
+# Recharge package variables
+# define export choice variable
+Define Variable: ExportRCH [Integer]
+# Define error flags
+Define Variable: err_rch_1 [Integer]
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: RechargeChoice [Integer]
+# Define flags for steady or transient stresses (0=steady, 1=transient)
+Define Variable: SteadyRecharge [Integer]
+# Define recharge option (NRCHOP=1 recharge only to the top grid layer, =2 vertical distribution of recharge specified from recharge elevation, =3 recharge applied to highest active cell in vertical dimension)
+# (Assume recharge elevation is constant for entire simulation)
+Define Variable: NRCHOP [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IRCHCB [Integer]
+Define Variable: RechargeTest [Boolean]
+# 
+# Evapotranspiration package variables
+# define export choice variable
+Define Variable: ExportEVT [Integer]
+# Define error flags
+Define Variable: err_evt_1 [Integer]
+# Define flags for stress packages (0 = package is NOT executed, 1 = package is executed):
+Define Variable: EvapotranspirationChoice [Integer]
+# Define flags for steady or transient stresses (0=steady, 1=transient)
+Define Variable: SteadyEVT [Integer]
+# Define evapotranspiration option (NEVTOP=1 ET calculated only at top grid layer, =2 vertical distribution of ET specified from ET surface)
+# (Assume ET surface and ET extinction depth are constant for entire simulation)
+Define Variable: NEVTOP [Integer]
+# Define flag for writing cell-by-cell flow from each stress package (0 = do not write, 1 = write)
+Define Variable: IEVTCB [Integer]
+# 
+# Stream package variables
+Define Variable: StreamChoice [Boolean]
+Define Variable: ExportStreams [Boolean]
+Define Variable: ElevationAboveTopError [Boolean]
+Define Variable: ElevationBelowBottomError [Boolean]
+Define Variable: TributaryMaxAllowed [Integer]
+Define Variable: SegmentIndex [Integer]
+Define Variable: TempInteger [Integer]
+Define Variable: StreamSegmentCount [Integer]
+Define Variable: StreamSegmentList [Integer]
+Define Variable: SortedStreamSegmentList [Integer]
+Define Variable: StreamUnitList [Integer]
+Define Variable: StreamTributaryList [Integer]
+Define Variable: StreamIndex [Integer]
+Define Variable: StreamIndex2 [Real]
+Define Variable: Tributary2DArray [Integer]
+Define Variable: TributaryIndex [Integer]
+Define Variable: TributaryCount [Integer]
+Define Variable: not_ok [Boolean]
+Define Variable: StreamsSteady [Boolean]
+Define Variable: StreamTop [Real]
+Define Variable: DownstreamStreamTop [Real]
+Define Variable: StreamBottom [Real]
+Define Variable: DownstreamStreamBottom [Real]
+Define Variable: StreamStage [Real]
+Define Variable: DownstreamStreamStage [Real]
+Define Variable: StreamConductance [Real]
+Define Variable: Width [Real]
+Define Variable: DownstreamWidth [Real]
+Define Variable: ICALC [Integer]
+Define Variable: UseTributaries [Boolean]
+Define Variable: UseDiversions [Boolean]
+Define Variable: StreamProperties3DArray [Integer]
+Define Variable: CurrentStream [Integer]
+Define Variable: BlockIndex [Integer]
+Define Variable: BlockListCount [Integer]
+Define Variable: BlockTop [Real]
+Define Variable: BlockBottom [Real]
+Define Variable: StreamUnit [Integer]
+Define Variable: CurrentStreamReachCount [Integer]
+Define Variable: MaxStreamReachCount [Integer]
+Define Variable: ISTCB1 [Integer]
+Define Variable: ISTCB2 [Integer]
+Define Variable: NTRIB [Integer]
+Define Variable: NTRIBCurrent [Integer]
+Define Variable: NDIV [Integer]
+Define Variable: Flow [Real]
+# ModelLengthUnits = 0 -> m
+# ModelLengthUnits = 1 -> ft
+Define Variable: ModelLengthUnits [Integer]
+Define Variable: StreamCONST [Real]
+Define Variable: FlowIndex [Integer]
+Define Variable: UpstreamStageIndex [Integer]
+Define Variable: DownstreamStageIndex [Integer]
+Define Variable: ConductivityIndex [Integer]
+Define Variable: UpstreamTopElevIndex [Integer]
+Define Variable: DownstreamTopElevIndex [Integer]
+Define Variable: UpstreamBotElevIndex [Integer]
+Define Variable: DownstreamBotElevIndex [Integer]
+Define Variable: UpstreamWidthIndex [Integer]
+Define Variable: DownstreamWidthIndex [Integer]
+Define Variable: SlopeIndex [Integer]
+Define Variable: RoughnessIndex [Integer]
+Define Variable: InterpolateStage [Integer]
+Define Variable: InterpolateTopElev [Integer]
+Define Variable: InterpolateBottomElev [Integer]
+Define Variable: InterpolateWidth [Integer]
+# 
+# Flow and Head variables
+Define Variable: FlowHeadChoice [Boolean]
+Define Variable: ExportFHB [Boolean]
+Define Variable: FlowBoundaryCount [Integer]
+Define Variable: HeadBoundaryCount [Integer]
+Define Variable: ContourIndex [Integer]
+Define Variable: FLWRAT [Real]
+Define Variable: SBHED [Real]
+Define Variable: EndSBHED [Real]
+Define Variable: LineFraction [Real]
+Define Variable: NBDTIM [Integer]
+Define Variable: IFHBSS [Integer]
+Define Variable: IFHBCB [Integer]
+Define Variable: IFHBUN [Integer]
+Define Variable: TopUnitElev [Real]
+Define Variable: BottomUnitElev [Real]
+Define Variable: TopContourElev [Real]
+Define Variable: BottomContourElev [Real]
+Define Variable: TopLayer [Integer]
+Define Variable: BottomLayer [Integer]
+Define Variable: TopDivElev [Real]
+Define Variable: BottomDivElev [Real]
+Define Variable: DivThickness [Real]
+Define Variable: UnitThickness [Real]
+Define Variable: ContourThickness [Real]
+Define Variable: TopContourInDiv [Real]
+Define Variable: BottomContourInDiv [Real]
+Define Variable: ThicknessContourInDiv [Real]
+# 
+# HFB Variables
+Define Variable: HFBChoice [Boolean]
+Define Variable: ExportHFB [Boolean]
+Define Variable: BarrierIndex [Integer]
+Define Variable: CellIndex [Integer]
+Define Variable: ColumnCount [Integer]
+Define Variable: RowCount [Integer]
+Define Variable: Row1 [Integer]
+Define Variable: Row2 [Integer]
+Define Variable: Column1 [Integer]
+Define Variable: Column2 [Integer]
+Define Variable: CurrentBarrierCount [Integer]
+Define Variable: TotalBarrierCount [Integer]
+Define Variable: HYDCHR [Real]
+Define Variable: AverageCellThickness [Real]
+# 
+# Solver Variables
+# define export choice variable
+Define Variable: ExportSOL [Integer]
+# Define flag for matrix solver: (0 = SOR, 1 = SIP, 2 = PCG, 3 = DE4)
+Define Variable: SolverChoice [Integer]
+# Define variables for SOR solver (SolverChoice=3)
+# MXITER: Maximum number of outer iterations
+Define Variable: SOR_MXITER [Integer]
+# ACCL: Acceleration parameter
+Define Variable: SOR_ACCL [Real]
+# HCLOSE: Maximum absolute change in head used to check convergence.
+Define Variable: SOR_HCLOSE [Real]
+# IPRSOR: Printout interval for SOR.
+Define Variable: SOR_IPRSOR [Integer]
+# 
+# Define variables for SIP solver (SolverChoice=0)
+# MXITER: Maximum number of outer iterations
+Define Variable: SIP_MXITER [Integer]
+# NPARM: Number of iteration parameters
+Define Variable: SIP_NPARM [Integer]
+# ACCL: Acceleration parameter
+Define Variable: SIP_ACCL [Real]
+# HCLOSE: Maximum absolute change in head used to check convergence.
+Define Variable: SIP_HCLOSE [Real]
+# IPCALC: Flag to indicate seed for calculating iteration parameters (0=seed entered by user, 1=seed calculated at start of simulation)
+Define Variable: SIP_IPCALC [Integer]
+# WSEED: Seed for calculating iteration paramters
+Define Variable: SIP_WSEED [Real]
+# IPRSIP: Printout interval for SIP.
+Define Variable: SIP_IPRSIP [Integer]
+# 
+# Define variable for PCG solver (SolverChoice=2)
+# MXITER: Maximum number of outer iterations
+Define Variable: PCG_MXITER [Integer]
+# ITER1: Maximum number of inner iterations
+Define Variable: PCG_ITER1 [Integer]
+# NPCOND: Flag used to select matrix preconditioning method: 1=Modified incomplete Cholesky, 2=Polynomial
+Define Variable: PCG_NPCOND [Real]
+# HCLOSE: Maximum absolute change in head used to check convergence.
+Define Variable: PCG_HCLOSE [Real]
+# RCLOSE: Maximum absolute change in residual used to check convergence.
+Define Variable: PCG_RCLOSE [Real]
+# RELAX: Relation parameter used with NPCOND=1
+Define Variable: PCG_RELAX [Real]
+# NBPOL: Flag used when NPCOND=2 to indicate whether the estimate of the upper bound of the max eignevalue is 2, or will be calculated. NBPOL=2 specifies max eigenvalue as 2, NBPOL!=2 calculates estimate. (Not used for NBPOL!=2)
+Define Variable: PCG_NBPOL [Integer]
+# IPRPCG: Printout interval for PCG
+Define Variable: PCG_IPRPCG [Integer]
+# MUTPCG: Flag to control printing from solver, MUTPCG=0 print solver information, MUTPCG=1 only print iteration, MUTPCG=2 suppresses all printing.
+Define Variable: PCG_MUTPCG [Integer]
+# IPCGCD: Flag used for NPCOND=1 to control whether same Cholesky decomposition is used for multiple calls to PCG.
+Define Variable: PCG_DAMP [Real]
+# 
+# Define variables for DE4 solver (SolverChoice=1)
+# ITMX: maximum number of iterations
+Define Variable: DE4_ITMX [Integer]
+# MXUP: maximum number of equations in upper part
+Define Variable: DE4_MXUP [Integer]
+# MXLOW: maximum number of equations in lower part
+Define Variable: DE4_MXLOW [Integer]
+# MXBW: maximum bandwidth
+Define Variable: DE4_MXBW [Integer]
+# IFREQ: flag indicating frequency of change in coefficient matrix (1=flow equations are linear, 2=flow equations are linear but coefficients of simulated head may change at the beginning of stress period, 3=nonlinear flow equations)
+Define Variable: DE4_IFREQ [Integer]
+# MUTD4: Flag indicating printing at convergence (0=number of iterations printed & maximum head change, 1=number of iterations printed, 2=no information printed)
+Define Variable: DE4_MUTD4 [Integer]
+# ACCL: acceleration parameter
+Define Variable: DE4_ACCL [Real]
+# HCLOSE: convergence criteria for head
+Define Variable: DE4_HCLOSE [Real]
+# IPRD4: time step interval when printing out convergence information
+Define Variable: DE4_IPRD4 [Integer]
+# 
+# MODPATH Variables
+Define Variable: MODFLOWLayer [Integer]
+Define Variable: MODPATHChoice [Boolean]
+Define Variable: RechargeITOP [Integer]
+Define Variable: EvapITOP [Integer]
+# 
+# MOC3D variables
+Define Variable: PrintMOC3DLocations [Boolean]
+Define Variable: RunMoc3d [Integer]
+# Define error flags
+Define Variable: err_moc_1 [Integer]
+Define Variable: ExportTRANS [Integer]
+Define Variable: ExportOBS [Integer]
+Define Variable: TransportFlag [Integer]
+Define Variable: Transport [Integer]
+Define Variable: MOC_ISLAY1 [Integer]
+Define Variable: MOC_ISLAY2 [Integer]
+Define Variable: FirstMoc3DUnit [Integer]
+Define Variable: LastMoc3DUnit [Integer]
+Define Variable: MOC_ISROW1 [Integer]
+Define Variable: MOC_ISROW2 [Integer]
+Define Variable: MOC_ISCOL1 [Integer]
+Define Variable: MOC_ISCOL2 [Integer]
+Define Variable: MOC_NODISP [Integer]
+Define Variable: MOC_DECAY [Real]
+Define Variable: MOC_DIFFUS [Real]
+Define Variable: MOC_INTRPL [Integer]
+Define Variable: MOC_CNOFLO [Real]
+Define Variable: MOC_INCRCH [Integer]
+Define Variable: MOC_IOBSFL [Integer]
+# 
+Define Variable: MOC_NPMAX [Integer]
+Define Variable: MOC_CELDIS [Real]
+Define Variable: MOC_FZERO [Real]
+Define Variable: MOC_NPCUST [Integer]
+Define Variable: MOC_NPTPND [Integer]
+Define Variable: MOC_NPTPNDError [Boolean]
+# 
+Define Variable: MOC_CNC_OPT [Integer]
+Define Variable: MOC_NPNTCL [Integer]
+Define Variable: MOC_NPNTCLN [Integer]
+Define Variable: MOC_VEL_OPT [Integer]
+Define Variable: MOC_NPNTVL [Integer]
+Define Variable: MOC_NPNTVLN [Integer]
+Define Variable: MOC_NPNTDL [Integer]
+Define Variable: MOC_NPNTDLN [Integer]
+Define Variable: MOC_PRT_OPT [Integer]
+Define Variable: MOC_NPNTPL [Integer]
+Define Variable: MOC_NPNTPLN [Integer]
+Define Variable: MOC_NSLAY [Integer]
+Define Variable: MOC_CINFLBefore [Real]
+Define Variable: MOC_CINFLAfter [Real]
+Define Variable: RowHeightList [Integer]
+Define Variable: ColumnWidthList [Integer]
+Define Variable: RowIndex [Integer]
+Define Variable: ColumnIndex [Integer]
+Define Variable: MinRow [Real]
+Define Variable: MaxRow [Real]
+Define Variable: MinColumn [Real]
+Define Variable: MaxColumn [Real]
+Define Variable: FirstRowHeight [Real]
+Define Variable: FirstColumnWidth [Real]
+Define Variable: CurrentRowHeight [Real]
+Define Variable: CurrentColumnWidth [Real]
+Define Variable: ObservationIndex [Integer]
+# 
+Define Variable: Dimensions [Integer]
+# MOCIMP
+Define Variable: MOC_EPSSLV [Real]
+Define Variable: MOC_FDTMTH [Real]
+Define Variable: MOC_IDIREC [Integer]
+Define Variable: MOC_MAXIT [Integer]
+Define Variable: MOC_NCXIT [Integer]
+# 
+Define Variable: MOC_NUMOBS [Integer]
+Define Variable: NColsSub [Integer]
+Define Variable: NRowsSub [Integer]
+Define Variable: NLaySub [Integer]
+Define Variable: FirstLay [Integer]
+Define Variable: LastLay [Integer]
+# MOC3D Age package variables
+Define Variable: AgeChoice [Boolean]
+Define Variable: AGER8 [Real]
+# MOC3D Dual Porosity package variables
+Define Variable: DualPorosityChoice [Boolean]
+Define Variable: IDPFO [Boolean]
+Define Variable: IDPZO [Boolean]
+Define Variable: IDPTIM [Boolean]
+Define Variable: IDPPS [Integer]
+# MOC3D Simple Reaction package variables
+Define Variable: SimpleReactionChoice [Boolean]
+Define Variable: IDKRF [Boolean]
+Define Variable: IDKTIM [Boolean]
+Define Variable: IDKFO [Boolean]
+Define Variable: IDKFS [Boolean]
+Define Variable: IDKZO [Boolean]
+Define Variable: IDKZS [Boolean]
+# 

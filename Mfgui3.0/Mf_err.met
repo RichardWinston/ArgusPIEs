@@ -1,0 +1,59 @@
+# 
+# MF_Err.met
+# ----------------------------------------------------
+# Write error log for MODFLOW & MOC3D export
+# ----------------------------------------------------
+If: ShowWarnings&(err_geo=1|err_bcf_1=1|err_rch_1=1|err_evt_1=1|err_ghb_1=1|err_ghb_2=1|err_riv_1=1|err_riv_2=1|err_riv_3=1|err_riv_4=1|err_drn_1=1|err_drn_2=1|err_drn_3=1|err_drn_4=1|err_wel_1=1|err_wel_2=1|err_moc_1=1)
+	If: err_geo=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - Project Information: No geologic units are specified in simulation")
+	End if
+	If: err_bcf_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - Project Information: Only the top simulated geologic unit can be unconfined")
+	End if
+	If: err_rch_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning - Recharge Information: Recharge elevation is located in a nonsimulated geologic unit - check recharge elevation and export Recharge package again")
+	End if
+	If: err_evt_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning - Evapotranspiration Information: Evapotranspiration surface is located in a nonsimulated geologic unit - check evapotranspiration surface and export Evapotranspiration package again")
+	End if
+	If: err_ghb_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_LayArray.DLL is missing - results from General Head Boundary package will not be generated")
+	End if
+	If: err_ghb_2=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_BlockArray.DLL is missing - results from General Head Boundary package will not be generated")
+	End if
+	If: err_riv_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_LayArray.DLL is missing - results from River package will not be generated")
+	End if
+	If: err_riv_2=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_BlockArray.DLL is missing - results from River package will not be generated")
+	End if
+	If: err_riv_3=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning - Line river elevation does not lie within the geologic unit - Line river is placed in the uppermost model layer of the geologic unit - Check line river elevations for possible errors")
+	End if
+	If: err_riv_4=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning - Area river elevation does not lie within the geologic unit - Area river is placed in the uppermost model layer of the geologic unit - Check area river elevations for possible errors")
+	End if
+	If: err_drn_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_LayArray.DLL is missing - results from Drain package will not be generated")
+	End if
+	If: err_drn_2=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - Project Information: No geologic units are specified in simulation")
+	End if
+	If: err_drn_3=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning - Line drain elevation does not lie within the geologic unit - Line drain is placed in the uppermost model layer of the geologic unit - Check line drain elevations for possible errors")
+	End if
+	If: err_drn_4=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning - Area drain elevation does not lie within the geologic unit - Area drain is placed in the uppermost model layer of the geologic unit - Check area drain elevations for possible errors")
+	End if
+	If: err_wel_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_LayArray.DLL is missing - results from Well package will not be generated")
+	End if
+	If: err_wel_2=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - The PIE Chk_BlockArray.DLL is missing - results from Well package will not be generated")
+	End if
+	If: err_moc_1=1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error - Non simulated layers are not allowed in the MOC3D subgrid!")
+	End if
+End if
+# 

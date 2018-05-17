@@ -1,0 +1,99 @@
+# 
+# MF_BAS.met
+# ----------------------------------------------------
+# Basic Package:
+# ----------------------------------------------------
+If: ContinueSimulation&(ExportBAS!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Basic Package")
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.bas
+			Start a new line
+				Export expression: Heading1 [G0]
+			End line
+			Start a new line
+				Export expression: Heading2 [G0]
+			End line
+			Start a new line
+				Export expression: NumLay [I5]
+				Export expression: NumRows() [I5]
+				Export expression: NumColumns() [I5]
+				Export expression: MODFLOW_NPER() [I5]
+				Export expression: ITMUNI [I5]
+			End line
+			Start a new line
+				Export expression: OPTION [G0]
+			End line
+			Start a new line
+				Export expression: IAPART [I5]
+				Export expression: ISTRT [I5]
+			End line
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)!=0
+					Redirect output to: @adeFileName@.i$LOOP$
+						If: TransportFlag=1 & Transport>0 & LayIndex>=FirstMoc3DUnit & LayIndex<=LastMoc3DUnit
+							# MOC3D case
+							Export matrix: MODFLOW FD Grid.IBOUND Unit[LayIndex] * if(MODFLOW FD Grid.IBOUND Unit[LayIndex]>=0,1,1+MODFLOW_L_IndexOf(ConcentrationList, Interpolate(Prescribed Head Unit[LayIndex].Concentration))) [I5]
+						Else
+							Export matrix: MODFLOW FD Grid.IBOUND Unit[LayIndex] [I5]
+						End if
+					End file
+					Evaluate expression: MODFLOW_Rename_File("@adeFileName@.i" + $LOOP$, "@adeFileName@.i" + MODFLOW_Int2Str(LayIndex-1))
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Start a new line
+							Export expression: "OPEN/CLOSE @adeFileName@.i" + MODFLOW_Int2Str(LayIndex-1) + " 1 (FREE)" [G0]
+							Export expression: 5 [I5]
+						End line
+					End loop
+				End if
+			End loop
+			If: ContinueSimulation
+				Start a new line
+					Export expression: HNOFLO [G0]
+				End line
+			End if
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+				If: MODFLOW_SIMUL(LayIndex)!=0
+				If: InitialHeadChoice
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Start a new line
+							Export expression: "EXTERNAL 42 1. (BINARY) " [G0]
+							Export expression: 2 [I5]
+						End line
+					End loop
+				Else
+					Redirect output to: @adeFileName@.h$LOOP$
+						Export matrix: MODFLOW FD Grid.Initial Head Unit[LayIndex] [G0]
+						If: CalcElev&ShowWarnings
+							Redirect output to: Dummy
+								Export matrix: If(MODFLOW FD Grid.IBOUND Unit[LayIndex]&MODFLOW FD Grid.Initial Head Unit[LayIndex]<MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex), MODFLOW_ProgressBarAddLine("Warning: Initial head is below the bottom of the layer in Unit "+ LayIndex + ", Row " + Row() + " Column " + Column()), 0) [G0]
+							End file
+							Evaluate expression: MODFLOW_Delete_File("Dummy")
+						End if
+					End file
+					Evaluate expression: MODFLOW_Rename_File("@adeFileName@.h" + $LOOP$, "@adeFileName@.h" + MODFLOW_Int2Str(LayIndex-1))
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Start a new line
+							Export expression: "OPEN/CLOSE @adeFileName@.h" + MODFLOW_Int2Str(LayIndex-1) + " 1.0 (FREE)" [G0]
+							Export expression: 2 [I5]
+						End line
+					End loop
+				End if
+				End if
+				End if
+			End loop
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					Start a new line
+						Export expression: MODFLOW_PERLEN(PeriodIndex); [G0]
+						Export expression: MODFLOW_NSTP(PeriodIndex); [I5]
+						Export expression: MODFLOW_TSMULT(PeriodIndex); [G0]
+					End line
+				End if
+			End loop
+		End file
+	End if
+End if

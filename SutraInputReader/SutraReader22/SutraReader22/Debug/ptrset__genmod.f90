@@ -1,0 +1,7 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE PTRSET__genmod
+          INTERFACE 
+            SUBROUTINE PTRSET
+            END SUBROUTINE PTRSET
+          END INTERFACE 
+        END MODULE PTRSET__genmod

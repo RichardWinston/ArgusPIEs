@@ -1,0 +1,88 @@
+# 
+# Elev.met
+# Elevation file for Model Viewer
+# 
+If: ExportModelViewerElevations&ContinueSimulation
+	If: RunMoc3d
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Printing top elevation for Model Viewer")
+		If: ContinueSimulation
+			Redirect output to: @adeFileName@.top
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 12 [I5]
+				End line
+				Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), 1) [G0]
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			End file
+		End if
+	Else
+		# 
+		# 
+		# Create list
+		Set Variable: ConfiningBedList:= MODFLOW_L_CreateNewList()
+		# 
+		# set list items
+		If: ContinueSimulation
+			Set Variable: LastBedIndex:= -1
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				If: MODFLOW_SIMUL(LayIndex)!=0
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: LastBedIndex:= MODFLOW_L_AddToList(ConfiningBedList,0)
+					End loop
+				Else
+					If: LastBedIndex>-1
+						Evaluate expression: MODFLOW_L_SetListItem(ConfiningBedList, LastBedIndex, 1)
+					End if
+				End if
+			End loop
+		End if
+		# 
+		If: ContinueSimulation
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Printing elevations for Model Viewer")
+			If: ContinueSimulation
+				Redirect output to: @adeFileName@.elev
+					Start a new line
+						Loop for: Variable LayIndex from: 0 to: MODFLOW_L_GetListSize(ConfiningBedList)-1 step: 1
+							Set Variable: ConfiningBed:= MODFLOW_L_GetFromList(ConfiningBedList, LayIndex)
+							Export expression: ConfiningBed; [I0]
+						End loop
+					End line
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					Start a new line
+						Export expression: "INTERNAL 1.0 (FREE)" [G0]
+						Export expression: 12 [I5]
+					End line
+					Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), 1) [G0]
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+						If: ContinueSimulation
+							# Data item 2
+							If: MODFLOW_SIMUL(LayIndex)=0
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								Export matrix: MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex) [G0]
+							Else
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									If: ContinueSimulation
+										# YBI: note that the next matrix is different for each sub division!
+										Start a new line
+											Export expression: "INTERNAL 1.0 (FREE)" [G0]
+											Export expression: 12 [I5]
+										End line
+										Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-DivIndex*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+									End if
+								End loop
+							End if
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+						End if
+					End loop
+				End file
+			End if
+		End if
+		Evaluate expression: MODFLOW_L_FreeAList(ConfiningBedList)
+	End if
+End if
+

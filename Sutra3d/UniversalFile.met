@@ -1,0 +1,752 @@
+# Editable SUTRA TEMPLATE for UCODE UNIVERSAL (.uni) input file goes here
+Define Variable: Time [Real]
+Define Variable: Phase [Integer]
+Define Variable: ObsTimeNumber [Integer]
+Define Variable: ICountNodesInContour [Integer]
+Define Variable: ObservationNodeCount [Integer]
+Define Variable: ObservationName [String]
+Define Variable: ICountObsTimes [Integer]
+Set Variable: Phase:= @rgPhase@
+If: Phase=0
+	Set Variable: Phase:= 1
+Else
+	If: Phase=1
+		Set Variable: Phase:= 11
+	Else
+		If: Phase=2
+			Set Variable: Phase:= 2
+		Else
+			If: Phase=3
+				Set Variable: Phase:= 22
+			Else
+				If: Phase=4
+					Set Variable: Phase:= 3
+				Else
+					If: Phase=5
+						Set Variable: Phase:= 33
+					Else
+						If: Phase=6
+							Set Variable: Phase:= 44
+						Else
+							Set Variable: Phase:= 45
+						End if
+					End if
+				End if
+			End if
+		End if
+	End if
+End if
+Define Variable: StateVariableType [Integer]
+# StateVariableType: 1=Head, 2=Pressure
+If: @rbSpecific@&@rbSoluteConstDens@
+	Set Variable: StateVariableType:= 1
+Else
+	Set Variable: StateVariableType:= 2
+End if
+Define Variable: TransportType [Integer]
+# TransportType: 1=Energy, 2=Solute
+If: @rbEnergy@=1
+	Set Variable: TransportType:= 1
+Else
+	Set Variable: TransportType:= 2
+End if
+Evaluate expression: Sutra_InitializeSimulationTimes()
+Redirect output to: @edRoot@.uni
+	# INITIALIZING THE EXPORTABLE FILE
+	# Writing the FILE HEAD
+	Start a new line
+		Export expression: "#*******************************************" [G0]
+	End line
+	Start a new line
+		Export expression: "#  THIS IS THE UNIVERSAL INPUT FILE (.uni) *" [G0]
+	End line
+	Start a new line
+		Export expression: "#*******************************************" [G0]
+	End line
+	# Writing the FILE FORMAT DIRECTIONS
+	Start a new line
+		Export expression: "#MAIN DIRECTIONS for the UNIVERSAL Input File" [G0]
+	End line
+	Start a new line
+		Export expression: "#-Except for the 'list of observations' part, each line must contains only one variable." [G0]
+	End line
+	Start a new line
+		Export expression: "#-Comments can be included by placing a # sign in the very first column of a line or," [G0]
+	End line
+	Start a new line
+		Export expression: "#   by placing a # sign after one or more blank spaces at the end of a data input line." [G0]
+	End line
+	Start a new line
+		Export expression: "#-Blank lines are NOT permitted before the END line." [G0]
+	End line
+	# Writing the SIMULATION PHASE
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****PHASE" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: Phase; [G0]
+	End line
+	# Writing the SENSITIVITY AND REGRESSION CONTROLS
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****SENSITIVITY AND REGRESSION CONTROL" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#DIFFERENCING; method used to calculate sensitivities during the the parameter stimations." [G0]
+	End line
+	Start a new line
+		Export expression: "#(1=forward scheme, 2=central scheme)" [G0]
+	End line
+	Start a new line
+		Export expression: @rgDifferencing@ + 1; [G0]
+	End line
+	Start a new line
+		Export expression: "#TOL; convergence criterion based on maximum allowed change in estimated parameters between regresion iterations." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0.01 recommended)" [G0]
+	End line
+	Start a new line
+		Export expression: @adeUcodeTolerance@; [G0]
+	End line
+	Start a new line
+		Export expression: "#SOSR; convergence criterion based on maximum allowed change in the sum-of-squared weighted values, over three consecutive regression iterations." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0.01 to 0.1 recommended in early stages of model calibration, ideally 0.0 for the final results)" [G0]
+	End line
+	Start a new line
+		Export expression: @adeUcodeSOSR@; [G0]
+	End line
+	Start a new line
+		Export expression: "#NOPT; quasi-newton updating method." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0=no updating, 1=update when criterion SOSR met)" [G0]
+	End line
+	Start a new line
+		Export expression: @rgNOPT@; [G0]
+	End line
+	Start a new line
+		Export expression: "#MAX-ITER; max # of regression iterations." [G0]
+	End line
+	Start a new line
+		Export expression: "#(starting with twice the number of parameters being estimated is recommended. no more iterations would be helpful with non-convergent problems)" [G0]
+	End line
+	Start a new line
+		Export expression: @adeUcodeMaxiter@; [G0]
+	End line
+	Start a new line
+		Export expression: "#MAX-CHANGE; maximum fractional change of a parameter allowed in one regression iteration." [G0]
+	End line
+	Start a new line
+		Export expression: "#(2.0 value is common, but smaller values may help an oscillating regression to converge)" [G0]
+	End line
+	Start a new line
+		Export expression: @adeUcodeMaxChange@; [G0]
+	End line
+	Start a new line
+		Export expression: "#INVERSION ALGORITHM; path name of the nonlinear regression executable used." [G0]
+	End line
+	Start a new line
+		Export expression: "#(no path name is needed when the executable is located in the same folder than this file)" [G0]
+	End line
+	Start a new line
+		Export expression: "@ffpInversion.edFilePath@"; [G0]
+	End line
+	# Writing the APPLICATION MODELS
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****APPLICATION MODELS" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#N-APPLICATIONS; number of application models being used." [G0]
+	End line
+	Start a new line
+		Export expression: "1 " [G0]
+	End line
+	Start a new line
+		Export expression: "#RUN COMMAND for the application model; use one line for each application model being used." [G0]
+	End line
+	Start a new line
+		Export expression: "#(none path name is needed when the executable is located in the same folder than this file)" [G0]
+	End line
+	Start a new line
+		Export expression: "@edRunSutra@"; [G0]
+	End line
+	# Writing the OUTPUT OPTIONS
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****OUTPUT OPTIONS (do not influence the solution)" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#SCALE-SENSITIVITY; control the scaling applied to the printer sensitivities." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0=no scaling (not recommended), 1=dimensionless scaled, 2=one-percent scaled, 3= 1 and 2)" [G0]
+	End line
+	Start a new line
+		Export expression: @rgScaleSensitivities@; [G0]
+	End line
+	Start a new line
+		Export expression: "#PRINT-INTERMEDIATE; print wether residuals and sensitivities for intermediate iterations." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0=no print (recommended), 1=print)" [G0]
+	End line
+	Start a new line
+		Export expression: @cbPrintIntermediate@; [G0]
+	End line
+	Start a new line
+		Export expression: "#GRAPH; when phase=3, print data for graphical evaluation of residuals and create input files for phase=33 and 44." [G0]
+	End line
+	Start a new line
+		Export expression: "#(0=do not print post-processing files, 1= print post-processing files (recommended))" [G0]
+	End line
+	Start a new line
+		Export expression: @cbPrintGraph@; [G0]
+	End line
+	Start a new line
+		Export expression: "#NUMBER-RESIDUAL-SETS; number of set of normally distributed random numbers to generate." [G0]
+	End line
+	Start a new line
+		Export expression: @adeUcodeSets@; [G0]
+	End line
+	# 
+	# OPTIONAL Input Items
+	# Do not check observation names
+	If: !@cbCheckObservationNames@
+		Start a new line
+			Export expression: "#"; [G0]
+		End line
+		Start a new line
+			Export expression: "#OPTIONAL INPUT ITEMS"; [G0]
+		End line
+		Start a new line
+			Export expression: "#Do not check observation names"; [G0]
+		End line
+		Start a new line
+			Export expression: "DO_NOT_CHECK_OBSERVATION_NAMES"; [G0]
+		End line
+	End if
+	# Writing the LIST OF OBSERVATIONS
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#*****LIST OF OBSERVATIONS" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#This observation list needs to be coordinated exactly with the occurring in the extract input file (.ext)." [G0]
+	End line
+	Start a new line
+		Export expression: "#Use one line for each observation value; each line contains 5 items separated by one or more blank spaces, of the type:" [G0]
+	End line
+	Start a new line
+		Export expression: "#(obs-name obs-value stat stat-flag plot-symbol)" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#-OBS-NAME; maximum 11 characters name identifying the observation. one blank space is needed after." [G0]
+	End line
+	Start a new line
+		Export expression: "#-OBS-VALUE; observed value." [G0]
+	End line
+	Start a new line
+		Export expression: "#-STATISTIC; statistic value used to calculate the weight for the observation." [G0]
+	End line
+	Start a new line
+		Export expression: "#-STAT-FLAG; indicate what is 'statistic' refered to (0=variance, 1=standard deviation, 2=coeff. of variation)." [G0]
+	End line
+	Start a new line
+		Export expression: "#-PLOT-SYMBOL; an integrer printed in the output files only for graphical analyses. use different values for different observation types." [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#obs-name             obs-value            stat      stat-flag  plot-symbol" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	# 
+	# Managing for HEAD/PRESSURE Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	# Loop for Observation Contours
+	Loop for: Objects in layer: Observation
+		If: is_observed
+			Set Variable: ObservationName:= Observation.Obs Name
+			# Loop for Observation Times
+			Set Variable: ICountObsTimes:= 0
+			Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+				If: StateVariableType=1
+					Set Variable: Time:= Observation.Head Obs Time[ObsTimeNumber]
+				Else
+					Set Variable: Time:= Observation.Pres Obs Time[ObsTimeNumber]
+				End if
+				If: Time > 0
+					Set Variable: ICountObsTimes:= ICountObsTimes+1
+					Set Variable: ObservationNodeCount:= 0
+					Loop for: Nodes
+						If: ObservationName=Ucode_Observation
+							Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+						End if
+					End loop
+					Loop for: Objects in layer: Observation
+						If: (Observation.Obs Name=ObservationName) 
+							If: ObservationNodeCount=1
+								Start a new line
+									Export expression: ObservationName [G0]
+									If: StateVariableType=1
+										Export expression: "/h" [G0]
+									Else
+										Export expression: "/p" [G0]
+									End if
+									Export expression: "/&1/" [G0]
+									Export expression: ICountObsTimes [G0]
+									Export expression: "  " [G0]
+									If: StateVariableType=1
+										Export expression: Observation.Head Value[ObsTimeNumber]; [G15]
+										Export expression: Observation.Head Statistic[ObsTimeNumber]; [G15]
+										Export expression: "        " [G0]
+										Export expression: Observation.Head Stat Flag; [G15]
+										Export expression: "          " [G0]
+										Export expression: Observation.Head Plot Symbol; [G0]
+									Else
+										Export expression: Observation.Pres Value[ObsTimeNumber]; [G15]
+										Export expression: Observation.Pres Statistic[ObsTimeNumber]; [G15]
+										Export expression: "        " [G0]
+										Export expression: Observation.Pres Stat Flag; [G15]
+										Export expression: "          " [G0]
+										Export expression: Observation.Pres Plot Symbol; [G0]
+									End if
+								End line
+							Else
+								If: Move to Node
+									Start a new line
+										Export expression: ObservationName [G0]
+										If: StateVariableType=1
+											Export expression: "/h" [G0]
+										Else
+											Export expression: "/p" [G0]
+										End if
+										Export expression: "/+1/" [G0]
+										Export expression: ICountObsTimes [G0]
+										Export expression: "  " [G0]
+										If: StateVariableType=1
+											Export expression: Observation.Head Value[ObsTimeNumber]; [G15]
+											Export expression: Observation.Head Statistic[ObsTimeNumber]; [G15]
+											Export expression: "        " [G0]
+											Export expression: Observation.Head Stat Flag; [G15]
+											Export expression: "          " [G0]
+											Export expression: Observation.Head Plot Symbol; [G0]
+										Else
+											Export expression: Observation.Pres Value[ObsTimeNumber]; [G15]
+											Export expression: Observation.Pres Statistic[ObsTimeNumber]; [G15]
+											Export expression: "        " [G0]
+											Export expression: Observation.Pres Stat Flag; [G15]
+											Export expression: "          " [G0]
+											Export expression: Observation.Pres Plot Symbol; [G0]
+										End if
+									End line
+								Else
+									Set Variable: ICountNodesInContour:= 0
+									Loop for: Nodes
+										If: (ObservationName=Ucode_Observation)&(Ucode_Observation!=0)&(Ucode_Observation!="0")
+											Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+											Start a new line
+												Export expression: ObservationName [G0]
+												If: StateVariableType=1
+													Export expression: "/h" [G0]
+												Else
+													Export expression: "/p" [G0]
+												End if
+												If: ICountNodesInContour = ObservationNodeCount
+													Export expression: "/&" [G0]
+												Else
+													Export expression: "/" [G0]
+												End if
+												Export expression: ICountNodesInContour [G0]
+												Export expression: "/" [G0]
+												Export expression: ICountObsTimes [G0]
+												Export expression: "  " [G0]
+												If: StateVariableType=1
+													Export expression: Observation.Head Value[ObsTimeNumber]; [G15]
+													Export expression: Observation.Head Statistic[ObsTimeNumber]; [G15]
+													Export expression: "        " [G0]
+													Export expression: Observation.Head Stat Flag; [G15]
+													Export expression: "          " [G0]
+													Export expression: Observation.Head Plot Symbol; [G0]
+												Else
+													Export expression: Observation.Pres Value[ObsTimeNumber]; [G15]
+													Export expression: Observation.Pres Statistic[ObsTimeNumber]; [G15]
+													Export expression: "        " [G0]
+													Export expression: Observation.Pres Stat Flag; [G15]
+													Export expression: "          " [G0]
+													Export expression: Observation.Pres Plot Symbol; [G0]
+												End if
+											End line
+										End if
+									End loop
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End loop
+	# 
+	# Managing for TEMPERATURE/CONCENTRATION Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	# Loop for Observation Contours
+	Loop for: Objects in layer: Observation
+		If: is_observed
+			Set Variable: ObservationName:= Observation.Obs Name
+			# Loop for Observation Times
+			Set Variable: ICountObsTimes:= 0
+			Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+				If: TransportType=1
+					Set Variable: Time:= Observation.Temp Obs Time[ObsTimeNumber]
+				Else
+					Set Variable: Time:= Observation.Conc Obs Time[ObsTimeNumber]
+				End if
+				If: Time > 0
+					Set Variable: ICountObsTimes:= ICountObsTimes+1
+					Set Variable: ObservationNodeCount:= 0
+					Loop for: Nodes
+						If: ObservationName=Ucode_Observation
+							Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+						End if
+					End loop
+					Loop for: Objects in layer: Observation
+						If: (Observation.Obs Name=ObservationName) 
+							If: ObservationNodeCount=1
+								Start a new line
+									Export expression: ObservationName [G0]
+									If: TransportType=1
+										Export expression: "/t" [G0]
+									Else
+										Export expression: "/c" [G0]
+									End if
+									Export expression: "/&1/" [G0]
+									Export expression: ICountObsTimes [G0]
+									Export expression: "  " [G0]
+									If: TransportType=1
+										Export expression: Observation.Temp Value[ObsTimeNumber]; [G15]
+										Export expression: Observation.Temp Statistic[ObsTimeNumber]; [G15]
+										Export expression: "        " [G0]
+										Export expression: Observation.Temp Stat Flag; [G15]
+										Export expression: "          " [G0]
+										Export expression: Observation.Temp Plot Symbol; [G0]
+									Else
+										Export expression: Observation.Conc Value[ObsTimeNumber]; [G15]
+										Export expression: Observation.Conc Statistic[ObsTimeNumber]; [G15]
+										Export expression: "        " [G0]
+										Export expression: Observation.Conc Stat Flag; [G15]
+										Export expression: "          " [G0]
+										Export expression: Observation.Conc Plot Symbol; [G0]
+									End if
+								End line
+							Else
+								If: Move to Node
+									Start a new line
+										Export expression: ObservationName [G0]
+										If: TransportType=1
+											Export expression: "/t" [G0]
+										Else
+											Export expression: "/c" [G0]
+										End if
+										Export expression: "/+1/" [G0]
+										Export expression: ICountObsTimes [G0]
+										Export expression: "  " [G0]
+										If: TransportType=1
+											Export expression: Observation.Temp Value[ObsTimeNumber]; [G15]
+											Export expression: Observation.Temp Statistic[ObsTimeNumber]; [G15]
+											Export expression: "        " [G0]
+											Export expression: Observation.Temp Stat Flag; [G15]
+											Export expression: "          " [G0]
+											Export expression: Observation.Temp Plot Symbol; [G0]
+										Else
+											Export expression: Observation.Conc Value[ObsTimeNumber]; [G15]
+											Export expression: Observation.Conc Statistic[ObsTimeNumber]; [G15]
+											Export expression: "        " [G0]
+											Export expression: Observation.Conc Stat Flag; [G15]
+											Export expression: "          " [G0]
+											Export expression: Observation.Conc Plot Symbol; [G0]
+										End if
+									End line
+								Else
+									Set Variable: ICountNodesInContour:= 0
+									Loop for: Nodes
+										If: (ObservationName=Ucode_Observation)&(Ucode_Observation!=0)&(Ucode_Observation!="0")
+											Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+											Start a new line
+												Export expression: ObservationName [G0]
+												If: TransportType=1
+													Export expression: "/h" [G0]
+												Else
+													Export expression: "/p" [G0]
+												End if
+												If: ICountNodesInContour = ObservationNodeCount
+													Export expression: "/&" [G0]
+												Else
+													Export expression: "/" [G0]
+												End if
+												Export expression: ICountNodesInContour [G0]
+												Export expression: "/" [G0]
+												Export expression: ICountObsTimes [G0]
+												Export expression: "  " [G0]
+												If: TransportType=1
+													Export expression: Observation.Temp Value[ObsTimeNumber]; [G15]
+													Export expression: Observation.Temp Statistic[ObsTimeNumber]; [G15]
+													Export expression: "        " [G0]
+													Export expression: Observation.Temp Stat Flag; [G15]
+													Export expression: "          " [G0]
+													Export expression: Observation.Temp Plot Symbol; [G0]
+												Else
+													Export expression: Observation.Conc Value[ObsTimeNumber]; [G15]
+													Export expression: Observation.Conc Statistic[ObsTimeNumber]; [G15]
+													Export expression: "        " [G0]
+													Export expression: Observation.Conc Stat Flag; [G15]
+													Export expression: "          " [G0]
+													Export expression: Observation.Conc Plot Symbol; [G0]
+												End if
+											End line
+										End if
+									End loop
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End loop
+	# 
+	# Managing for SATURATION Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	If: @rbSatUnsat@
+		# The problem is 'SATURATED-UNSATURATED'
+		# Loop for Observation Contours
+		Loop for: Objects in layer: Observation
+			If: is_observed
+				Set Variable: ObservationName:= Observation.Obs Name
+				# Loop for Observation Times
+				Set Variable: ICountObsTimes:= 0
+				Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+					Set Variable: Time:= Observation.Sat Obs Time[ObsTimeNumber]
+					If: Time > 0
+						Set Variable: ICountObsTimes:= ICountObsTimes+1
+						Set Variable: ObservationNodeCount:= 0
+						Loop for: Nodes
+							If: ObservationName=Ucode_Observation
+								Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+							End if
+						End loop
+						Loop for: Objects in layer: Observation
+							If: (Observation.Obs Name=ObservationName) 
+								If: ObservationNodeCount=1
+									Start a new line
+										Export expression: ObservationName [G0]
+										Export expression: "/s" [G0]
+										Export expression: "/&1/" [G0]
+										Export expression: ICountObsTimes [G0]
+										Export expression: "  " [G0]
+										Export expression: Observation.Sat Value[ObsTimeNumber]; [G15]
+										Export expression: Observation.Sat Statistic[ObsTimeNumber]; [G15]
+										Export expression: "        " [G0]
+										Export expression: Observation.Sat Stat Flag; [G15]
+										Export expression: "          " [G0]
+										Export expression: Observation.Sat Plot Symbol; [G0]
+									End line
+								Else
+									If: Move to Node
+										Start a new line
+											Export expression: ObservationName [G0]
+											Export expression: "/s" [G0]
+											Export expression: "/+1/" [G0]
+											Export expression: ICountObsTimes [G0]
+											Export expression: "  " [G0]
+											Export expression: Observation.Sat Value[ObsTimeNumber]; [G15]
+											Export expression: Observation.Sat Statistic[ObsTimeNumber]; [G15]
+											Export expression: "        " [G0]
+											Export expression: Observation.Sat Stat Flag; [G15]
+											Export expression: "          " [G0]
+											Export expression: Observation.Sat Plot Symbol; [G0]
+										End line
+									Else
+										Set Variable: ICountNodesInContour:= 0
+										Loop for: Nodes
+											If: (ObservationName=Ucode_Observation)&(Ucode_Observation!=0)&(Ucode_Observation!="0")
+												Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+												Start a new line
+													Export expression: ObservationName [G0]
+													Export expression: "/s" [G0]
+													If: ICountNodesInContour = ObservationNodeCount
+														Export expression: "/&" [G0]
+													Else
+														Export expression: "/" [G0]
+													End if
+													Export expression: ICountNodesInContour [G0]
+													Export expression: "/" [G0]
+													Export expression: ICountObsTimes [G0]
+													Export expression: "  " [G0]
+													Export expression: Observation.Sat Value[ObsTimeNumber]; [G15]
+													Export expression: Observation.Sat Statistic[ObsTimeNumber]; [G15]
+													Export expression: "        " [G0]
+													Export expression: Observation.Sat Stat Flag; [G15]
+													Export expression: "          " [G0]
+													Export expression: Observation.Sat Plot Symbol; [G0]
+												End line
+											End if
+										End loop
+									End if
+								End if
+							End if	
+						End loop
+					End if
+				End loop
+			End if
+		End loop
+	End if
+	# 
+	# OPTIONAL Input Items
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "#OPTIONAL INPUT ITEMS"; [G0]
+	End line
+	# Alternate Weighting Option
+	If: @cbAlternateWeighting@
+		Start a new line
+			Export expression: "#Alternate Weighting Option"; [G0]
+		End line
+		Start a new line
+			Export expression: "UNIQUE_WEIGHT"; [G0]
+			Export expression: @adeAltWeightingConstant@; [G0]
+			Export expression: @adeAltWeightingThreshold@; [G0]
+		End line
+	End if
+	# Alternate Print Files Option
+	If: @cbAlternatePrintFiles@
+		Start a new line
+			Export expression: "#Alternate Print Files Option"; [G0]
+		End line
+		Start a new line
+			Export expression: "ALTERNATE_PRINT"; [G0]
+		End line
+	End if
+	# Print Graph File Header Option
+	If: @cbPrintGraphFileHeader@
+		Start a new line
+			Export expression: "#Print Graph File Header Option"; [G0]
+		End line
+		Start a new line
+			Export expression: "HEADER_PRINT"; [G0]
+		End line
+	End if
+	# Group Statistics Reporting Option
+	If: @cbGroupStatisticsReporting@
+		Start a new line
+			Export expression: "#Group Statistics Reporting Option"; [G0]
+		End line
+		Start a new line
+			Export expression: "GROUP_STATS"; [G0]
+		End line
+	End if
+	# Restart Option
+	If: @cbRestart@
+		Start a new line
+			Export expression: "#Restart Option"; [G0]
+		End line
+		Start a new line
+			Export expression: "RESTART_SAVE"; [G0]
+		End line
+	End if
+	# Perfect Problem Option
+	If: @cbPerfectProblem@
+		Start a new line
+			Export expression: "#Perfect Problem Option"; [G0]
+		End line
+		Start a new line
+			Export expression: "PERFECT_PROBLEM"; [G0]
+		End line
+	End if
+	# 
+	# ADDING THE END-OF-FILE LABEL
+	# 
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "END " [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+End file

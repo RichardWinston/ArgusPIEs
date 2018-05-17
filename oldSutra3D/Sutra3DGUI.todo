@@ -1,0 +1,20 @@
+{TODO : Warn if user tries to have steady-state transport with transient flow.}{TODO : When checking elevations, use epsilons to make sure exact or near exact matches are caught.}{TODO 4 : Warn users if they use an incorrect contour type}{TODO 4 : Warn users if they use the SutraZ function in a weird or invalid location}{TODO 4 : group layers in hydrosources and boundaries in 3D}{TODO 4 : Split 3d objects into different layers}
+{TODO 4 : add group layers for sources}
+{TODO 4 : Make observations like boundaries}
+{TODO 4 : Rearrange layers in 3D}
+{TODO 4 : Change surfaces to sheets}
+{TODO 4 : Get rid of extra layers in 3D models?}
+{TODO 4 : When adjusting mesh, use observations}
+{TODO 4 : Specify the root for output in Edit Project info and Run Sutra}
+{TODO 4 : Show angles in 3D}
+{TODO 4 : Save virtual mesh until it project closes unless user wishes it destroyed.}
+{DONE 3 : on the Fluid properties tab, compressibility is always disabled}
+{TODO 4 : Make it easy for users to convert from virtual nodes to Argus nodes and back}
+{TODO 4 : Get angles used by SUTRA from one or more contours}
+{TODO 4 : Automate comparison of boundary conditions with results}
+{TODO 3 : Do observations work?}
+{DONE 3 : check default values for gravity}
+{DONE 2 : There is an error reading restart files in 2D models.}
+{DONE 2 : in areal head models, you can't edit viscosity}
+{DONE 2 : Disable Set Now button on the initial values tab in new projects}
+{DONE 1 : If you create a sutra post-processing layer, Argus crashes during closing} 

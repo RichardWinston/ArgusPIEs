@@ -1,0 +1,65 @@
+# 
+# contour2data.met
+# Export template for converting contours to scattered data points.
+# 
+# This template uses the JoinFiles and List PIEs.
+# 
+# Line 30 needs to be altered before using this template.
+# See the comment on lines 28-29 for how to alter line 30.
+# The data points will be save in Points.exp
+# IMPORTANT NOTE:
+# If two contours have verticies at the same location,
+# it will only; be possible to import one of these verticies.
+# 
+Define Variable: PointCount [Integer]
+Define Variable: ParameterCount [Real]
+Set Variable: PointCount:= 0
+Define Variable: ParameterValuesList [Integer]
+Set Variable: ParameterValuesList:= MODFLOW_L_CreateNewList()
+Define Variable: ParameterValue [Real]
+Define Variable: ParameterIndex [Integer]
+Define Variable: NodeIndex [Integer]
+Define Variable: NodeCount [Integer]
+Define Variable: File1 [String]
+Define Variable: File2 [String]
+Set Variable: File1:= "Points.exp"
+Set Variable: File2:= "Points.tmp"
+Redirect output to: Points.tmp
+	# In the line below, change "New Layer" to the layer for
+	# which you wish to convert contours to data points.
+	Loop for: Objects in layer: New Layer
+		Set Variable: ParameterCount:= NumParameters()
+		Evaluate expression: MODFLOW_L_FreeAList(ParameterValuesList)
+		Loop for: Parameters
+			Set Variable: ParameterValue:= $Parameter$
+			Evaluate expression: MODFLOW_L_AddToList(ParameterValuesList,ParameterValue)
+		End loop
+		If: ContourType()=3
+			Set Variable: NodeCount:= NumVertices() - 1
+		Else
+			Set Variable: NodeCount:= NumVertices()
+		End if
+		Loop for: Variable NodeIndex from: 1 to: NodeCount step: 1
+			Set Variable: PointCount:= PointCount + 1
+			Start a new line
+				Export expression: NthVertexX(NodeIndex); [G0]
+				Export expression: NthVertexY(NodeIndex); [G0]
+				Loop for: Variable ParameterIndex from: 0 to: NumParameters()-1 step: 1
+					Export expression: MODFLOW_L_GetFromList(ParameterValuesList,ParameterIndex); [G0]
+				End loop
+			End line
+		End loop
+	End loop
+End file
+Redirect output to: Points.exp
+	Start a new line
+		Export expression: PointCount; [G0]
+		Export expression: ParameterCount; [G0]
+	End line
+End file
+Evaluate expression: MODFLOW_Join_Files(File1,File2,File1)
+Evaluate expression: MODFLOW_Delete_File(File2)
+If: MODFLOW_L_GetErrorCount()
+	Alert: "Errors in List PIE"
+End if
+Evaluate expression: MODFLOW_L_FreeAllLists()

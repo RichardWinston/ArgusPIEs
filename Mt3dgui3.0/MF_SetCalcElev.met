@@ -1,0 +1,34 @@
+# 
+# MF_SetCalcElev.met
+# 
+Set Variable: CalcElev:= 0
+If: RunMoc3d
+	Set Variable: CalcElev:= 1
+End if
+If: ExportBCF
+	Set Variable: CalcElev:= 1
+End if
+If: ExportRCH&RechargeChoice
+	Set Variable: CalcElev:= 1
+End if
+If: ExportEVT&EvapotranspirationChoice
+	Set Variable: CalcElev:= 1
+End if
+If: ExportRIV&RiverChoice
+	Set Variable: CalcElev:= 1
+End if
+If: ExportDRN&DrainChoice
+	Set Variable: CalcElev:= 1
+End if
+If: ExportStreams&StreamChoice
+	Set Variable: CalcElev:= 1
+End if
+If: ExportHFB&HFBChoice
+	Set Variable: CalcElev:= 1
+End if
+If: CalcElev
+	Set Variable: ProgressMax:= ProgressMax + 2*MODFLOW_NLAY()
+	If: MODFLOW_NLAY() > 1
+		Set Variable: ProgressMax:= ProgressMax + MODFLOW_NLAY()-1
+	End if
+End if

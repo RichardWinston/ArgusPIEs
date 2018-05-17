@@ -1,0 +1,7 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:08 2011
+        MODULE FDUMP__genmod
+          INTERFACE 
+            SUBROUTINE FDUMP
+            END SUBROUTINE FDUMP
+          END INTERFACE 
+        END MODULE FDUMP__genmod

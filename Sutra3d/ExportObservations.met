@@ -1,0 +1,347 @@
+# Editable SUTRA TEMPLATE for UCODE MAIN INPUT FILE (.in) goes here
+Define Variable: BlankIndex [Integer]
+Define Variable: DerParamName [String]
+Define Variable: ElementCount [Integer]
+Define Variable: EstimParamNumber [Integer]
+Define Variable: IDerParCount [Integer]
+Define Variable: IParCount [Integer]
+Define Variable: IsDefinedPar [Integer]
+Define Variable: NodeCount [Integer]
+Define Variable: NodElemCount [Integer]
+Define Variable: OK [Boolean]
+Define Variable: ParamName [String]
+Define Variable: PriorInfoIndex [Integer]
+Define Variable: SimulationMode [Integer]
+Define Variable: ICount [Integer]
+Define Variable: NodeIndex [Integer]
+# Define Variable: ICountNodesInContour [Integer]
+# Define Variable: ICountObsTimes [Integer]
+Define Variable: ObservationCount [Integer]
+Define Variable: ObservationName [String]
+Define Variable: ObsObjectCount [Integer]
+Define Variable: ObsPointCount [Integer]
+Define Variable: ObsObjectName [String]
+Define Variable: CombinedValue [Real]
+Define Variable: TimeIndex [Integer]
+Define Variable: ContourTypeVariable [Integer]
+Define Variable: ObsNamePosition [Integer]
+Define Variable: ObservedNodeCount [Integer]
+Evaluate expression: SUTRA_L_FreeNamedStringLists()
+Evaluate expression: SUTRA_L_FreeNamedLists()
+# Define Variable: ObservationNodeCount [Integer]
+# Define Variable: ObsTimeNumber [Integer]
+# Define Variable: Phase [Integer]
+# Define Variable: Time [Real]
+# 
+Set Variable: SimulationMode:= @rgPhase@
+# StateVariableType: 1=Head, 2=Pressure
+Define Variable: StateVariableType [Integer]
+If: @rbSpecific@&@rbSoluteConstDens@
+	Set Variable: StateVariableType:= 1
+Else
+	Set Variable: StateVariableType:= 2
+End if
+# TransportType: 1=Energy, 2=Solute
+Define Variable: TransportType [Integer]
+If: @rbEnergy@=1
+	Set Variable: TransportType:= 1
+Else
+	Set Variable: TransportType:= 2
+End if
+Define Variable: SutraDimensions [Integer]
+If: (@rgDimensions@=1)
+	Set Variable: SutraDimensions:= 3
+Else
+	Set Variable: SutraDimensions:= 2
+End if
+# Evaluate expression: Sutra_InitializeSimulationTimes()
+# 
+# HERE, WE WRITE THE LIST OF OBSERVATIONS IN A SEPARATE FILE
+# If: ObsPointCount>0	      #Count observation points earlier and use the value here to decide if there is any observation to export
+Redirect output to: @edRoot@.uob
+	# Writing the file head
+	Start a new line
+		Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# UCODE_2005 OBSERVATIONS DEFINITION input file"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# Model Name:"; [G0]
+		Export expression: "@edModelName@"; [G0]
+	End line
+	Start a new line
+		Export expression: "#"; [G0]
+	End line
+	Start a new line
+		Export expression: "# <+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>-<+>"; [G0]
+	End line
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------;" [G0]
+	End line
+	Start a new line
+		Export expression: "# OBSERVATIONS definition"; [G0]
+	End line
+	Start a new line
+		Export expression: "# -----------------------------------"; [G0]
+	End line
+	# Writing the OBSERVATION_GROUPS input block
+	# Observation groups: IsCompared, NotCompared
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN OBSERVATION_GROUPS Table"; [G0]
+	End line
+	Start a new line
+		Export expression: "nrow=2 ncol=2   ColumnLabels;" [G0]
+	End line
+	Start a new line
+		Export expression: "GroupName   UseFlag"; [G0]
+	End line
+	Start a new line
+		Export expression: "IsCompared      yes"; [G0]
+	End line
+	Start a new line
+		Export expression: "NotCompared     no"; [G0]
+	End line
+	Start a new line
+		Export expression: "END PRIOR_INFORMATION_GROUPS"; [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	# Writing the OBSERVATION_DATA input block
+	# For each observation type, Observations are listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	Start a new line
+		Export expression: " "; [G0]
+	End line
+	Start a new line
+		Export expression: "BEGIN OBSERVATION_DATA Table"; [G0]
+	End line
+	Start a new line
+		Export expression: "nrow=" [G0]
+		# this is a temporary count of number of nodes/points
+		# observed to look for in the Sutra output files. This
+		# is programmed assuming all obsevations are points of
+		# concentration and/or pressure
+		Set Variable: ObsPointCount:= 0
+		Loop for: Objects in layer: Generalized Concentration Observation
+			Set Variable: ObsPointCount:= ObsPointCount+1
+		End loop
+		Loop for: Objects in layer: Generalized Pressure Observation
+			Set Variable: ObsPointCount:= ObsPointCount+1
+		End loop
+		# ObsPointCount should be calculted earlier in the file to decide if we need to write observations
+		Export expression: ObsPointCount; [G0]
+		Export expression: "ncol=8   ColumnLabels"; [G0]
+	End line
+	Start a new line
+		# QUESTION: does statistic and statflag applies also to "notcompared" observations??
+		Export expression: "ObsName            ObsValue   Statistic   StatFlag   Equation   GroupName"; [G0]
+		# ATTENTION: WE NEED TO INCLUDE UCODE functions NonDetect and WtOSConstant in SUTRAGUI first, then update template
+		# Export expression: "ObsName            ObsValue   Statistic   StatFlag   Equation   GroupName NonDetect   WtOSConstant"; [G0]
+	End line
+	# Exporting Generalized Observations
+	Set Variable: ObsObjectCount:= 0
+	Set Variable: ObsPointCount:= 0
+	If: StateVariableType =1
+		# Export Generalized Head Observation
+		# Export Generalized Observation Fluid Flow Rate at Spec H
+		# Export Generalized Observation Solute Flow Rate at Spec H
+	End if
+	If: StateVariableType+2
+		# Export Generalized Pressure Observation
+	End if
+	If: TransportType=1
+		# Export Generalized Temperature Observation
+		# Export Generalized Observation Heat flow at Spec P
+	End if
+	If: TransportType=2
+		# Export Generalized Concentration Observation
+		Loop for: Nodes
+			Set Variable: ObsNamePosition:= SUTRA_L_PositionInNamedStringList("ObservationNameList", Ucode_U_Observation)
+			If: ObsNamePosition < 0
+				Evaluate expression: SUTRA_L_AddToNamedStringList("ObservationNameList", Ucode_U_Observation)
+				Evaluate expression: SUTRA_L_AddToNamedList("ObservationNodeCountList", 1)
+			Else
+				Set Variable: ObservedNodeCount:= Round(SUTRA_L_GetFromNamedList("ObservationNodeCountList", ObsNamePosition))
+				Set Variable: ObservedNodeCount:= ObservedNodeCount+1
+				Evaluate expression: SUTRA_L_SetNamedListItem("ObservationNodeCountList", ObsNamePosition, ObservedNodeCount)
+			End if
+		End loop
+		Loop for: Objects in layer: Generalized Concentration Observation
+			Set Variable: ObsObjectName:= Generalized Concentration Observation.Obs Name
+			Set Variable: ObsObjectCount:= ObsObjectCount+1
+			Set Variable: NodeIndex:= 0
+			Set Variable: ObsNamePosition:= SUTRA_L_PositionInNamedStringList("ObservationNameList", ObsObjectName)
+			If: ObsNamePosition>=0
+				Set Variable: NodeIndex:= Round(SUTRA_L_GetFromNamedList("ObservationNodeCountList", ObsNamePosition))
+			End if
+			# store the value of ContourType() in a temporary variable for use later.
+			Set Variable: ContourTypeVariable:= ContourType()
+			Alert: obsobjectname
+			Alert: contourtypevariable
+			# count mesh nodes in close- and open-contours
+			# Loop for: Nodes
+			# 	If: SUTRA Mesh.Ucode_U_Observation = ObsObjectName
+			# 		Set Variable: NodeIndex:= NodeIndex+1
+			# 	End if
+			# End loop
+			# RICHARD, i get an error here but do not know how to solve it. I want a IF contourtype()=1 OR nodeindex=1 THEN. how do i do that?
+			# RBW: Now check ContourTypeVariable which was saved earlier
+			If: ContourTypeVariable=1|NodeIndex=1
+				# If: ContourType()=1
+				Set Variable: ObsPointCount:= ObsPointCount + 1
+				Loop for: Variable TimeIndex from: 1 to: @adeObservationTimes@ step: 1
+					If: Generalized Concentration Observation.Value[TimeIndex]!=0
+						Start a new line
+							Export expression: ObsObjectName [G0]
+							Export expression: "_N0_" [G0]
+							Export expression: TimeIndex [G0]
+							Export expression: "_C"; [G0]
+							Export expression: Generalized Concentration Observation.Value[TimeIndex]; [G0]
+							Export expression: Generalized Concentration Observation.Statistic[TimeIndex]; [G0]
+							Export expression: Generalized Concentration Observation.Statistic Type; [G0]
+							Export expression: "_"; [G0]
+							Export expression: "IsCompared"; [G0]
+							# Here goes "NonDetect" UCODE function but this has not been programmed yet in the GUI
+							# Here goes "WtOSConstant" UCODE function but this has not been programmed yet in the GUI
+						End line
+					End if
+				End loop
+			Else
+				Loop for: Variable TimeIndex from: 1 to: @adeObservationTimes@ step: 1
+					# Richard, I am not sure it this statement would work.
+					# does all the observation values are listed in a
+					# unique matrix (@adeObservationTimes@ x NumberObservationCountours).
+					# If not, what do you suggest?
+					# If: Generalized Concentration Observation.Value[TimeIndex]!=0
+					# 
+					# RBW: There may not be observations and zero
+					# may be a valid observation value.  I suggest
+					# checking whether the time is a number or not.
+					If: Generalized Concentration Observation.Time[TimeIndex]!=$N/A
+						Set Variable: NodeIndex:= 0
+						Start a new line
+							Export expression: ObsObjectName [G0]
+							Export expression: "_" [G0]
+							If: Generalized Concentration Observation.Combine Obs Values= 0
+								Export expression: "N" [G0]
+							Else
+								If: Generalized Concentration Observation.Combine Obs Values= 1
+									Export expression: "S" [G0]
+								Else
+									If: Generalized Concentration Observation.Combine Obs Values= 2
+										Export expression: "AA"; [G0]
+									Else
+										If: Generalized Concentration Observation.Combine Obs Values= 3
+											# HOW DO WE KNOW IF IS LINE/AREA OR VOLUME WEIGHTED AVERAGE?
+											Export expression: "SA"; [G0]
+										End if
+									End if
+								End if
+							End if
+							Export expression: "0_" [G0]
+							Export expression: TimeIndex [G0]
+							Export expression: "_C"; [G0]
+							Export expression: Generalized Concentration Observation.Value[TimeIndex]; [G0]
+							Export expression: Generalized Concentration Observation.Statistic[TimeIndex]; [G0]
+							Export expression: Generalized Concentration Observation.Statistic Type; [G0]
+							# richard, to write the equations for each combine values,
+							# I would need to run again the loop over nodes.
+							# I think may be better to store the observation names
+							# for every contour in a list, then call the list here
+							# picking the values... what do you think?
+							# RBW: I agree. There are some functions that you can use for that purpose:
+							# SUTRA_L_AddToNamedStringList(Name, String)
+							# SUTRA_L_FreeNamedStringList(Name)
+							# SUTRA_L_FreeNamedStringLists()
+							# SUTRA_L_GetFromNamedStringList(Name, Position)
+							# SUTRA_L_GetNamedStringListCount(Name)
+							If: Generalized Concentration Observation.Combine Obs Values= 1
+								# SUM
+								Export expression: "_"; [G0]
+							End if
+							If: Generalized Concentration Observation.Combine Obs Values= 2
+								# AVERAGE
+								Export expression: "_"; [G0]
+							End if
+							If: Generalized Concentration Observation.Combine Obs Values= 3
+								# LINE/AREA/VOLUME WEIGHTED AVERAGE
+								Export expression: "_"; [G0]
+							End if
+							Export expression: "IsCompared"; [G0]
+							# Here goes "NonDetect" UCODE function but this has not been programmed yet in the GUI
+							# Here goes "WtOSConstant" UCODE function but this has not been programmed yet in the GUI
+						End line
+						Loop for: Nodes
+							If: Generalized Concentration Observation.Obs Name = ObsObjectName
+								Set Variable: NodeIndex:= NodeIndex+1
+								Set Variable: CombinedValue:= 0
+								Start a new line
+									Export expression: "N_" [G0]
+									Export expression: NodeNumber() [G0]
+									Export expression: "_" [G0]
+									If: Generalized Concentration Observation.Combine Obs Values= 0
+										Export expression: "N" [G0]
+									Else
+										If: Generalized Concentration Observation.Combine Obs Values= 1
+											Export expression: "S" [G0]
+										Else
+											If: Generalized Concentration Observation.Combine Obs Values= 2
+												Export expression: "AA"; [G0]
+											Else
+												If: Generalized Concentration Observation.Combine Obs Values= 3
+													# HOW DO WE KNOW IF IS LINE/AREA OR VOLUME WEIGHTED AVERAGE?
+													Export expression: "SA"; [G0]
+												End if
+											End if
+										End if
+									End if
+									Export expression: NodeIndex [G0]
+									Export expression: "_" [G0]
+									Export expression: TimeIndex [G0]
+									Export expression: "_C"; [G0]
+									Export expression: 0.0; [G0]
+									Export expression: Generalized Concentration Observation.Statistic[TimeIndex]; [G0]
+									Export expression: Generalized Concentration Observation.Statistic Type; [G0]
+									Export expression: "_"; [G0]
+									Export expression: "NotCompared"; [G0]
+									# Here goes "NonDetect" UCODE function but this has not been programmed yet in the GUI
+									# Here goes "WtOSConstant" UCODE function but this has not been programmed yet in the GUI
+								End line
+							End if
+						End loop
+					End if
+				End loop
+			End if
+		End loop
+		# 
+		If: StateVariableType =2
+			# Export Generalized Observation Fluid Flow Rate at Spec P
+			# Export Generalized Observation Solute Flow Rate at Spec P
+		End if
+	End if
+	If: @rbSatUnsat@
+		# check Generalized Saturation Observation
+	End if
+	# 
+	Start a new line
+		Export expression: "END OBSERVATION_DATA"; [G0]
+	End line
+	# End .uob file
+End file
+Evaluate expression: SUTRA_L_FreeNamedLists()
+Evaluate expression: SUTRA_L_FreeNamedStringLists()
+# End if
+

@@ -1,0 +1,165 @@
+# 
+# MF_IBS.met
+# --------------------------
+# Interbed storage package
+# --------------------------
+# 
+If: ExportIBS
+	Redirect output to: @adeFileName@.ibs
+		If: IIBSCB>0&OneCBCFile=1
+			Set Variable: BUDUnit:= MF_GetUnitNumber("BUDUnit")
+			Set Variable: IIBSCB:= BUDUnit
+			# Set Variable: IIBSCB:= 33
+		End if
+		If: IIBSCB>0&OneCBCFile=0
+			Set Variable: BIBUnit:= MF_GetUnitNumber("BIBUnit")
+			Set Variable: IIBSCB:= BIBUnit
+			# Set Variable: IIBSCB:= 62
+		End if
+		If: IIBSCB=0
+			Set Variable: IIBSCB:= 0
+		End if
+		Set Variable: IIBSOC:= 1
+		Start a new line
+			Export expression: IIBSCB; [I10]
+			Export expression: IIBSOC [I9]
+		End line
+		Set Variable: ModflowLayer:= 0
+		Set Variable: IBQ_String:= ""
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			If: MODFLOW_SIMUL(LayIndex)
+				If: MF_UseIBS(LayIndex)
+					Set Variable: IBQ:= 1
+				Else
+					Set Variable: IBQ:= 0
+				End if
+				Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+					Set Variable: ModflowLayer:= ModflowLayer + 1
+					Set Variable: IBQ_String:= IBQ_String + " " + IBQ
+					If: ModflowLayer=40
+						Start a new line
+							Export expression: IBQ_String [G0]
+							Set Variable: IBQ_String:= ""
+							Set Variable: ModflowLayer:= 0
+						End line
+					End if
+				End loop
+			End if
+		End loop
+		If: ModflowLayer!=0
+			Start a new line
+				Export expression: IBQ_String [G0]
+			End line
+		End if
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation
+				If: MF_UseIBS(LayIndex)
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 0 [G0]
+					End line
+					Export matrix: IBS Preconsolidation head Unit[LayIndex] [G0]
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 0 [G0]
+					End line
+					Export matrix: IBS Elastic storage factor Unit[LayIndex] [G0]
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 0 [G0]
+					End line
+					Export matrix: IBS Inelastic storage factor Unit[LayIndex] [G0]
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)"; [G0]
+						Export expression: 0 [G0]
+					End line
+					Export matrix: IBS Starting compaction Unit[LayIndex] [G0]
+				End if
+			End if
+		End loop
+		If: @comboIBSPrintStyle@
+			Set Variable: PrintIBSResultFormat:= @comboIBSPrintFormat@
+		Else
+			Set Variable: PrintIBSResultFormat:= -@comboIBSPrintFormat@
+			If: PrintIBSResultFormat=0
+				Set Variable: PrintIBSResultFormat:= -12
+			End if
+		End if
+		Set Variable: ISUBFM:= PrintIBSResultFormat
+		Set Variable: ICOMFM:= PrintIBSResultFormat
+		Set Variable: IHCFM:= PrintIBSResultFormat
+		Set Variable: ISUBUN:= MF_GetUnitNumber("IBSSubsidenceUnit")
+		Set Variable: ICOMUN:= MF_GetUnitNumber("IBSCompactionUnit")
+		Set Variable: IHCUN:= MF_GetUnitNumber("IBSPreconsolidationHeadUnit")
+		# Set Variable: ISUBUN:= 63
+		# Set Variable: ICOMUN:= 64
+		# Set Variable: IHCUN:= 65
+		Start a new line
+			Export expression: ISUBFM; [I10]
+			Export expression: ICOMFM; [I9]
+			Export expression: IHCFM; [I9]
+			Export expression: ISUBUN; [I9]
+			Export expression: ICOMUN; [I9]
+			Export expression: IHCUN; [I9]
+		End line
+		If: IIBSOC>0
+			Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					Loop for: Variable StepIndex from: 1 to: MODFLOW_NSTP(PeriodIndex) step: 1
+						If: @comboIBSPrintFrequency@
+							If: @comboIBSPrintFrequency@=1
+								If: Floor(StepIndex/@adeIBSPrintFrequency@) = StepIndex/@adeIBSPrintFrequency@
+									Set Variable: PrintIBSResults:= 1
+								Else
+									Set Variable: PrintIBSResults:= 0
+								End if
+							Else
+								If: StepIndex=MODFLOW_NSTP(PeriodIndex)
+									Set Variable: PrintIBSResults:= 1
+								Else
+									Set Variable: PrintIBSResults:= 0
+								End if
+							End if
+						Else
+							Set Variable: PrintIBSResults:= 0
+						End if
+						If: @comboIBSSaveFrequency@
+							If: @comboIBSSaveFrequency@=1
+								If: Floor(StepIndex/@adeIBSSaveFrequency@) = StepIndex/@adeIBSSaveFrequency@
+									Set Variable: SaveIBSResults:= 1
+								Else
+									Set Variable: SaveIBSResults:= 0
+								End if
+							Else
+								If: StepIndex=MODFLOW_NSTP(PeriodIndex)
+									Set Variable: SaveIBSResults:= 1
+								Else
+									Set Variable: SaveIBSResults:= 0
+								End if
+							End if
+						Else
+							Set Variable: SaveIBSResults:= 0
+						End if
+						Set Variable: ISUBPR:= PrintIBSResults
+						Set Variable: ICOMPR:= PrintIBSResults
+						Set Variable: IHCPR:= PrintIBSResults
+						Set Variable: ISUBSV:= SaveIBSResults
+						Set Variable: ICOMSV:= SaveIBSResults
+						Set Variable: IHCSV:= SaveIBSResults
+						Start a new line
+							Export expression: ISUBPR; [I10]
+							Export expression: ICOMPR; [I9]
+							Export expression: IHCPR; [I9]
+							Export expression: ISUBSV; [I9]
+							Export expression: ICOMSV; [I9]
+							Export expression: IHCSV; [I9]
+						End line
+					End loop
+				End if
+			End loop
+		End if
+	End file
+End if
+

@@ -1,0 +1,497 @@
+# Editable SUTRA TEMPLATE for UCODE EXTERNAL (.ext) input file goes here
+Define Variable: VectorOfColumns [Integer]
+Define Variable: NodeIndex [Integer]
+Define Variable: TimeIndex [Integer]
+Define Variable: TimeStep [Integer]
+Define Variable: PreviousStep [Integer]
+Define Variable: NewStep [Integer]
+Define Variable: Column [Integer]
+Define Variable: OcurrenceInTimeStep [Integer]
+Define Variable: Time [Real]
+Define Variable: ZeroIndex [Integer]
+Set Variable: NodeIndex:= 0
+Set Variable: VectorOfColumns:= SUTRA_L_CreateNewList()
+Define Variable: StateVariableType [Integer]
+# StateVariableType: 1=Head, 2=Pressure
+If: @rbSpecific@&@rbSoluteConstDens@
+	Set Variable: StateVariableType:= 1
+Else
+	Set Variable: StateVariableType:= 2
+End if
+Define Variable: TransportType [Integer]
+# TransportType: 1=Energy, 2=Solute
+If: @rbEnergy@=1
+	Set Variable: TransportType:= 1
+Else
+	Set Variable: TransportType:= 2
+End if
+Evaluate expression: Sutra_InitializeSimulationTimes()
+# Look for Observation Nodes
+Loop for: Nodes
+	If: INOB
+		Set Variable: NodeIndex:= NodeIndex+1
+		Evaluate expression: SUTRA_L_AddToList(VectorOfColumns,(NodeIndex-1)*48+33)
+	Else
+		Evaluate expression: SUTRA_L_AddToList(VectorOfColumns,0)
+	End if
+End loop
+Redirect output to: @edRoot@.ext
+	# INITIALIZING THE EXPORTABLE FILE
+	# Writing the file head
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: "# THIS IS THE EXTRACT UCODE INPUT FILE (.ext)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	#
+	# Managing for HEAD/PRESSURE Observations, listed by Time-Step Number, and then by Node Number
+	#
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		If: StateVariableType=1
+			Export expression: "#HEAD Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		Else
+			Export expression: "#PRESSURE Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		End if
+	End line
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	# Selecting the SUTRA Observation Output File, from which Observation Values will be extracted
+	Start a new line
+		Export expression: "#SUTRA Observation Output File (.obs): BE SURE THE FILE ROOT IS CORRECT!!" [G0]
+	End line
+
+	# Define the SUTRA Observation Output File (.obs) name in the simulation
+	Start a new line
+		Export expression: "<@edRoot@.obs" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "#<>--<>--<>--<>" [G0]
+	End line
+	# Going to the initial position in Sutra Observation Output File
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	# CSSTRA
+	If: @sicomboCSSFLO_and_CSSTRA@=0
+	# The problem is 'STEADY TRANSPORT'
+		Start a new line
+			Export expression: "+6"; [G0]
+		End line
+	Else
+		Start a new line
+			Export expression: "+7"; [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "#<>--<>--<>--<>" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+
+	# Loop for Time-Steps
+	Start a new line
+		Export expression: "#List of observations" [G0]
+	End line
+	Set Variable: PreviousStep:= 0
+	Loop for: Variable TimeIndex from: 1 to: @adeObservationTimes@ step: 1
+		Set Variable: OcurrenceInTimeStep:= 0
+		# Loop for Observation Nodes
+		Loop for: Nodes
+			If: INOB
+				# Writing for Pressure/Head Observations
+				If: StateVariableType=1
+					Set Variable: Time:= Observation.Head Obs Time[TimeIndex]
+				Else
+					Set Variable: Time:= Observation.Pres Obs Time[TimeIndex]
+				End if
+				If: Time > 0
+					Set Variable: NewStep:= Sutra_GetTimeStep(Time)
+					If: Length(NodeNumber())>6
+						Start a new line
+							Export expression: "#WARNING: Next observation is associated to a Node# with more than 6 digits, and the observation will not be read correctly" [G0]
+							Set Variable: ObservationError:= 1
+						End line
+					End if
+					If: Length(NewStep)>4
+						Start a new line
+							Export expression: "#WARNING: Next observation is associated to a TimeStep# with more than 4 digits, and the observation will not be read correctly" [G0]
+							Set Variable: ObservationError:= 1
+						End line
+					End if
+					Start a new line
+						Export expression: "o " [G0]
+						If: StateVariableType=1
+							Export expression: "h" [G0]
+						Else
+							Export expression: "p" [G0]
+						End if
+						Loop for: Variable ZeroIndex from: Length(NodeNumber()) to: 5 step: 1
+							Export expression: "0" [G0]
+						End loop
+						Export expression: NodeNumber() [G0]
+						# Is Steady-Steady simulation?
+						If: @sicomboCSSFLO_and_CSSTRA@<=1&@sicomboCSSFLO_and_CSSTRA@=0
+							Export expression: "00001" [G0]
+						Else
+							Loop for: Variable ZeroIndex from: Length(NewStep) to: 3 step: 1
+								Export expression: "0" [G0]
+							End loop
+							Export expression: NewStep [G0]
+						End if
+					End line
+					If: PreviousStep!=NewStep
+						Start a new line
+							If: NewStep - PreviousStep > 0
+								Export expression: "+" [G0]
+								Export expression: NewStep - PreviousStep [G0]
+							Else
+								Export expression: NewStep - PreviousStep [G0]
+							End if
+						End line
+					End if
+					Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, NodeNumber()-1))
+					Start a new line
+						Export expression: "c" [G0]
+						Export expression: Column [I0]
+						Export expression: "_" [G0]
+						Export expression: Column+12 [I0]
+					End line
+					Set Variable: OcurrenceInTimeStep:= OcurrenceInTimeStep + 1
+					Set Variable: PreviousStep:= NewStep
+				End if
+			End if
+		End loop
+	# Including a blank line between different Time-Steps
+		If: OcurrenceInTimeStep!=0
+			Start a new line
+				Export expression: " " [G0]
+			End line
+		End if
+	End loop
+	#
+	# Managing for TEMPERATURE/CONCENTRATION Observations, listed by Time-Step Number, and then by Node Number
+	#
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		If: TransportType=1
+			Export expression: "#TEMPERATURE Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		Else
+			Export expression: "#CONCENTRATION Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		End if
+	End line
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	# Selecting the SUTRA Observation Output File, from which Observation Values will be extracted
+	Start a new line
+		Export expression: "#SUTRA Observation Output File (.obs): BE SURE THE FILE ROOT IS CORRECT!!" [G0]
+	End line
+
+	# Define the SUTRA Observation Output File (.obs) name in the simulation
+	Start a new line
+		Export expression: "<@edRoot@.obs" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "#<>--<>--<>--<>" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	# CSSTRA
+	If: @sicomboCSSFLO_and_CSSTRA@=0
+	# The problem is 'STEADY TRANSPORT'
+		Start a new line
+			Export expression: "+6"; [G0]
+		End line
+	Else
+		Start a new line
+			Export expression: "+7"; [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "#<>--<>--<>--<>" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+
+	# Loop for Time-Steps
+	Start a new line
+		Export expression: "#List of observations" [G0]
+	End line
+	Set Variable: PreviousStep:= 0
+	Loop for: Variable TimeIndex from: 1 to: @adeObservationTimes@ step: 1
+		Set Variable: OcurrenceInTimeStep:= 0
+		# Loop for Observation Nodes
+		Loop for: Nodes
+			If: INOB
+				# Writing for Temperature/Concentration Observations
+				If: TransportType=1
+					Set Variable: Time:= Observation.Temp Obs Time[TimeIndex]
+				Else
+					Set Variable: Time:= Observation.Conc Obs Time[TimeIndex]
+				End if
+				If: Time > 0
+					Set Variable: NewStep:= Sutra_GetTimeStep(Time )
+					If: Length(NodeNumber())>6
+						Start a new line
+							Export expression: "#WARNING: Next observation is associated to a Node# with more than 6 digits, and the observation will not be read correctly" [G0]
+							Set Variable: ObservationError:= 1
+						End line
+					End if
+					If: Length(NewStep)>4
+						Start a new line
+							Export expression: "#WARNING: Next observation is associated to a TimeStep# with more than 4 digits, and the observation will not be read correctly" [G0]
+							Set Variable: ObservationError:= 1
+						End line
+					End if
+					Start a new line
+						Export expression: "o " [G0]
+						If: TransportType=1
+							Export expression: "t" [G0]
+						Else
+							Export expression: "c" [G0]
+						End if
+						Loop for: Variable ZeroIndex from: Length(NodeNumber()) to: 5 step: 1
+							Export expression: "0" [G0]
+						End loop
+						Export expression: NodeNumber() [G0]
+						# Is Steady-Steady simulation?
+						If: @sicomboCSSFLO_and_CSSTRA@<=1&@sicomboCSSFLO_and_CSSTRA@=0
+							Export expression: "00001" [G0]
+						Else
+							Loop for: Variable ZeroIndex from: Length(NewStep) to: 3 step: 1
+								Export expression: "0" [G0]
+							End loop
+							Export expression: NewStep [G0]
+						End if
+					End line
+					If: PreviousStep!=NewStep
+						Start a new line
+							If: NewStep - PreviousStep > 0
+								Export expression: "+" [G0]
+								Export expression: NewStep - PreviousStep [G0]
+							Else
+								Export expression: NewStep - PreviousStep [G0]
+							End if
+						End line
+					End if
+					Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, NodeNumber()-1))
+					Set Variable: Column:= Column + 15
+					Start a new line
+						Export expression: "c" [G0]
+						Export expression: Column [I0]
+						Export expression: "_" [G0]
+						Export expression: Column+12 [I0]
+						Export expression: " " [G0]
+					End line
+					Set Variable: OcurrenceInTimeStep:= OcurrenceInTimeStep + 1
+					Set Variable: PreviousStep:= NewStep
+				End if
+			End if
+		End loop
+		# Including a blank line between different Time-Steps
+		If: OcurrenceInTimeStep!=0
+			Start a new line
+				Export expression: " " [G0]
+			End line
+		End if
+	End loop
+	#
+	# Managing for SATURATION Observations, listed by Time-Step Number, and then by Node Number
+	#
+	If: @rbSatUnsat@
+	#The problem is 'SATURATED-UNSATURATED'
+		Start a new line
+			Export expression: "#-----------------------------------------------------------------" [G0]
+		End line
+		Start a new line
+			Export expression: "#SATURATION Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		End line
+		Start a new line
+			Export expression: "#-----------------------------------------------------------------" [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		# Selecting the SUTRA Observation Output File, from which Observation Values will be extracted
+		Start a new line
+			Export expression: "#SUTRA Observation Output File (.obs): BE SURE THE FILE ROOT IS CORRECT!!" [G0]
+		End line
+	
+		# Define the SUTRA Observation Output File (.obs) name in the simulation
+		Start a new line
+			Export expression: "<@edRoot@.obs" [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+		Start a new line
+			Export expression: "#<>--<>--<>--<>" [G0]
+		End line
+		Start a new line
+			Export expression: "/========/" [G0]
+		End line
+		Start a new line
+			Export expression: "/========/" [G0]
+		End line
+		Start a new line
+			Export expression: "/========/" [G0]
+		End line
+		# CSSTRA
+		If: @sicomboCSSFLO_and_CSSTRA@=0
+		# The problem is 'STEADY TRANSPORT'
+			Start a new line
+				Export expression: "+6"; [G0]
+			End line
+		Else
+			Start a new line
+				Export expression: "+7"; [G0]
+			End line
+		End if
+		Start a new line
+			Export expression: "#<>--<>--<>--<>" [G0]
+		End line
+		Start a new line
+			Export expression: " " [G0]
+		End line
+	
+		# Loop for Time-Steps
+		Start a new line
+			Export expression: "#List of observations" [G0]
+		End line
+		Set Variable: PreviousStep:= 0
+		Loop for: Variable TimeIndex from: 1 to: @adeObservationTimes@ step: 1
+			Set Variable: OcurrenceInTimeStep:= 0
+			# Loop for Observation Nodes
+			Loop for: Nodes
+				If: INOB
+					# Writing for Saturation Observations
+					Set Variable: Time:= Observation.Sat Obs Time[TimeIndex]
+					If: Time > 0
+						Set Variable: NewStep:= Sutra_GetTimeStep(Time )
+						If: Length(NodeNumber())>6
+							Start a new line
+								Export expression: "#WARNING: Next observation is associated to a Node# with more than 6 digits, and the observation will not be read correctly" [G0]
+								Set Variable: ObservationError:= 1
+							End line
+						End if
+						If: Length(NewStep)>4
+							Start a new line
+								Export expression: "#WARNING: Next observation is associated to a TimeStep# with more than 4 digits, and the observation will not be read correctly" [G0]
+								Set Variable: ObservationError:= 1
+							End line
+						End if
+						Start a new line
+							Export expression: "o " [G0]
+							Export expression: "s" [G0]
+							Loop for: Variable ZeroIndex from: Length(NodeNumber()) to: 5 step: 1
+								Export expression: "0" [G0]
+							End loop
+							Export expression: NodeNumber() [G0]
+							# Is Steady-Steady simulation?
+							If: @sicomboCSSFLO_and_CSSTRA@<=1&@sicomboCSSFLO_and_CSSTRA@=0
+								Export expression: "00001" [G0]
+							Else
+								Loop for: Variable ZeroIndex from: Length(NewStep) to: 3 step: 1
+									Export expression: "0" [G0]
+								End loop
+								Export expression: NewStep [G0]
+							End if
+						End line
+						If: PreviousStep!=NewStep
+							Start a new line
+								If: NewStep - PreviousStep > 0
+									Export expression: "+" [G0]
+									Export expression: NewStep - PreviousStep [G0]
+								Else
+									Export expression: NewStep - PreviousStep [G0]
+								End if
+							End line
+						End if
+						Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, NodeNumber()-1))
+						Set Variable: Column:= Column + 30
+						Start a new line
+							Export expression: "c" [G0]
+							Export expression: Column [I0]
+							Export expression: "_" [G0]
+							Export expression: Column+12 [I0]
+							Export expression: " " [G0]
+						End line
+						Set Variable: OcurrenceInTimeStep:= OcurrenceInTimeStep + 1
+						Set Variable: PreviousStep:= NewStep
+					End if
+				End if
+			End loop
+			# Including a blank line between different Time-Steps
+			If: OcurrenceInTimeStep!=0
+				Start a new line
+					Export expression: " " [G0]
+				End line
+			End if
+		End loop
+	Else
+	# The problem is 'SATURATED'; no saturation observations could be defined
+		Start a new line
+			Export expression: " " [G0]
+		End line
+	End if
+	# 
+	# ADDING A (only comment) END-OF-FILE LABEL
+	# 
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#END of FILE" [G0]
+	End line
+	Start a new line
+		Export expression: "#*" [G0]
+	End line
+	Start a new line
+		Export expression: "#" [G0]
+	End line
+End file
+Evaluate expression: SUTRA_L_FreeAllLists()
+

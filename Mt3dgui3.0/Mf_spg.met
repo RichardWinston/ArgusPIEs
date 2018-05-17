@@ -1,0 +1,284 @@
+# ----------------------------------------------------
+# Seepage Package
+# ----------------------------------------------------
+If: SeepageChoice!=0&ExportSPG!=0
+	Evaluate expression: MODFLOW_ProgressBarSetMessage("Seepage Package")
+	Redirect output to: @adeFileName@.spg
+	End file
+	Set Variable: MaxSeepages:= 0
+	Set Variable: err_line:= 0
+	Set Variable: err_area1:= 0
+	Set Variable: err_area2:= 0
+	Set Variable: CurrentSeepageCount:= 0
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Evaluate expression: MODFLOW_ProgressBarAdvance()
+		If: LayIndex=1
+			Set Variable: M:= 0
+		Else
+			Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+		End if
+		# 
+		If: MODFLOW_SIMUL(LayIndex)!=0
+			# 
+			Loop for: Blocks
+				Set Variable: AreaBoundaryInBlock:= 0
+				# 
+				Set Variable: DumRow:= Row()
+				Set Variable: DumCol:= Column()
+				# 
+				If: @cbAltSpg@
+					If: CountObjectsInBlock(Line Seepage Unit[LayIndex].Elevation)!=0
+						Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+						Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+						Set Variable: ocflag:= 0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							If: Line Seepage Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Line Seepage Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+								Set Variable: ocflag:= DivIndex
+							End if
+						End loop
+						If: ocflag=0
+							Set Variable: ocflag:= 1
+							Set Variable: err_spg_3:= 1
+							Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Line seepage elevation does not lie within geologic unit: Line seepage is placed in uppermost model layer in geologic unit.")
+						End if
+						Set Variable: DumLay:= M+ocflag
+						Set Variable: CurrentSeepageCount:= CurrentSeepageCount + 1
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							If: !(PeriodIndex>1&SteadySeepage=0)
+								Redirect output to: TempSeepagePer
+									Start a new line
+										Export expression: DumLay [I10]
+										Export expression: DumRow [I10]
+										Export expression: DumCol [I10]
+										If: Line Seepage Unit[LayIndex].On or Off Stress[PeriodIndex]
+											Export expression: Line Seepage Unit[LayIndex].Elevation [E13.5]
+										Else
+											Export expression: 1.e49 [E13.5]
+										End if
+										Export expression: 0; [E13.5]
+										# MODPATH
+										# If: MODPATHChoice
+										#	Export expression: Line Seepage Unit[LayIndex].IFACE[PeriodIndex] [G0]
+										# End if
+									End line
+								End file
+								Evaluate expression: MODFLOW_Join_Files("TempSeepagePer" + PeriodIndex, "TempSeepagePer", "TempSeepagePer" + PeriodIndex)
+							End if
+						End loop
+						# End if
+					End if
+					# 
+					Set Variable: ThisElevation:= AREA Seepage Unit[LayIndex].Elevation
+					If: (ThisElevation!=$N/A)
+						Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+						Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+						Set Variable: ocflag:= 0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							If: ThisElevation<=(LayerTop-(DivIndex-1)*LayerThickness)&ThisElevation>(LayerTop-DivIndex*LayerThickness)
+								Set Variable: ocflag:= DivIndex
+							End if
+						End loop
+						If: ocflag=0
+							Set Variable: ocflag:= 1
+							Set Variable: err_spg_4:= 1
+							Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area seepage elevation does not lie within geologic unit: Area seepage is placed in uppermost model layer in geologic unit.")
+						End if
+						Set Variable: CurrentSeepageCount:= CurrentSeepageCount + 1
+						Set Variable: DumLay:= M+ocflag
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							If: !(PeriodIndex>1&SteadySeepage=0)
+								Redirect output to: TempSeepagePer
+									Start a new line
+										Export expression: DumLay [I10]
+										Export expression: DumRow [I10]
+										Export expression: DumCol [I10]
+										If: Area Seepage Unit[LayIndex].On or Off Stress[PeriodIndex]
+											Export expression: ThisElevation [E13.5]
+										Else
+											Export expression: 1.e49 [E13.5]
+										End if
+										Export expression: 0; [E13.5]
+										# MODPATH
+										# If: MODPATHChoice
+										# 	Export expression: Area Seepage Unit[LayIndex].IFACE[PeriodIndex] [G0]
+										# End if
+									End line
+								End file
+								Evaluate expression: MODFLOW_Join_Files("TempSeepagePer" + PeriodIndex, "TempSeepagePer", "TempSeepagePer" + PeriodIndex)
+							End if
+						End loop
+					End if
+				Else
+					Loop for: Objects in layer: LINE SEEPAGE UNIT[LayIndex]
+						Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+						Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+							Set Variable: ocflag:= 0
+							Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+								If: Line Seepage Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Line Seepage Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+									Set Variable: ocflag:= DivIndex
+								End if
+							End loop
+							If: ocflag=0
+								Set Variable: ocflag:= 1
+								Set Variable: err_spg_3:= 1
+								Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Line seepage elevation does not lie within geologic unit: Line seepage is placed in uppermost model layer in geologic unit.")
+							End if
+							Set Variable: DumLay:= M+ocflag
+							Set Variable: CurrentSeepageCount:= CurrentSeepageCount + 1
+							Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+								If: !(PeriodIndex>1&SteadySeepage=0)
+									Redirect output to: TempSeepagePer
+										Start a new line
+											Export expression: DumLay [I10]
+											Export expression: DumRow [I10]
+											Export expression: DumCol [I10]
+											If: Line Seepage Unit[LayIndex].On or Off Stress[PeriodIndex]
+												Export expression: Line Seepage Unit[LayIndex].Elevation [E13.5]
+											Else
+												Export expression: 1.e49 [E13.5]
+											End if
+											Export expression: 0; [E13.5]
+											# MODPATH
+											# If: MODPATHChoice
+											# 	Export expression: Line Seepage Unit[LayIndex].IFACE[PeriodIndex] [G0]
+											# End if
+										End line
+									End file
+									Evaluate expression: MODFLOW_Join_Files("TempSeepagePer" + PeriodIndex, "TempSeepagePer", "TempSeepagePer" + PeriodIndex)
+								End if
+							End loop
+					End loop
+					# 
+					Loop for: Objects in layer: AREA SEEPAGE UNIT[LayIndex]
+						Set Variable: AreaBoundaryInBlock:= 1
+						Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+						Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+						Set Variable: ocflag:= 0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							If: Area Seepage Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Area Seepage Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+								Set Variable: ocflag:= DivIndex
+							End if
+						End loop
+						If: ocflag=0
+							Set Variable: ocflag:= 1
+							Set Variable: err_spg_4:= 1
+							Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area seepage elevation does not lie within geologic unit: Area seepage is placed in uppermost model layer in geologic unit.")
+						End if
+						Set Variable: CurrentSeepageCount:= CurrentSeepageCount + 1
+						Set Variable: DumLay:= M+ocflag
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							If: !(PeriodIndex>1&SteadySeepage=0)
+								Redirect output to: TempSeepagePer
+									Start a new line
+										Export expression: DumLay [I10]
+										Export expression: DumRow [I10]
+										Export expression: DumCol [I10]
+										If: Area Seepage Unit[LayIndex].On or Off Stress[PeriodIndex]
+											Export expression: Area Seepage Unit[LayIndex].Elevation [E13.5]
+										Else
+											Export expression: 1.e49 [E13.5]
+										End if
+										Export expression: 0; [E13.5]
+										# MODPATH
+										# If: MODPATHChoice
+										# 	Export expression: Area Seepage Unit[LayIndex].IFACE[PeriodIndex] [G0]
+										# End if
+									End line
+								End file
+								Evaluate expression: MODFLOW_Join_Files("TempSeepagePer" + PeriodIndex, "TempSeepagePer", "TempSeepagePer" + PeriodIndex)
+							End if
+						End loop
+					End loop
+					Set Variable: ThisElevation:= AREA Seepage Unit[LayIndex].Elevation
+					If: (!AreaBoundaryInBlock)&(ThisElevation!=$N/A)
+						Set Variable: LayerTop:= MODFLOW_L_GetFromOneBased3DList(TopElevationList, DumCol, DumRow, LayIndex)
+						Set Variable: LayerThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, DumCol, DumRow, LayIndex)
+						Set Variable: ocflag:= 0
+						Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							If: Area Seepage Unit[LayIndex].Elevation<=(LayerTop-(DivIndex-1)*LayerThickness)&Area Seepage Unit[LayIndex].Elevation>(LayerTop-DivIndex*LayerThickness)
+								Set Variable: ocflag:= DivIndex
+							End if
+						End loop
+						If: ocflag=0
+							Set Variable: ocflag:= 1
+							Set Variable: err_spg_4:= 1
+							Evaluate expression: MODFLOW_ProgressBarAddLine("At column " + DumCol + " Row " + DumRow + " and Layer " + DumLay + ", Area seepage elevation does not lie within geologic unit: Area seepage is placed in uppermost model layer in geologic unit.")
+						End if
+						Set Variable: CurrentSeepageCount:= CurrentSeepageCount + 1
+						Set Variable: DumLay:= M+ocflag
+						Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+							If: !(PeriodIndex>1&SteadySeepage=0)
+								Redirect output to: TempSeepagePer
+									Start a new line
+										Export expression: DumLay [I10]
+										Export expression: DumRow [I10]
+										Export expression: DumCol [I10]
+										If: Area Seepage Unit[LayIndex].On or Off Stress[PeriodIndex]
+											Export expression: ThisElevation [E13.5]
+										Else
+											Export expression: 1.e49 [E13.5]
+										End if
+										Export expression: 0; [E13.5]
+										# MODPATH
+										# If: MODPATHChoice
+										# 	Export expression: Area Seepage Unit[LayIndex].IFACE[PeriodIndex] [G0]
+										# End if
+									End line
+								End file
+								Evaluate expression: MODFLOW_Join_Files("TempSeepagePer" + PeriodIndex, "TempSeepagePer", "TempSeepagePer" + PeriodIndex)
+							End if
+						End loop
+					End if
+				End if
+			End loop
+		End if
+	End loop
+	Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+		Redirect output to: TempSeepage1
+			If: PeriodIndex>1&SteadySeepage=0
+				Start a new line
+					Export expression: -1 [I5]
+				End line
+			Else
+				Start a new line
+					Export expression: CurrentSeepageCount [I5]
+				End line
+			End if
+		End file
+		If: CurrentSeepageCount>MaxSeepages
+			Set Variable: MaxSeepages:= CurrentSeepageCount
+		End if
+		If: !(PeriodIndex>1&SteadySeepage=0)
+			Evaluate expression: MODFLOW_Join_Files("TempSeepage1", "TempSeepagePer" + PeriodIndex, "TempSeepage1")
+			Evaluate expression: MODFLOW_Delete_File("TempSeepagePer" + PeriodIndex)
+		End if
+		Evaluate expression: MODFLOW_Join_Files("@adeFileName@.spg", "TempSeepage1", "@adeFileName@.spg")
+	End loop
+	Redirect output to: TempSeepage1
+		Start a new line
+			Export expression: MaxSeepages [I5]
+			If: ISPGCB>0&OneCBCFile=1
+				Export expression: 33 [I5]
+			End if
+			If: ISPGCB>0&OneCBCFile=0
+				Export expression: 69 [I5]
+			End if
+			If: ISPGCB=0
+				Export expression: 0 [I5]
+			End if
+			# MODPATH
+			# If: MODPATHChoice
+			# 	Export expression: " AUXILIARY IFACE" [G0]
+			# End if
+			# MOC3D CBC parameter
+			If: TransportFlag=1 & Transport>0
+				Export expression: " CBCALLOCATE" [G0]
+			End if
+		End line
+	End file
+	Evaluate expression: MODFLOW_Join_Files("TempSeepage1", "@adeFileName@.spg", "@adeFileName@.spg")
+	# 
+	Evaluate expression: MODFLOW_Delete_File("TempSeepage1")
+	Evaluate expression: MODFLOW_Delete_File("TempSeepagePer")
+End if
+

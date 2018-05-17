@@ -1,0 +1,7 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE TERSEQ__genmod
+          INTERFACE 
+            SUBROUTINE TERSEQ
+            END SUBROUTINE TERSEQ
+          END INTERFACE 
+        END MODULE TERSEQ__genmod

@@ -1,0 +1,430 @@
+# Editable SUTRA-UCODE TEMPLATE for GW-Chart (ForGWchart.gw file) goes here
+Define Variable: TimeIndex [Integer]
+Define Variable: Time [Real]
+Define Variable: ObsTimeNumber [Integer]
+Define Variable: ICountNodesInContour [Integer]
+Define Variable: ObservationNodeCount [Integer]
+Define Variable: ObservationName [String]
+Define Variable: ICountObsTimes [Integer]
+#
+Define Variable: StateVariableType [Integer]
+# StateVariableType: 1=Head, 2=Pressure
+If: @rbSpecific@&@rbSoluteConstDens@
+	Set Variable: StateVariableType:= 1
+Else
+	Set Variable: StateVariableType:= 2
+End if
+Define Variable: TransportType [Integer]
+# TransportType: 1=Energy, 2=Solute
+If: @rbEnergy@=1
+	Set Variable: TransportType:= 1
+Else
+	Set Variable: TransportType:= 2
+End if
+Evaluate expression: Sutra_InitializeSimulationTimes()
+Redirect output to: ForGWchart.gw
+	# INITIALIZING THE EXPORTABLE FILE
+	Start a new line
+		Export expression: "#This is the number of columns of data" [G0]
+	End line
+	Start a new line
+		Export expression: "6" [G0]
+	End line
+	Start a new line
+		Export expression: "#These are the titles of the data presented" [G0]
+	End line
+	Start a new line
+		Export expression: "Observation Name" [G0]
+	End line
+	Start a new line
+		Export expression: "Type of Observation" [G0]
+	End line
+	Start a new line
+		Export expression: "X coordinate" [G0]
+	End line
+	Start a new line
+		Export expression: "Y coordinate" [G0]
+	End line
+	Start a new line
+		Export expression: "Z coordinate" [G0]
+	End line
+	Start a new line
+		Export expression: "Observation Time (s)" [G0]
+	End line
+	Start a new line
+		Export expression: "#Here is the data" [G0]
+	End line
+	# 
+	# Managing for HEAD/PRESSURE Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	# Loop for Observation Contours
+	Loop for: Objects in layer: Observation
+		If: is_observed
+			Set Variable: ObservationName:= Observation.Obs Name
+			# Loop for Observation Times
+			Set Variable: ICountObsTimes:= 0
+			Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+				If: StateVariableType=1
+					Set Variable: Time:= Observation.Head Obs Time[ObsTimeNumber]
+				Else
+					Set Variable: Time:= Observation.Pres Obs Time[ObsTimeNumber]
+				End if
+				If: Time > 0
+					Set Variable: ICountObsTimes:= ICountObsTimes+1
+					Set Variable: ObservationNodeCount:= 0
+					Loop for: Nodes
+						If: ObservationName=Ucode_Observation
+							Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+						End if
+					End loop
+					Loop for: Objects in layer: Observation
+						If: (Observation.Obs Name=ObservationName) 
+							If: ObservationNodeCount=1
+								Start a new line
+									Export expression: "o " [G0]
+									Export expression: ObservationName [G0]
+									If: StateVariableType=1
+										Export expression: "/h" [G0]
+									Else
+										Export expression: "/p" [G0]
+									End if
+									Export expression: "/&1/" [G0]
+									Export expression: ICountObsTimes [G0]
+									Export expression: "\t" [G0]
+									If: StateVariableType=1
+										Export expression: "head" [G0]
+									Else
+										Export expression: "pressure" [G0]
+									End if
+									Export expression: "\t" [G0]
+									Export expression: PositionX() [G0]
+									Export expression: "\t" [G0]
+									Export expression: PositionY() [G0]
+									Export expression: "\t" [G0]
+									Export expression: PositionZ() [G0]
+									Export expression: "\t" [G0]
+									If: StateVariableType=1
+										Export expression: Observation.Head Value[ObsTimeNumber]; [G15]
+									Else
+										Export expression: Observation.Pres Value[ObsTimeNumber]; [G15]
+									End if
+								End line
+							Else
+								If: Move to Node
+									Start a new line
+										Export expression: "o " [G0]
+										Export expression: ObservationName [G0]
+										If: StateVariableType=1
+											Export expression: "/h" [G0]
+										Else
+											Export expression: "/p" [G0]
+										End if
+										Export expression: "/+1/" [G0]
+										Export expression: ICountObsTimes [G0]
+										Export expression: "\t" [G0]
+										If: StateVariableType=1
+											Export expression: "head" [G0]
+										Else
+											Export expression: "pressure" [G0]
+										End if
+										Export expression: "\t" [G0]
+										Export expression: PositionX() [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionY() [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionZ() [G0]
+										Export expression: "\t" [G0]
+										If: StateVariableType=1
+											Export expression: Observation.Head Value[ObsTimeNumber]; [G15]
+										Else
+											Export expression: Observation.Pres Value[ObsTimeNumber]; [G15]
+										End if
+									End line
+								Else
+									Set Variable: ICountNodesInContour:= 0
+									Loop for: Nodes
+										If: (ObservationName=Ucode_Observation)&(Ucode_Observation!=0)&(Ucode_Observation!="0")
+											Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+											Start a new line
+												Export expression: "o " [G0]
+												Export expression: ObservationName [G0]
+												If: StateVariableType=1
+													Export expression: "/h" [G0]
+												Else
+													Export expression: "/p" [G0]
+												End if
+												If: ICountNodesInContour = ObservationNodeCount
+													Export expression: "/&" [G0]
+												Else
+													Export expression: "/" [G0]
+												End if
+												Export expression: ICountNodesInContour [G0]
+												Export expression: "/" [G0]
+												Export expression: ICountObsTimes [G0]
+												Export expression: "\t" [G0]
+												If: StateVariableType=1
+													Export expression: "head" [G0]
+												Else
+													Export expression: "pressure" [G0]
+												End if
+												Export expression: "\t" [G0]
+												Export expression: PositionX() [G0]
+												Export expression: "\t" [G0]
+												Export expression: PositionY() [G0]
+												Export expression: "\t" [G0]
+												Export expression: PositionZ() [G0]
+												Export expression: "\t" [G0]
+												If: StateVariableType=1
+													Export expression: Observation.Head Value[ObsTimeNumber]; [G15]
+												Else
+													Export expression: Observation.Pres Value[ObsTimeNumber]; [G15]
+												End if
+											End line
+										End if
+									End loop
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End loop
+	# 
+	# Managing for TEMPERATURE/CONCENTRATION Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	# Loop for Observation Contours
+	Loop for: Objects in layer: Observation
+		If: is_observed
+			Set Variable: ObservationName:= Observation.Obs Name
+			# Loop for Observation Times
+			Set Variable: ICountObsTimes:= 0
+			Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+				If: TransportType=1
+					Set Variable: Time:= Observation.Temp Obs Time[ObsTimeNumber]
+				Else
+					Set Variable: Time:= Observation.Conc Obs Time[ObsTimeNumber]
+				End if
+				If: Time > 0
+					Set Variable: ICountObsTimes:= ICountObsTimes+1
+					Set Variable: ObservationNodeCount:= 0
+					Loop for: Nodes
+						If: ObservationName=Ucode_Observation
+							Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+						End if
+					End loop
+					Loop for: Objects in layer: Observation
+						If: (Observation.Obs Name=ObservationName) 
+							If: ObservationNodeCount=1
+								Start a new line
+									Export expression: "o " [G0]
+									Export expression: ObservationName [G0]
+									If: TransportType=1
+										Export expression: "/t" [G0]
+									Else
+										Export expression: "/c" [G0]
+									End if
+									Export expression: "/&1/" [G0]
+									Export expression: ICountObsTimes [G0]
+									Export expression: "\t" [G0]
+									If: TransportType=1
+										Export expression: "temperature" [G0]
+									Else
+										Export expression: "concentration" [G0]
+									End if
+									Export expression: "\t" [G0]
+									Export expression: PositionX() [G0]
+									Export expression: "\t" [G0]
+									Export expression: PositionY() [G0]
+									Export expression: "\t" [G0]
+									Export expression: PositionZ() [G0]
+									Export expression: "\t" [G0]
+									If: TransportType=1
+										Export expression: Observation.Temp Value[ObsTimeNumber]; [G15]
+									Else
+										Export expression: Observation.Conc Value[ObsTimeNumber]; [G15]
+									End if
+								End line
+							Else
+								If: Move to Node
+									Start a new line
+										Export expression: "o " [G0]
+										Export expression: ObservationName [G0]
+										If: TransportType=1
+											Export expression: "/t" [G0]
+										Else
+											Export expression: "/c" [G0]
+										End if
+										Export expression: "/+1/" [G0]
+										Export expression: ICountObsTimes [G0]
+										Export expression: "\t" [G0]
+										If: TransportType=1
+											Export expression: "temperature" [G0]
+										Else
+											Export expression: "concentration" [G0]
+										End if
+										Export expression: "\t" [G0]
+										Export expression: PositionX() [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionY() [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionZ() [G0]
+										Export expression: "\t" [G0]
+										If: TransportType=1
+											Export expression: Observation.Temp Value[ObsTimeNumber]; [G15]
+										Else
+											Export expression: Observation.Conc Value[ObsTimeNumber]; [G15]
+										End if
+									End line
+								Else
+									Set Variable: ICountNodesInContour:= 0
+									Loop for: Nodes
+										If: (ObservationName=Ucode_Observation)&(Ucode_Observation!=0)&(Ucode_Observation!="0")
+											Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+											Start a new line
+												Export expression: "o " [G0]
+												Export expression: ObservationName [G0]
+												If: TransportType=1
+													Export expression: "/t" [G0]
+												Else
+													Export expression: "/c" [G0]
+												End if
+												If: ICountNodesInContour = ObservationNodeCount
+													Export expression: "/&" [G0]
+												Else
+													Export expression: "/" [G0]
+												End if
+												Export expression: ICountNodesInContour [G0]
+												Export expression: "/" [G0]
+												Export expression: ICountObsTimes [G0]
+												Export expression: "\t" [G0]
+												If: TransportType=1
+													Export expression: "temperature" [G0]
+												Else
+													Export expression: "concentration" [G0]
+												End if
+												Export expression: "\t" [G0]
+												Export expression: PositionX() [G0]
+												Export expression: "\t" [G0]
+												Export expression: PositionY() [G0]
+												Export expression: "\t" [G0]
+												Export expression: PositionZ() [G0]
+												Export expression: "\t" [G0]
+												If: TransportType=1
+													Export expression: Observation.Temp Value[ObsTimeNumber]; [G15]
+												Else
+													Export expression: Observation.Conc Value[ObsTimeNumber]; [G15]
+												End if
+											End line
+										End if
+									End loop
+								End if
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End if
+	End loop
+	# 
+	# Managing for SATURATION Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	If: @rbSatUnsat@
+		# The problem is 'SATURATED-UNSATURATED'
+		# Loop for Observation Contours
+		Loop for: Objects in layer: Observation
+			If: is_observed
+				Set Variable: ObservationName:= Observation.Obs Name
+				# Loop for Observation Times
+				Set Variable: ICountObsTimes:= 0
+				Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+					Set Variable: Time:= Observation.Sat Obs Time[ObsTimeNumber]
+					If: Time > 0
+						Set Variable: ICountObsTimes:= ICountObsTimes+1
+						Set Variable: ObservationNodeCount:= 0
+						Loop for: Nodes
+							If: ObservationName=Ucode_Observation
+								Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+							End if
+						End loop
+						Loop for: Objects in layer: Observation
+							If: (Observation.Obs Name=ObservationName) 
+								If: ObservationNodeCount=1
+									Start a new line
+										Export expression: "o " [G0]
+										Export expression: ObservationName [G0]
+										Export expression: "/s" [G0]
+										Export expression: "/&1/" [G0]
+										Export expression: ICountObsTimes [G0]
+										Export expression: "\t" [G0]
+										Export expression: "saturation" [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionX() [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionY() [G0]
+										Export expression: "\t" [G0]
+										Export expression: PositionZ() [G0]
+										Export expression: "\t" [G0]
+										Export expression: Observation.Sat Value[ObsTimeNumber]; [G15]
+									End line
+								Else
+									If: Move to Node
+										Start a new line
+											Export expression: "o " [G0]
+											Export expression: ObservationName [G0]
+											Export expression: "/s" [G0]
+											Export expression: "/+1/" [G0]
+											Export expression: ICountObsTimes [G0]
+											Export expression: "\t" [G0]
+											Export expression: "saturation" [G0]
+											Export expression: "\t" [G0]
+											Export expression: PositionX() [G0]
+											Export expression: "\t" [G0]
+											Export expression: PositionY() [G0]
+											Export expression: "\t" [G0]
+											Export expression: PositionZ() [G0]
+											Export expression: "\t" [G0]
+											Export expression: Observation.Sat Value[ObsTimeNumber]; [G15]
+										End line
+									Else
+										Set Variable: ICountNodesInContour:= 0
+										Loop for: Nodes
+											If: (ObservationName=Ucode_Observation)&(Ucode_Observation!=0)&(Ucode_Observation!="0")
+												Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+												Start a new line
+													Export expression: "o " [G0]
+													Export expression: ObservationName [G0]
+													Export expression: "/s" [G0]
+													If: ICountNodesInContour = ObservationNodeCount
+														Export expression: "/&" [G0]
+													Else
+														Export expression: "/" [G0]
+													End if
+													Export expression: ICountNodesInContour [G0]
+													Export expression: "/" [G0]
+													Export expression: ICountObsTimes [G0]
+													Export expression: "\t" [G0]
+													Export expression: "saturation" [G0]
+													Export expression: "\t" [G0]
+													Export expression: PositionX() [G0]
+													Export expression: "\t" [G0]
+													Export expression: PositionY() [G0]
+													Export expression: "\t" [G0]
+													Export expression: PositionZ() [G0]
+													Export expression: "\t" [G0]
+													Export expression: Observation.Sat Value[ObsTimeNumber]; [G15]
+												End line
+											End if
+										End loop
+									End if
+								End if
+							End if	
+						End loop
+					End if
+				End loop
+			End if
+		End loop
+	End if
+#
+End file
+

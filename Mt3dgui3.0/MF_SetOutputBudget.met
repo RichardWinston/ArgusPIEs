@@ -1,0 +1,8 @@
+# 
+# MF_SetOutputBudget.met
+# 
+If: ((IBCFCB=1|(WellChoice=1&IWELCB=1)|(RechargeChoice=1&IRCHCB=1)|(DrainChoice=1&IDRNCB=1)|(RiverChoice=1&IRIVCB=1)|(EvapotranspirationChoice=1&IEVTCB=1)|(GeneralHeadChoice=1&IGHBCB=1)|(StreamChoice=1&ISTCB1=1)|(StreamChoice=1&ISTCB2=1)|(FlowHeadChoice&IFHBCB)))
+	Set Variable: OutputBudget:= 1
+End if
+# 
+# 

@@ -1,0 +1,11 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:08 2011
+        MODULE J4SAVE__genmod
+          INTERFACE 
+            FUNCTION J4SAVE(IWHICH,IVALUE,ISET) RESULT(J4SAVE_0)
+              INTEGER(KIND=4) :: IWHICH
+              INTEGER(KIND=4) :: IVALUE
+              LOGICAL(KIND=4) :: ISET
+              INTEGER(KIND=4) :: J4SAVE_0
+            END FUNCTION J4SAVE
+          END INTERFACE 
+        END MODULE J4SAVE__genmod

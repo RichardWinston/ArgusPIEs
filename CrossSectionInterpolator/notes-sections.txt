@@ -1,0 +1,79 @@
+coordinates of section endpoints: projects\shenandoah\notes.xls
+
+sections.apr: 
+north	0.5			layers:	sea level & 5000 m
+	1				silic-top
+	2				silic-mid
+	3				carb-top
+	4	JMU block		carb-upper	JUM block:
+	5	5-2			carb-mid	carb-top2
+	6	6-2			carb-lower	carb-mid2
+	6.5	6.5-2			carb-bot	carb-bot2
+south	7	7-2			S-P fault
+
+example:
+
+	section1	digitized section from adobe streamline, convert with centerline
+			saved as dxf and converted to coverage
+	
+	sect1		drawn formlines using section1 as background
+			add tics define coordinate system of section
+	
+	sect1xy		set tics to depth and distance scale from axes
+			transform sect1 sect1xy 
+			build sect1xy line
+	
+	sect1.shp	convert arcs to points (500-m spacing),  use xtools pro "convert features to points"
+
+
+
+To use the cross-section PIE do the following.
+1. Select File|Import <layer name>|Import from cross sections...
+
+2. Select the shape files that have the cross sections in them.
+
+3. In the dialog box, you can select additional shape files that 
+contain cross sections or remove cross sections if they were selected incorrectly.  
+For each shape file, you can select a name for the cross section if the default name 
+is not satisfactory.  You must also select an attribute for each cross section that will 
+be used to identify the different lines in the sections (Line A, Line B, etc.)  
+By default, it will select the first character attribute if there is one.
+
+4. Click the "Next" button.
+
+5. Copy the locations of the cross sections from your spreadsheet and paste in the table.  
+Then click the "Next" button.
+
+6. Select a pair of adjacent cross sections and one of the section lines.  They will be 
+displayed in the main window.  Click someplace on one of the selected section lines 
+(shown with a wider line) and then click on the corresponding spot on the other cross section.
+A line will be drawn connecting the two section lines.  If you make a mistake, click the button 
+labelled X and then click on the line you want to erase.  To continue adding more connecting lines,
+click on the button with the arrow and continue as before.
+
+7. Repeat this for each of the lines in the pair of adjacent cross sections.
+
+8. Select another pair of adjacent cross sections and continue until you are done.
+
+9. Click the "Next" button.
+
+10.  A map view of the area will be plotted. The colors represent elevation with red being
+the highest and blue the lowest.  You can control the spacing of the points by changing "Delta".
+Review elevation distribution for each surface. 
+
+11. When you are satisfied, click the "Finish" button.  The data will be imported into Argus ONE
+in new data layers.  The data layer will be hidden at first and you may also need to select 
+"Special|Scale to Fit" to see all the data points.
+
+
+update 2-18-05
+
+1. The dip and dip direction that are imported are in degrees instead of in radians.
+
+2. The dip direction is measured in a clockwise direction from due north instead of 
+counterclockwise from due east.
+
+3. There are two functions that you can use in the Expression Editor: SUTRA_Angle2 and SUTRA_Angle3.
+They use a map heading, dip and dip direction to get the 2nd and 3rd angles used by SUTRA.  
+the map heading is equivalent to the first Sutra Angle.  It is the direction of the maximum 
+permeability direction in map view.  It is measured in degrees clockwise from North.

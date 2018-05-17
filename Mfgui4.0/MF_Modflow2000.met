@@ -1,0 +1,14 @@
+# 
+# Remove all files from ReadFileValues PIE.
+Evaluate expression: MODFLOW_RF_Clear_Files()
+# 
+Loop for: Blocks
+	If: (Row()=NumRows())&(Column()=NumColumns())
+		If: !MF_ExportModflow2000()
+			Alert: "Error in export of MODFLOW 2000. Contact PIE developer for assistance."
+		End if
+	End if
+End loop
+Evaluate expression: MODFLOW_RF_Save_Files()
+Evaluate expression: MODFLOW_RF_Clear_Files()
+

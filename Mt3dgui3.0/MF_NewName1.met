@@ -1,0 +1,19 @@
+	If: LakeChoice
+		Start a new line
+			# file for the lake package
+			Export expression: "LAK 65 " + Filename + ".lak" [G0]
+		End line
+	End if
+	If: LakeChoice&ILKOUT
+		Start a new line
+			# file for the lake stage/budget file
+			Export expression: "DATA 67 " + Filename + ".lbd" [G0]
+		End line
+	End if
+	If: SeepageChoice
+		Start a new line
+			# file for the lake package
+			Export expression: "SPG 68 " + Filename + ".spg" [G0]
+		End line
+	End if
+

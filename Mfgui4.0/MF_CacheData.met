@@ -1,0 +1,83 @@
+# 
+# MF_CacheData.met
+# Create lists
+Set Variable: ConcentrationList:= MODFLOW_L_CreateNewList()
+Set Variable: TopElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: BottomElevationList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: ThicknessList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+Set Variable: KzList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), MODFLOW_NLAY())
+# 
+# set list items
+If: CalcElev&ContinueSimulation
+	# Set top elevations
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Top Elevations of Unit " + LayIndex)
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Redirect output to: Dummy
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(TopElevationList, Column(), Row(), LayIndex, Elev Top Unit[LayIndex]) [G0]
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End if
+	End loop
+	# Set Bottom elevations and layer thicknesses
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Bottom Elevations of Unit " + LayIndex)
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Redirect output to: Dummy
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(BottomElevationList, Column(), Row(), LayIndex, Elev Bot Unit[LayIndex]) [G0]
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Layer Thicknesses of Unit " + LayIndex)
+				If: ContinueSimulation
+					If: MODFLOW_SIMUL(LayIndex)
+						Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex))/MODFLOW_NDIV(LayIndex)) [G0]
+					Else
+						Export matrix: MODFLOW_L_SetOneBased3DListItem(ThicknessList, Column(), Row(), LayIndex, (MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex))) [G0]
+					End if
+				End if
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Testing Layer Thicknesses of Unit " + LayIndex)
+				# Check thicknesses
+				If: ContinueSimulation&ShowWarnings
+					Export matrix: If((MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)<=0)&IBOUND Unit[LayIndex], MODFLOW_ProgressBarAddLine("Negative or zero unit thickness at Unit " + LayIndex + "; Column: " + Column() + "; Row: " + Row()), 0) [G0]
+				End if
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End if
+	End loop
+	# check elevations
+	If: ShowWarnings&ContinueSimulation
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Checking for elevation errors")
+		If: MODFLOW_NLAY() > 1
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY()-1 step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					Redirect output to: Dummy
+						If: MODFLOW_SpecVcont(LayIndex)
+							Export matrix: If(MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)>MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex + 1)&IBOUND Unit[LayIndex]&IBOUND Unit[LayIndex+1], MODFLOW_ProgressBarAddLine("Bottom elevation at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + " is less than the top elevation of the unit beneath it."), 0) [G0]
+						Else
+							Export matrix: If(MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)!=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex + 1)&IBOUND Unit[LayIndex]&IBOUND Unit[LayIndex+1], MODFLOW_ProgressBarAddLine("Bottom elevation at Column: " + Column() + "; Row: " + Row() + "; Unit: " + LayIndex + " is different from the top elevation of the unit beneath it."), 0) [G0]
+						End if
+					End file
+					Evaluate expression: MODFLOW_Delete_File("Dummy")
+				End if
+			End loop
+		End if
+	End if
+End if
+# store Kz values
+If: (NumLay>1)&ContinueSimulation&ExportBCF
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Evaluating Kz")
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			Redirect output to: Dummy
+				Export matrix: MODFLOW_L_SetOneBased3DListItem(KzList, Column(), Row(), LayIndex, Kz Unit[LayIndex]) [G0]
+				If: ShowWarnings
+					Export matrix: If(MODFLOW_L_GetFromOneBased3DList(KzList, Column(), Row(), LayIndex)<=0&IBOUND Unit[LayIndex], MODFLOW_ProgressBarAddLine("Negative or zero vertical hydraulic conductivity at Unit " + LayIndex + "; Column: " + Column() + "; Row: " + Row()), 0) [G0]
+				End if
+			End file
+			Evaluate expression: MODFLOW_Delete_File("Dummy")
+		End if
+	End loop
+End if
+

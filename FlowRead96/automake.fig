@@ -1,0 +1,7 @@
+QUITONERROR
+
+FILES=*.for
+COMPILE=@lf90 %fi -c -winconsole -nsav -o3 -tp -ng -dal -dll -ml bd -out ReadFlow96 -o %sf%oe
+LINK=@lf90 %ob -ng -winconsole -dll -ml bd -out ReadFlow96
+TARGET=ReadFlow96.dll
+

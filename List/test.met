@@ -1,0 +1,131 @@
+# 
+# These will be assigned values of ListIndex
+Define Variable: FirstList [Integer]
+Define Variable: SecondList [Integer]
+# These will be used to determine how many items are in the list
+Define Variable: LoopIndex [Integer]
+Redirect output to: $BaseName$
+	Start a new line
+		# FirstList is assigned a value of 0
+		Set Variable: FirstList:= L_CreateNewList()
+		Export expression: FirstList; [G0]
+		# SecondList is assigned a value of 1
+		Set Variable: SecondList:= L_CreateNewList()
+		Export expression: SecondList; [G0]
+		# We now add variables to the first and second lists
+		Evaluate expression: L_AddToList(FirstList, 5)
+		Evaluate expression: L_AddToList(FirstList, 7)
+		Evaluate expression: L_AddToList(SecondList, 9)
+		# The number of items in FirstList is 2 and The number of items in SecondList is 1
+		Export expression: L_GetListSize(FirstList); [G0]
+		Export expression: L_GetListSize(SecondList); [G0]
+	End line
+	# This exports all values in the first list
+	Start a new line
+		Export expression: "FirstList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(FirstList)-1 step: 1
+			Export expression: L_GetFromList(FirstList, LoopIndex); [G0]
+		End loop
+	End line
+	# This exports all values in the second list
+	Start a new line
+		Export expression: "SecondList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(SecondList)-1 step: 1
+			Export expression: L_GetFromList(SecondList, LoopIndex); [G0]
+		End loop
+	End line
+	# This does nothing because there are already more than one item if FirstList.
+	Evaluate expression: SetListSize(FirstList, 1)
+	# This adds two more items with a values of 0 to the end of SecondList
+	Evaluate expression: L_SetListSize(SecondList, 3)
+	# This exports all values in the first list
+	Start a new line
+		Export expression: "FirstList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(FirstList)-1 step: 1
+			Export expression: L_GetFromList(FirstList, LoopIndex); [G0]
+		End loop
+	End line
+	# This exports all values in the second list
+	Start a new line
+		Export expression: "SecondList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(SecondList)-1 step: 1
+			Export expression: L_GetFromList(SecondList, LoopIndex); [G0]
+		End loop
+	End line
+	# This deletes all items in FirstList but does not change SecondList
+	Evaluate expression: L_FreeAList(FirstList)
+	# This exports all values in the first list
+	Start a new line
+		Export expression: "FirstList is Empty"; [G0]
+		# This returns 0
+		Export expression: L_GetListSize(FirstList) [G0]
+	End line
+	Start a new line
+		# These will cause an error because all loops are executed at least once
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(FirstList)-1 step: 1
+			# The error occurs here because FirstList contains nothing.
+			Export expression: L_GetFromList(FirstList, LoopIndex); [G0]
+		End loop
+	End line
+	# This exports all values in the second list
+	Start a new line
+		Export expression: "SecondList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(SecondList)-1 step: 1
+			Export expression: L_GetFromList(SecondList, LoopIndex); [G0]
+		End loop
+	End line
+	# This sets the value of the second item in SecondList to 20.
+	Evaluate expression: L_SetListItem(SecondList, 1, 20)
+	# This exports all values in the second list
+	Start a new line
+		Export expression: "SecondList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(SecondList)-1 step: 1
+			Export expression: L_GetFromList(SecondList, LoopIndex); [G0]
+		End loop
+	End line
+	# This deletes the first item of SecondList
+	Evaluate expression: L_DeleteListItem(SecondList, 0)
+	# This exports all values in the second list
+	Start a new line
+		Export expression: "SecondList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(SecondList)-1 step: 1
+			Export expression: L_GetFromList(SecondList, LoopIndex); [G0]
+		End loop
+	End line
+	# This deletes the last item of SecondList
+	Evaluate expression: L_DeleteListItem(SecondList)
+	# This exports all values in the second list
+	Start a new line
+		Export expression: "SecondList" [G0]
+	End line
+	Start a new line
+		Loop for: Variable LoopIndex from: 0 to: L_GetListSize(SecondList)-1 step: 1
+			Export expression: L_GetFromList(SecondList, LoopIndex); [G0]
+		End loop
+	End line
+	# Test if error has occured
+	If: L_GetErrorCount()
+		Start a new line
+			Export expression: "Whoops. The number of errors was " + L_GetErrorCount() [G0]
+		End line
+	End if
+	# This frees up memory. It returns True if successful.
+	Start a new line
+		Export expression: L_FreeAllLists() [G0]
+	End line
+End file
+

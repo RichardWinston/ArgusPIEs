@@ -1,0 +1,9 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE CUTSML__genmod
+          INTERFACE 
+            FUNCTION CUTSML(DPNUM) RESULT(CUTSML_0)
+              REAL(KIND=8) :: DPNUM
+              REAL(KIND=8) :: CUTSML_0
+            END FUNCTION CUTSML
+          END INTERFACE 
+        END MODULE CUTSML__genmod

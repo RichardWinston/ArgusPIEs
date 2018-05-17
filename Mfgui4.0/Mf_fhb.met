@@ -1,0 +1,769 @@
+# 
+# MF_FHB.met
+# ----------------------------------------------------
+# FHB Package
+# ----------------------------------------------------
+If: ContinueSimulation&FlowHeadChoice&ExportFHB
+	Set Variable: IFHBUN:= MF_GetUnitNumber("FHBUnit")
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Flow and Head Boundary Package")
+	Evaluate expression: MODFLOW_BL_InitializeGridInformation("MODFLOW FD Grid")
+	# initialize output file to an empty file
+	Redirect output to: @adeFileName@.fhb
+	End file
+	Set Variable: FlowBoundaryCount:= 0
+	Set Variable: HeadBoundaryCount:= 0
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+		If: ContinueSimulation
+			If: LayIndex=1
+				Set Variable: M:= 0
+			Else
+				Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+			End if
+			# 
+			If: MODFLOW_SIMUL(LayIndex)!=0
+				Evaluate expression: MODFLOW_BL_FreeVertexList()
+				Evaluate expression: MODFLOW_BL_AddVertexLayer("Line FHB Unit" + LayIndex)
+				# 
+				Redirect output to: TempFHB5Line$LOOP$
+					Set Variable: ContourIndex:= -1
+					Loop for: Objects in layer: Line FHB Unit[LayIndex]
+						Set Variable: ContourIndex:= ContourIndex + 1
+						If: (Line FHB Unit[LayIndex].Flux per Length Time1!=$N/A)&MODFLOW_BL_GetCountOfACellList(ContourIndex)>0
+							If: ShowWarnings&(Line FHB Unit[LayIndex].Start_Line Head Time1!=$N/A)
+								Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: In Line FHB Unit" + LayIndex + ", both a specified head and specified flux are defined for the same contour. MODFLOW will ignore the specified flux." )
+							End if
+							Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+							Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+							Set Variable: UnitThickness:= TopUnitElev - BottomUnitElev
+							Set Variable: LayerThickness:= UnitThickness/MODFLOW_NDIV(LayIndex)
+							Set Variable: TopContourElev:= Line FHB Unit[LayIndex].Top Elev
+							Set Variable: BottomContourElev:= Line FHB Unit[LayIndex].Bottom Elev
+							If: TopContourElev>TopUnitElev
+								If: ShowWarnings
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Line FHB Unit" + LayIndex + " layer, the top elevation (" + TopContourElev + ") is above the top of the unit (" + TopUnitElev + "). The top of the unit will be used instead.")
+								End if
+								Set Variable: TopContourElev:= TopUnitElev
+							End if
+							If: BottomContourElev<BottomUnitElev
+								If: ShowWarnings
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Line FHB Unit" + LayIndex + " layer, the bottom elevation (" + BottomContourElev + ") is below the bottom of the unit (" + BottomUnitElev + "). The bottom of the unit will be used instead.")
+								End if
+								Set Variable: BottomContourElev:= BottomUnitElev
+							End if
+							Set Variable: ContourThickness:= TopContourElev - BottomContourElev
+							# Error test check ContourThickness < 0
+							If: ContourThickness=0
+								Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+									Set Variable: FlowBoundaryCount:= FlowBoundaryCount + 1
+									Start a new line
+										Export expression: MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, TopContourElev); [G0]
+										Export expression: MODFLOW_BL_GetCellRow(ContourIndex, CellIndex); [G0]
+										Export expression: MODFLOW_BL_GetCellColumn(ContourIndex, CellIndex); [G0]
+										Export expression: 0; [G0]
+										Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+											Export expression: Line FHB Unit[LayIndex].Flux per Length Time[PeriodIndex] * MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex); [G0]
+										End loop
+									End line
+								End loop
+							Else
+								Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+									If: MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex)>0
+										Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+											Set Variable: DumLay:= M+DivIndex
+											Set Variable: TopDivElev:= TopUnitElev - (DivIndex - 1) * LayerThickness
+											Set Variable: BottomDivElev:= TopUnitElev - DivIndex * LayerThickness
+											Set Variable: DivThickness:= TopDivElev - BottomDivElev
+											Set Variable: TopContourInDiv:= TopContourElev
+											If: TopContourInDiv>TopDivElev
+												Set Variable: TopContourInDiv:= TopDivElev
+											End if
+											Set Variable: BottomContourInDiv:= BottomContourElev
+											If: BottomContourInDiv<BottomDivElev
+												Set Variable: BottomContourInDiv:= BottomDivElev
+											End if
+											Set Variable: ThicknessContourInDiv:= TopContourInDiv - BottomContourInDiv
+											If: ThicknessContourInDiv>0
+												Set Variable: FlowBoundaryCount:= FlowBoundaryCount + 1
+												Start a new line
+													Export expression: DumLay; [G0]
+													Export expression: MODFLOW_BL_GetCellRow(ContourIndex, CellIndex); [G0]
+													Export expression: MODFLOW_BL_GetCellColumn(ContourIndex, CellIndex); [G0]
+													Export expression: 0; [G0]
+													Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+														# Export expression: Line FHB Unit[LayIndex].Flux per Length Time[PeriodIndex] * MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex) * ThicknessContourInDiv / DivThickness; [G0]
+														Export expression: Line FHB Unit[LayIndex].Flux per Length Time[PeriodIndex] * MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex) * ThicknessContourInDiv / ContourThickness; [G0]
+													End loop
+												End line
+											End if
+										End loop
+									End if
+								End loop
+								# End if
+							End if
+						End if
+					End loop
+					# 
+				End file
+				# 
+				If: TransportFlag=1 & Transport>0
+					Redirect output to: TempFHB6Line$LOOP$
+						Set Variable: ContourIndex:= -1
+						Loop for: Objects in layer: Line FHB Unit[LayIndex]
+							Set Variable: ContourIndex:= ContourIndex + 1
+							If: (Line FHB Unit[LayIndex].Flux per Length Time1!=$N/A)&MODFLOW_BL_GetCountOfACellList(ContourIndex)>0
+								Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+								Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+								Set Variable: UnitThickness:= TopUnitElev - BottomUnitElev
+								Set Variable: TopContourElev:= Line FHB Unit[LayIndex].Top Elev
+								Set Variable: BottomContourElev:= Line FHB Unit[LayIndex].Bottom Elev
+								If: TopContourElev>TopUnitElev
+									If: ShowWarnings
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Line FHB Unit" + LayIndex + " layer, the top elevation (" + TopContourElev + ") is above the top of the unit (" + TopUnitElev + "). The top of the unit will be used instead.")
+									End if
+									Set Variable: TopContourElev:= TopUnitElev
+								End if
+								If: BottomContourElev<BottomUnitElev
+									If: ShowWarnings
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Line FHB Unit" + LayIndex + " layer, the bottom elevation (" + BottomContourElev + ") is below the bottom of the unit (" + BottomUnitElev + "). The bottom of the unit will be used instead.")
+									End if
+									Set Variable: BottomContourElev:= BottomUnitElev
+								End if
+								Set Variable: ContourThickness:= TopContourElev - BottomContourElev
+								If: ContourThickness=0
+									Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+										Start a new line
+											Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+												Export expression: Line FHB Unit[LayIndex].Flux Concentration Time[PeriodIndex]; [G0]
+											End loop
+										End line
+									End loop
+								Else
+									# If: (Line FHB Unit[LayIndex].Flux per Length Time1!=$N/A)&MODFLOW_BL_GetCountOfACellList(ContourIndex)>0
+									Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+										If: MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex)>0
+											Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+												Set Variable: DumLay:= M+DivIndex
+												Set Variable: TopDivElev:= TopUnitElev - (DivIndex - 1) * UnitThickness
+												Set Variable: BottomDivElev:= TopUnitElev - DivIndex * UnitThickness
+												Set Variable: DivThickness:= TopDivElev - BottomDivElev
+												Set Variable: TopContourInDiv:= TopContourElev
+												If: TopContourInDiv>TopDivElev
+													Set Variable: TopContourInDiv:= TopDivElev
+												End if
+												Set Variable: BottomContourInDiv:= BottomContourElev
+												If: BottomContourInDiv<BottomDivElev
+													Set Variable: BottomContourInDiv:= BottomDivElev
+												End if
+												Set Variable: ThicknessContourInDiv:= TopContourInDiv - BottomContourInDiv
+												If: ThicknessContourInDiv>0
+													Start a new line
+														Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+															Export expression: Line FHB Unit[LayIndex].Flux Concentration Time[PeriodIndex]; [G0]
+														End loop
+													End line
+												End if
+											End loop
+										End if
+									End loop
+									# End if
+								End if
+							End if
+						End loop
+						# 
+					End file
+				End if
+				Redirect output to: TempFHB7Line$LOOP$
+					# 
+					Set Variable: ContourIndex:= -1
+					Loop for: Objects in layer: Line FHB Unit[LayIndex]
+						Set Variable: ContourIndex:= ContourIndex + 1
+						If: (Line FHB Unit[LayIndex].Start_Line Head Time1!=$N/A)&MODFLOW_BL_GetCountOfACellList(ContourIndex)>0
+							Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+							Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+							Set Variable: TopLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Line FHB Unit[LayIndex].Top Elev)
+							Set Variable: BottomLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Line FHB Unit[LayIndex].Bottom Elev)
+							If: (Line FHB Unit[LayIndex].Start_Line Head Time1!=$N/A)
+								Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+									If: MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex)>0
+										Set Variable: LineFraction:= MODFLOW_BL_FractionOfLine(ContourIndex, CellIndex)
+										Loop for: Variable DivIndex from: TopLayer to: BottomLayer step: 1
+											Set Variable: HeadBoundaryCount:= HeadBoundaryCount + 1
+											Start a new line
+												Export expression: DivIndex; [G0]
+												Export expression: MODFLOW_BL_GetCellRow(ContourIndex, CellIndex); [G0]
+												Export expression: MODFLOW_BL_GetCellColumn(ContourIndex, CellIndex); [G0]
+												Export expression: 0; [G0]
+												Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+													Set Variable: SBHED:= Line FHB Unit[LayIndex].Start_Line Head Time[PeriodIndex]
+													Set Variable: EndSBHED:= Line FHB Unit[LayIndex].End_Line Head Time[PeriodIndex]
+													If: IsNumber(EndSBHED)
+														Set Variable: SBHED:= SBHED - (SBHED - EndSBHED) * LineFraction
+													End if
+													Export expression: SBHED; [G0]
+												End loop
+											End line
+										End loop
+									End if
+								End loop
+							End if
+						End if
+					End loop
+					# 
+					# 
+				End file
+				If: TransportFlag=1 & Transport>0
+					Redirect output to: TempFHB8Line$LOOP$
+						# 
+						Set Variable: ContourIndex:= -1
+						Loop for: Objects in layer: Line FHB Unit[LayIndex]
+							Set Variable: ContourIndex:= ContourIndex + 1
+							If: (Line FHB Unit[LayIndex].Start_Line Head Time1!=$N/A)&MODFLOW_BL_GetCountOfACellList(ContourIndex)>0
+								Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+								Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+								Set Variable: TopLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Line FHB Unit[LayIndex].Top Elev)
+								Set Variable: BottomLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Line FHB Unit[LayIndex].Bottom Elev)
+								Set Variable: ContourIndex:= -1
+								Loop for: Objects in layer: Line FHB Unit[LayIndex]
+									Set Variable: ContourIndex:= ContourIndex + 1
+									If: (Line FHB Unit[LayIndex].Start_Line Head Time1!=$N/A)
+										Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+											If: MODFLOW_BL_SumSegmentLengths(ContourIndex, CellIndex)>0
+												Loop for: Variable DivIndex from: TopLayer to: BottomLayer step: 1
+													Start a new line
+														Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+															Export expression: Line FHB Unit[LayIndex].Head Concentration Time[PeriodIndex]; [G0]
+														End loop
+													End line
+												End loop
+											End if
+										End loop
+									End if
+								End loop
+							End if
+						End loop
+						# 
+					End file
+				End if
+			End if
+		End if
+	End loop
+	If: ContinueSimulation
+		Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation
+				If: LayIndex=1
+					Set Variable: M:= 0
+				Else
+					Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+				End if
+			End if
+			# 
+			If: ContinueSimulation&MODFLOW_SIMUL(LayIndex)
+				# 
+				Evaluate expression: MODFLOW_BL_FreeVertexList()
+				Evaluate expression: MODFLOW_BL_AddVertexLayer("Point FHB Unit" + LayIndex)
+				Redirect output to: TempFHB5Point$LOOP$
+#					Loop for: Variable k from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+#						Set Variable: DumLay:= M+k
+						Loop for: Blocks
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+					Set Variable: ContourIndex:= -1
+							Loop for: Objects in layer: Point FHB Unit[LayIndex]
+					Set Variable: ContourIndex:= ContourIndex + 1
+								# get from 3D list
+								If: ContinueSimulation&(Point FHB Unit[LayIndex].Flux Time1!=$N/A)
+									If: ShowWarnings&(Point FHB Unit[LayIndex].Head Time1!=$N/A)
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: In Point FHB Unit" + LayIndex + ", both a specified head and specified flux are defined for the same contour. MODFLOW will ignore the specified flux." )
+									End if
+									Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+									Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+									Set Variable: UnitThickness:= TopUnitElev - BottomUnitElev
+									Set Variable: LayerThickness:= UnitThickness/MODFLOW_NDIV(LayIndex)
+									Set Variable: TopContourElev:= Point FHB Unit[LayIndex].Top Elev
+									Set Variable: BottomContourElev:= Point FHB Unit[LayIndex].Bottom Elev
+									If: TopContourElev>TopUnitElev
+										If: ShowWarnings
+											Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Point FHB Unit" + LayIndex + " layer, the top elevation (" + TopContourElev + ") is above the top of the unit (" + TopUnitElev + "). The top of the unit will be used instead.")
+										End if
+										Set Variable: TopContourElev:= TopUnitElev
+									End if
+									If: BottomContourElev<BottomUnitElev
+										If: ShowWarnings
+											Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Point FHB Unit" + LayIndex + " layer, the bottom elevation (" + BottomContourElev + ") is below the bottom of the unit (" + BottomUnitElev + "). The bottom of the unit will be used instead.")
+										End if
+										Set Variable: BottomContourElev:= BottomUnitElev
+									End if
+									Set Variable: ContourThickness:= TopContourElev - BottomContourElev
+									If: ContourThickness=0
+										Set Variable: FlowBoundaryCount:= FlowBoundaryCount + 1
+										Start a new line
+											Export expression: MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, TopContourElev); [G0]
+											Export expression: DumRow; [G0]
+											Export expression: DumCol; [G0]
+											Export expression: 0; [G0]
+											Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+												Export expression: Point FHB Unit[LayIndex].Flux Time[PeriodIndex]; [G0]
+											End loop
+										End line
+									Else
+										Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+											Set Variable: DumLay:= M+DivIndex
+											Set Variable: TopDivElev:= TopUnitElev - (DivIndex - 1) * LayerThickness
+											Set Variable: BottomDivElev:= TopUnitElev - DivIndex * LayerThickness
+											Set Variable: DivThickness:= TopDivElev - BottomDivElev
+											Set Variable: TopContourInDiv:= TopContourElev
+											If: TopContourInDiv>TopDivElev
+												Set Variable: TopContourInDiv:= TopDivElev
+											End if
+											Set Variable: BottomContourInDiv:= BottomContourElev
+											If: BottomContourInDiv<BottomDivElev
+												Set Variable: BottomContourInDiv:= BottomDivElev
+											End if
+											Set Variable: ThicknessContourInDiv:= TopContourInDiv - BottomContourInDiv
+											If: ThicknessContourInDiv>0
+												Set Variable: FlowBoundaryCount:= FlowBoundaryCount + 1
+												Start a new line
+													Export expression: DumLay; [G0]
+													Export expression: DumRow; [G0]
+													Export expression: DumCol; [G0]
+													Export expression: 0; [G0]
+													Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+														# Export expression: Point FHB Unit[LayIndex].Flux Time[PeriodIndex] * ThicknessContourInDiv / DivThickness; [G0]
+														Export expression: Point FHB Unit[LayIndex].Flux Time[PeriodIndex] * ThicknessContourInDiv / ContourThickness; [G0]
+													End loop
+												End line
+											End if
+										End loop
+										# End if
+									End if
+								End if
+							End loop
+						End loop
+						# 
+#					End loop
+				End file
+				# 
+				If: TransportFlag=1 & Transport>0
+					Redirect output to: TempFHB6Point$LOOP$
+						Loop for: Variable k from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+#							Set Variable: DumLay:= M+k
+#							Loop for: Blocks
+								Set Variable: DumRow:= Row()
+								Set Variable: DumCol:= Column()
+					Set Variable: ContourIndex:= -1
+								Loop for: Objects in layer: Point FHB Unit[LayIndex]
+									Set Variable: ContourIndex:= ContourIndex + 1
+									# get from 3D list
+									If: ContinueSimulation&(Point FHB Unit[LayIndex].Flux Time1!=$N/A)
+										Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+										Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+										Set Variable: UnitThickness:= TopUnitElev - BottomUnitElev
+										Set Variable: TopContourElev:= Point FHB Unit[LayIndex].Top Elev
+										Set Variable: BottomContourElev:= Point FHB Unit[LayIndex].Bottom Elev
+										If: TopContourElev>TopUnitElev
+											If: ShowWarnings
+												Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Point FHB Unit" + LayIndex + " layer, the top elevation (" + TopContourElev + ") is above the top of the unit (" + TopUnitElev + "). The top of the unit will be used instead.")
+											End if
+											Set Variable: TopContourElev:= TopUnitElev
+										End if
+										If: BottomContourElev<BottomUnitElev
+											If: ShowWarnings
+												Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("On the Point FHB Unit" + LayIndex + " layer, the bottom elevation (" + BottomContourElev + ") is below the bottom of the unit (" + BottomUnitElev + "). The bottom of the unit will be used instead.")
+											End if
+											Set Variable: BottomContourElev:= BottomUnitElev
+										End if
+										Set Variable: ContourThickness:= TopContourElev - BottomContourElev
+										If: ContourThickness=0
+											Start a new line
+												Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+													Export expression: Point FHB Unit[LayIndex].Flux Concentration Time[PeriodIndex]; [G0]
+												End loop
+											End line
+										Else
+											Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+												Set Variable: DumLay:= M+DivIndex
+												Set Variable: TopDivElev:= TopUnitElev - (DivIndex - 1) * UnitThickness
+												Set Variable: BottomDivElev:= TopUnitElev - DivIndex * UnitThickness
+												Set Variable: DivThickness:= TopDivElev - BottomDivElev
+												Set Variable: TopContourInDiv:= TopContourElev
+												If: TopContourInDiv>TopDivElev
+													Set Variable: TopContourInDiv:= TopDivElev
+												End if
+												Set Variable: BottomContourInDiv:= BottomContourElev
+												If: BottomContourInDiv<BottomDivElev
+													Set Variable: BottomContourInDiv:= BottomDivElev
+												End if
+												Set Variable: ThicknessContourInDiv:= TopContourInDiv - BottomContourInDiv
+												If: ThicknessContourInDiv>0
+													Start a new line
+														Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+															Export expression: Point FHB Unit[LayIndex].Flux Concentration Time[PeriodIndex]; [G0]
+														End loop
+													End line
+												End if
+											End loop
+											# End if
+										End if
+									End if
+								End loop
+							End loop
+							# 
+#						End loop
+					End file
+				End if
+				# 
+				# 
+				Redirect output to: TempFHB7Point$LOOP$
+					# 
+					Loop for: Blocks
+						Set Variable: DumRow:= Row()
+						Set Variable: DumCol:= Column()
+						Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+						Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+						Set Variable: TopLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Point FHB Unit[LayIndex].Top Elev)
+						Set Variable: BottomLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Point FHB Unit[LayIndex].Bottom Elev)
+					Set Variable: ContourIndex:= -1
+						Loop for: Objects in layer: Point FHB Unit[LayIndex]
+									Set Variable: ContourIndex:= ContourIndex + 1
+							If: (Point FHB Unit[LayIndex].Head Time1!=$N/A)
+								Loop for: Variable CellIndex from: 0 to: MODFLOW_BL_GetCountOfACellList(ContourIndex) - 1 step: 1
+									Loop for: Variable DivIndex from: TopLayer to: BottomLayer step: 1
+										Set Variable: HeadBoundaryCount:= HeadBoundaryCount + 1
+										Start a new line
+											Export expression: DivIndex; [G0]
+											Export expression: DumRow; [G0]
+											Export expression: DumCol; [G0]
+											Export expression: 0; [G0]
+											Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+												Export expression: Point FHB Unit[LayIndex].Head Time[PeriodIndex]; [G0]
+											End loop
+										End line
+									End loop
+								End loop
+							End if
+						End loop
+					End loop
+					# 
+					# 
+				End file
+				# 
+				If: TransportFlag=1 & Transport>0
+					Redirect output to: TempFHB8Point$LOOP$
+						# 
+						Loop for: Blocks
+					Set Variable: ContourIndex:= -1
+							Loop for: Objects in layer: Point FHB Unit[LayIndex]
+									Set Variable: ContourIndex:= ContourIndex + 1
+								If: (Point FHB Unit[LayIndex].Head Time1!=$N/A)
+									Set Variable: TopUnitElev:= Elevation Top Unit[LayIndex]
+									Set Variable: BottomUnitElev:= Elevation Bottom Unit[LayIndex]
+									Set Variable: TopLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Line FHB Unit[LayIndex].Top Elev)
+									Set Variable: BottomLayer:= MODFLOW_Layer(LayIndex, TopUnitElev, BottomUnitElev, Line FHB Unit[LayIndex].Bottom Elev)
+									If: (Point FHB Unit[LayIndex].Flux Time1!=$N/A)
+										Loop for: Variable DivIndex from: TopLayer to: BottomLayer step: 1
+											Start a new line
+												Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+													Export expression: Point FHB Unit[LayIndex].Head Concentration Time[PeriodIndex]; [G0]
+												End loop
+											End line
+										End loop
+									End if
+								End if
+							End loop
+						End loop
+						# 
+					End file
+				End if
+				# 
+				Evaluate expression: MODFLOW_BL_FreeVertexList()
+				If: @cbUseAreaFHBs@
+				Evaluate expression: MODFLOW_BL_AddVertexLayer("Area FHB Unit" + LayIndex)
+				Redirect output to: TempFHB5Area$LOOP$
+					Loop for: Variable k from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: DumLay:= M+k
+						Loop for: Blocks
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+					Set Variable: ContourIndex:= -1
+							Loop for: Objects in layer: Area FHB Unit[LayIndex]
+									Set Variable: ContourIndex:= ContourIndex + 1
+								Set Variable: ContourArea:= ContourIntersectArea()
+								If: ContourArea!=0
+									Set Variable: FLWRAT:= Area FHB Unit[LayIndex].Flux per Area Time1 * ContourArea
+									If: IsNumber(FLWRAT)
+										Set Variable: FlowBoundaryCount:= FlowBoundaryCount + 1
+										Start a new line
+											Export expression: DumLay; [G0]
+											Export expression: DumRow; [G0]
+											Export expression: DumCol; [G0]
+											Export expression: 0; [G0]
+											Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+												Export expression: Area FHB Unit[LayIndex].Flux per Area Time[PeriodIndex] * ContourArea/MODFLOW_NDIV(LayIndex); [G0]
+											End loop
+										End line
+									End if
+								End if
+							End loop
+							# The following doesn't work now due to a bug in EffectiveValue()
+							# Set Variable: FLWRAT:= EffectiveValue(Area FHB Unit[LayIndex].Flux per Area Time1)
+							# If: IsNumber(FLWRAT)
+							# 	Set Variable: FlowBoundaryCount:= FlowBoundaryCount + 1
+							# 	Start a new line
+							# 		Export expression: DumLay; [G0]
+							# 		Export expression: DumRow; [G0]
+							# 		Export expression: DumCol; [G0]
+							# 		Export expression: 0; [G0]
+							# 		Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+							# 			Export expression: EffectiveValue(Area FHB Unit[LayIndex].Flux per Area Time[PeriodIndex]); [G0]
+							# 		End loop
+							# 	End line
+							# End if
+						End loop
+						# 
+					End loop
+				End file
+				# 
+				# 
+				If: TransportFlag=1 & Transport>0
+					Redirect output to: TempFHB6Area$LOOP$
+						Loop for: Variable k from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Set Variable: DumLay:= M+k
+							Loop for: Blocks
+								Set Variable: DumRow:= Row()
+								Set Variable: DumCol:= Column()
+					Set Variable: ContourIndex:= -1
+								Loop for: Objects in layer: Area FHB Unit[LayIndex]
+									Set Variable: ContourIndex:= ContourIndex + 1
+									If: ContinueSimulation
+										Set Variable: ContourArea:= ContourIntersectArea()
+										If: ContourArea
+											Set Variable: FLWRAT:= Area FHB Unit[LayIndex].Flux per Area Time1 * ContourIntersectArea()
+											If: IsNumber(FLWRAT)
+												If: ShowWarnings&(Area FHB Unit[LayIndex].Head Time1!=$N/A)
+													Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: In Area FHB Unit" + LayIndex + ", both a specified head and specified flux are defined for the same contour. MODFLOW will ignore the specified flux." )
+												End if
+												Start a new line
+													Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+														Export expression: Area FHB Unit[LayIndex].Flux Concentration Time[PeriodIndex]; [G0]
+													End loop
+												End line
+											End if
+										End if
+									End if
+								End loop
+								# The following doesn't work now due to a bug in EffectiveValue()
+								# Set Variable: FLWRAT:= EffectiveValue(Area FHB Unit[LayIndex].Flux per Area Time1)
+								# If: IsNumber(FLWRAT)
+								# 	Start a new line
+								# 		Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+								# 			Export expression: Area FHB Unit[LayIndex].Flux Concentration Time[PeriodIndex] [G0]
+								# 		End loop
+								# 	End line
+								# End if
+							End loop
+							# 
+						End loop
+					End file
+				End if
+				# 
+				# 
+				Redirect output to: TempFHB7Area$LOOP$
+					Loop for: Variable k from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Set Variable: DumLay:= M+k
+						Loop for: Blocks
+							Set Variable: DumRow:= Row()
+							Set Variable: DumCol:= Column()
+							Set Variable: SBHED:= Area FHB Unit[LayIndex].Head Time1
+							If: IsNumber(SBHED)
+								Set Variable: HeadBoundaryCount:= HeadBoundaryCount + 1
+								Start a new line
+									Export expression: DumLay; [G0]
+									Export expression: DumRow; [G0]
+									Export expression: DumCol; [G0]
+									Export expression: 0; [G0]
+									Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+										Export expression: Area FHB Unit[LayIndex].Head Time[PeriodIndex]; [G0]
+									End loop
+								End line
+							End if
+						End loop
+						# 
+					End loop
+				End file
+				# 
+				# 
+				If: TransportFlag=1 & Transport>0
+					Redirect output to: TempFHB8Area$LOOP$
+						Loop for: Variable k from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+							Set Variable: DumLay:= M+k
+							Loop for: Blocks
+								Set Variable: DumRow:= Row()
+								Set Variable: DumCol:= Column()
+								Set Variable: SBHED:= Area FHB Unit[LayIndex].Head Time1
+								If: IsNumber(SBHED)
+									Start a new line
+										Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+											Export expression: Area FHB Unit[LayIndex].Head Concentration Time[PeriodIndex]; [G0]
+										End loop
+									End line
+								End if
+							End loop
+							# 
+						End loop
+					End file
+				End if
+				End if
+				# 
+				# 
+			End if
+		End loop
+	End if
+	Redirect output to: @adeFileName@.fhb
+		Start a new line
+			Export expression: NBDTIM; [G0]
+			Export expression: FlowBoundaryCount; [G0]
+			Export expression: HeadBoundaryCount; [G0]
+			Export expression: IFHBSS; [G0]
+			If: IFHBCB
+				If: OneCBCFile=1
+					Set Variable: BFHUnit:= MF_GetUnitNumber("BUDUnit")
+				Else
+					Set Variable: BFHUnit:= MF_GetUnitNumber("BFHUnit")
+				End if
+			Else
+				Set Variable: BFHUnit:= 0
+			End if
+			Export expression: BFHUnit; [G0]
+			# Export expression: IFHBCB; [G0]
+			If: TransportFlag=1 & Transport>0
+				Export expression: 1; [G0]
+				Export expression: 1; [G0]
+			Else
+				Export expression: 0; [G0]
+				Export expression: 0; [G0]
+			End if
+		End line
+		If: TransportFlag=1 & Transport>0
+			Start a new line
+				Export expression: "CONCENTRATION"; [G0]
+				Export expression: @adeFHBHeadConcWeight@; [G0]
+			End line
+			Start a new line
+				Export expression: "CONCENTRATION"; [G0]
+				Export expression: @adeFHBFluxConcWeight@; [G0]
+			End line
+		End if
+		Start a new line
+			Export expression: IFHBUN; [G0]
+			Export expression: 1.; [G0]
+			Export expression: 1; [G0]
+		End line
+		Start a new line
+			Loop for: Variable PeriodIndex from: 1 to: NBDTIM step: 1
+				Export expression: MODFLOW_FHB_Time(PeriodIndex); [G0]
+			End loop
+		End line
+		If: FlowBoundaryCount
+			Start a new line
+				Export expression: IFHBUN; [G0]
+				Export expression: 1.; [G0]
+				Export expression: 1; [G0]
+			End line
+		End if
+	End file
+	Loop for: Variable LayIndex from: 0 to: MODFLOW_NLAY()-1 step: 1
+		If: MODFLOW_SIMUL(LayIndex+1)!=0
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB5Line" + LayIndex, "@adeFileName@.fhb")
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB5Point" + LayIndex, "@adeFileName@.fhb")
+			If: @cbUseAreaFHBs@
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB5Area" + LayIndex, "@adeFileName@.fhb")
+			End if
+			Evaluate expression: MODFLOW_Delete_File("TempFHB5Line" + LayIndex)
+			Evaluate expression: MODFLOW_Delete_File("TempFHB5Point" + LayIndex)
+			If: @cbUseAreaFHBs@
+			Evaluate expression: MODFLOW_Delete_File("TempFHB5Area" + LayIndex)
+			End if
+		End if
+	End loop
+	If: TransportFlag=1 & Transport>0
+		If: FlowBoundaryCount
+			Redirect output to: FHBTemp
+				Start a new line
+					Export expression: IFHBUN; [G0]
+					Export expression: 1.; [G0]
+					Export expression: 1; [G0]
+				End line
+			End file
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "FHBTemp", "@adeFileName@.fhb")
+		End if
+		Loop for: Variable LayIndex from: 0 to: MODFLOW_NLAY()-1 step: 1
+			If: MODFLOW_SIMUL(LayIndex+1)!=0
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB6Line" + LayIndex, "@adeFileName@.fhb")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB6Point" + LayIndex, "@adeFileName@.fhb")
+			If: @cbUseAreaFHBs@
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB6Area" + LayIndex, "@adeFileName@.fhb")
+			End if
+				Evaluate expression: MODFLOW_Delete_File("TempFHB6Line" + LayIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempFHB6Point" + LayIndex)
+			If: @cbUseAreaFHBs@
+				Evaluate expression: MODFLOW_Delete_File("TempFHB6Area" + LayIndex)
+			End if
+			End if
+		End loop
+	End if
+	If: HeadBoundaryCount
+		Redirect output to: FHBTemp
+			Start a new line
+				Export expression: IFHBUN; [G0]
+				Export expression: 1.; [G0]
+				Export expression: 1; [G0]
+			End line
+		End file
+		Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "FHBTemp", "@adeFileName@.fhb")
+	End if
+	Loop for: Variable LayIndex from: 0 to: MODFLOW_NLAY()-1 step: 1
+		If: MODFLOW_SIMUL(LayIndex+1)!=0
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB7Line" + LayIndex, "@adeFileName@.fhb")
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB7Point" + LayIndex, "@adeFileName@.fhb")
+			If: @cbUseAreaFHBs@
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB7Area" + LayIndex, "@adeFileName@.fhb")
+			End if
+			Evaluate expression: MODFLOW_Delete_File("TempFHB7Line" + LayIndex)
+			Evaluate expression: MODFLOW_Delete_File("TempFHB7Point" + LayIndex)
+			If: @cbUseAreaFHBs@
+			Evaluate expression: MODFLOW_Delete_File("TempFHB7Area" + LayIndex)
+			End if
+		End if
+	End loop
+	If: TransportFlag=1 & Transport>0
+		If: HeadBoundaryCount
+			Redirect output to: FHBTemp
+				Start a new line
+					Export expression: IFHBUN; [G0]
+					Export expression: 1.; [G0]
+					Export expression: 1; [G0]
+				End line
+			End file
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "FHBTemp", "@adeFileName@.fhb")
+		End if
+		Loop for: Variable LayIndex from: 0 to: MODFLOW_NLAY()-1 step: 1
+			If: MODFLOW_SIMUL(LayIndex+1)!=0
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB8Line" + LayIndex, "@adeFileName@.fhb")
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB8Point" + LayIndex, "@adeFileName@.fhb")
+			If: @cbUseAreaFHBs@
+				Evaluate expression: MODFLOW_Join_Files("@adeFileName@.fhb", "TempFHB8Area" + LayIndex, "@adeFileName@.fhb")
+			End if
+				Evaluate expression: MODFLOW_Delete_File("TempFHB8Line" + LayIndex)
+				Evaluate expression: MODFLOW_Delete_File("TempFHB8Point" + LayIndex)
+			If: @cbUseAreaFHBs@
+				Evaluate expression: MODFLOW_Delete_File("TempFHB8Area" + LayIndex)
+			End if
+			End if
+		End loop
+	End if
+	Evaluate expression: MODFLOW_Delete_File("FHBTemp")
+	# 
+End if
+

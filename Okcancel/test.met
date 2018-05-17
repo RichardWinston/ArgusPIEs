@@ -1,0 +1,7 @@
+# 
+# Ask the user a question and do different things depending on the result.
+If: IsOK("Do you want to click the Yes button?")
+	Alert: "You clicked Yes."
+Else
+	Alert: "You clicked No or Cancel."
+End if

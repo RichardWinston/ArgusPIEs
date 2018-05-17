@@ -1,0 +1,7 @@
+# 
+If: ((LakeChoice&ILKCBC)|(SeepageChoice&ISPGCB))
+	Set Variable: OutputBudget:= 1
+End if
+# 
+# 
+

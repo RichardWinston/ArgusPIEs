@@ -1,0 +1,160 @@
+#
+# MF_WEL.met
+# ----------------------------------------------------
+# Well Package
+# ----------------------------------------------------
+If: ContinueSimulation&(WellChoice!=0&ExportWEL!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Well Package")
+	Redirect output to: @adeFileName@.wel
+	End file
+	Set Variable: MaxWells:= 0
+	Set Variable: CurrentWellCount:= 0
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		Set Variable: PointLayerIsEmpty:= IsLayerEmpty(Wells Unit[LayIndex].Top Elevation)
+		If: ContinueSimulation
+			If: LayIndex=1
+				Set Variable: M:= 0
+			Else
+				Set Variable: M:= M+MODFLOW_SIMUL(LayIndex-1)*MODFLOW_NDIV(LayIndex-1)
+			End if
+			# 
+			If: MODFLOW_SIMUL(LayIndex)
+				# 
+				Loop for: Blocks
+					# 
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					If: ContinueSimulation
+						Set Variable: DumRow:= Row()
+						Set Variable: DumCol:= Column()
+						If: !PointLayerIsEmpty
+							Loop for: Objects in layer: WELLS UNIT[LayIndex]
+								Set Variable: WT:= Wells Unit[LayIndex].Top Elevation
+								Set Variable: WB:= Wells Unit[LayIndex].Bottom Elevation
+								# YBI: Pre calculate elevation top and thickness
+								Set Variable: TempValue2:= Elevation Top Unit[LayIndex]
+								Set Variable: TempValue4:= Elevation Bottom Unit[LayIndex]
+								If: (WT>TempValue2)|(WT<=TempValue4)
+									If: ShowWarnings
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Top Elevation in a well in Unit: " + LayIndex + "; Row: " + DumRow + "; Column: " + DumCol + " is outside the limits of the unit, it will be treated as if the top of the well screen were at the top of the unit.")
+									End if
+									Set Variable: WT:= TempValue2
+								End if
+								If: (WB>TempValue2)|(WB<TempValue4)
+									If: ShowWarnings
+										Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Bottom Elevation in a well in Unit: " + LayIndex + "; Row: " + DumRow + "; Column: " + DumCol + " is outside the limits of the unit, it will be treated as if the bottom of the well screen were at the bottom of the unit.")
+									End if
+									Set Variable: WB:= TempValue4
+								End if
+								Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+									Set Variable: DumLay:= M+DivIndex
+									Set Variable: TempValue3:= (TempValue2-TempValue4)/MODFLOW_NDIV(LayIndex)
+									Set Variable: TML:= TempValue2-(DivIndex-1)*TempValue3
+									Set Variable: BML:= TempValue2-DivIndex*TempValue3
+									If: ((WT>TML)&(WB>=TML))|WT<=BML
+									Else
+										Set Variable: ocflag:= 0
+										If: (WT<=TML&WT>BML)&(WB<TML&WB>=BML)
+											Set Variable: ocflag:= 1
+											Set Variable: TempValue1:= WT-WB
+										End if
+										If: ocflag=0
+											If: (WT<=TML&WT>BML)&(WB<=BML)
+												Set Variable: ocflag:= 1
+												Set Variable: TempValue1:= WT-BML
+											End if
+										End if
+										If: ocflag=0
+											If: (WT>=TML)&(WB<TML&WB>=BML)
+												Set Variable: ocflag:= 1
+												Set Variable: TempValue1:= TML-WB
+											End if
+										End if
+										If: ocflag=0
+											If: (WT>TML)&(WB<BML)
+												Set Variable: ocflag:= 1
+												Set Variable: TempValue1:= TML-BML
+											End if
+										End if
+										Set Variable: CurrentWellCount:= CurrentWellCount + 1
+										Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+											If: !(PeriodIndex>1&SteadyWell=0)
+												Redirect output to: TempWellPer
+													Set Variable: TempValue5:= TempValue1*Wells Unit[LayIndex].Stress[PeriodIndex]/(WT-WB)
+													Start a new line
+														Export expression: DumLay [I10]
+														Export expression: DumRow [I10]
+														Export expression: DumCol [I10]
+														Export expression: TempValue5; [E13.5]
+														# MODPATH
+														If: MODPATHChoice
+															Export expression: Wells Unit[LayIndex].IFACE[PeriodIndex] [G0]
+														End if
+														# MOC3D Data
+														If: TransportFlag=1 & Transport>0
+															Export expression: Wells Unit[LayIndex].Concentration[PeriodIndex] [E13.5]
+														End if
+													End line
+												End file
+												Evaluate expression: MODFLOW_Join_Files("TempWellPer" + PeriodIndex, "TempWellPer", "TempWellPer" + PeriodIndex)
+											End if
+										End loop
+									End if
+								End loop
+							End loop
+						End if
+					End if
+				End loop
+			End if
+		End if
+	End loop
+	If: ContinueSimulation
+		If: CurrentWellCount > MaxWells
+			Set Variable: MaxWells:= CurrentWellCount
+		End if
+		Loop for: Variable PeriodIndex from: 1 to: MODFLOW_NPER() step: 1
+			Redirect output to: TempWell1
+				If: PeriodIndex>1&SteadyWell=0
+					Start a new line
+						Export expression: -1 [I5]
+					End line
+				Else
+					Start a new line
+						Export expression: CurrentWellCount [I5]
+					End line
+				End if
+			End file
+			If: !(PeriodIndex>1&SteadyWell=0)
+				Evaluate expression: MODFLOW_Join_Files("TempWell1", "TempWellPer" + PeriodIndex, "TempWell1")
+				Evaluate expression: MODFLOW_Delete_File("TempWellPer" + PeriodIndex)
+			End if
+			Evaluate expression: MODFLOW_Join_Files("@adeFileName@.wel", "TempWell1", "@adeFileName@.wel")
+		End loop
+		Evaluate expression: MODFLOW_Delete_File("TempWellPer")
+		Redirect output to: TempWell1
+			Start a new line
+				Export expression: MaxWells [I5]
+				If: IWELCB>0&OneCBCFile=1
+					Export expression: 33 [I5]
+				End if
+				If: IWELCB>0&OneCBCFile=0
+					Export expression: 29 [I5]
+				End if
+				If: IWELCB=0
+					Export expression: 0 [I5]
+				End if
+				# MODPATH
+				If: MODPATHChoice
+					Export expression: " AUXILIARY IFACE" [G0]
+				End if
+				# MOC3D AUX parameter
+				If: TransportFlag=1 & Transport>0
+					Export expression: " CBCALLOCATE AUXILIARY CONCENTRATION" [G0]
+				End if
+			End line
+		End file
+		Evaluate expression: MODFLOW_Join_Files("TempWell1", "@adeFileName@.wel", "@adeFileName@.wel")
+		Evaluate expression: MODFLOW_Delete_File("TempWell1")
+	End if
+	# 
+End if
+# 

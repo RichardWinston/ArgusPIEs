@@ -1,0 +1,588 @@
+# 
+# MF_Name.met
+# ----------------------------------------------------
+# Name file
+# ----------------------------------------------------
+# Unit Numbers Used
+# 10 MODFLOW Listing file
+# 11 Basic Package File
+# 12 Output Control File
+# 13 BCF File
+# 14 Recharge File
+# 15 River File
+# 16 Well File
+# 17 Drain File
+# 18 GHB File
+# 19 EVT File
+# 20 SIP File
+# 21 SOR File
+# 22 binary head file
+# 23 formatted head file
+# 24 binary drawdown file
+# 25 formatted drawdown file
+# 27 River budget file
+# 28 Recharge budget file
+# 29 Well budget file
+# 30 Drain budget file
+# 31 EVT budget file
+# 32 GHB budget file
+# 33 budget file
+# 34 PCG File
+# 35 DE4 File
+# 36 Stream budget file 1
+# 37 Stream budget file 2
+# 38 HFB file
+# 39 FHB budget file
+# 40 FHB file
+# 41 Stream file
+# 42 Initial head source file
+# 59 Lake budget file
+# 60 Lake input file
+# 61 IBS files
+# 62 IBS budget iles
+# 63 IBS subsidence files
+# 64 IBS compaction files
+# 65 IBS preconsolidation head files
+# 66 RES file
+# 67 RES budget file
+# 68 TLK input file
+# 69 TLK budget file
+# 71 TLK input restart record
+# 72 TLK output restart record
+# 70 MOC3D information file
+If: ContinueSimulation
+	Redirect output to: @adeFileName@.nam
+		# The NameFile is the list of filenames being used in the MODFLOW simulation. These filenames are for specifying where output is to bewritten and where information is to be read.
+		Start a new line
+			# File for LISTING results of MODFLOW simulation
+			Set Variable: ListUnit:= MF_GetUnitNumber("ListUnit")
+			Export expression: "LIST " [G0]
+			Export expression: ListUnit; [G0]
+			Export expression: FileName+".lst" [G0]
+		End line
+		Start a new line
+			# File for reading BASIC package information
+			Set Variable: BASICUnit:= MF_GetUnitNumber("BASICUnit")
+			Export expression: "BAS " [G0]
+			Export expression: BASICUnit; [G0]
+			Export expression: FileName+".bas" [G0]
+			# Export expression: "BAS 11 "+FileName+".bas" [G0]
+		End line
+		Start a new line
+			# File for reading OUTPUT CONTROL information
+			Set Variable: OCUnit:= MF_GetUnitNumber("OCUnit")
+			Export expression: "OC " [G0]
+			Export expression: OCUnit; [G0]
+			Export expression: FileName+".oc" [G0]
+			# Export expression: "OC 12 "+FileName+".oc" [G0]
+		End line
+		Start a new line
+			# File for reading BCF package information
+			Set Variable: BCFUnit:= MF_GetUnitNumber("BCFUnit")
+			Export expression: "BCF " [G0]
+			Export expression: BCFUnit; [G0]
+			Export expression: FileName+".bcf" [G0]
+			# Export expression: "BCF 13 "+FileName+".bcf" [G0]
+		End line
+		If: InitialHeadChoice
+			Start a new line
+				# File for reading initial heads
+				Set Variable: InitialHeadUnit:= MF_GetUnitNumber("InitialHeadUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: InitialHeadUnit; [G0]
+				Export expression: InitialHeadName [G0]
+				# Export expression: "DATA(BINARY) 42 " + InitialHeadName [G0]
+			End line
+		End if
+		# 
+		If: WellChoice=1
+			Start a new line
+				# File for reading WEL package information
+				Set Variable: WELUnit:= MF_GetUnitNumber("WELUnit")
+				Export expression: "WEL " [G0]
+				Export expression: WELUnit; [G0]
+				Export expression: FileName+".wel" [G0]
+				# Export expression: "WEL 16 "+FileName+".wel" [G0]
+			End line
+		End if
+		# 
+		If: RechargeChoice=1
+			Start a new line
+				# File for reading RCH package information
+				Set Variable: RCHUnit:= MF_GetUnitNumber("RCHUnit")
+				Export expression: "RCH " [G0]
+				Export expression: RCHUnit; [G0]
+				Export expression: FileName+".rch" [G0]
+				# Export expression: "RCH 14 "+FileName+".rch" [G0]
+			End line
+		End if
+		# 
+		If: DrainChoice=1
+			Start a new line
+				# File for reading DRN package information
+				Set Variable: DRNUnit:= MF_GetUnitNumber("DRNUnit")
+				Export expression: "DRN " [G0]
+				Export expression: DRNUnit; [G0]
+				Export expression: FileName+".drn" [G0]
+				# Export expression: "DRN 17 "+FileName+".drn" [G0]
+			End line
+		End if
+		# 
+		If: RiverChoice=1
+			Start a new line
+				# File for reading RIV package information
+				Set Variable: RIVUnit:= MF_GetUnitNumber("RIVUnit")
+				Export expression: "RIV " [G0]
+				Export expression: RIVUnit; [G0]
+				Export expression: FileName+".riv" [G0]
+				# Export expression: "RIV 15 "+FileName+".riv" [G0]
+			End line
+		End if
+		# 
+		If: EvapotranspirationChoice=1
+			Start a new line
+				# File for reading EVT package information
+				Set Variable: EVTUnit:= MF_GetUnitNumber("EVTUnit")
+				Export expression: "EVT " [G0]
+				Export expression: EVTUnit; [G0]
+				Export expression: FileName+".evt" [G0]
+				# Export expression: "EVT 19 "+FileName+".evt" [G0]
+			End line
+		End if
+		# 
+		If: GeneralHeadChoice=1
+			Start a new line
+				# File for reading GHB package information
+				Set Variable: GHBUnit:= MF_GetUnitNumber("GHBUnit")
+				Export expression: "GHB " [G0]
+				Export expression: GHBUnit; [G0]
+				Export expression: FileName+".ghb" [G0]
+				# Export expression: "GHB 18 "+FileName+".ghb" [G0]
+			End line
+		End if
+		# 
+		If: HFBChoice=1
+			Start a new line
+				# File for reading HFB package information
+				Set Variable: HFBUnit:= MF_GetUnitNumber("HFBUnit")
+				Export expression: "HFB " [G0]
+				Export expression: HFBUnit; [G0]
+				Export expression: FileName+".hfb" [G0]
+				# Export expression: "HFB 38 "+FileName+".hfb" [G0]
+			End line
+		End if
+		If: UseLakes=1
+			Start a new line
+				# File for reading Lake package information
+				Set Variable: LAKUnit:= MF_GetUnitNumber("LAKUnit")
+				Export expression: "LAK " [G0]
+				Export expression: LAKUnit; [G0]
+				Export expression: FileName+".lak" [G0]
+				# Export expression: "LAK 60 "+FileName+".lak" [G0]
+			End line
+		End if
+		If: UseGages=1
+			Set Variable: UseGages:= MF_GageCount()
+		End if
+		If: UseGages
+			Start a new line
+				# File for reading Gage package information
+				Set Variable: GAGUnit:= MF_GetUnitNumber("GAGE")
+				Export expression: "GAGE " [G0]
+				Export expression: GAGUnit; [G0]
+				Export expression: FileName+".gag" [G0]
+			End line
+			Loop for: Variable GageIndex from: 0 to: MF_GageCount()-1 step: 1
+				Start a new line
+					Export expression: "DATA " [G0]
+					Export expression: MF_GageUnitNumber(GageIndex); [G0]
+					Export expression: FileName+(GageIndex+1)+".ggo" [G0]
+				End line
+			End loop
+		End if
+		If: UseReservoirs=1
+			Start a new line
+				# File for reading Reservoir package information
+				Set Variable: RESUnit:= MF_GetUnitNumber("RESUnit")
+				Export expression: "RES " [G0]
+				Export expression: RESUnit; [G0]
+				Export expression: FileName+".res" [G0]
+				# Export expression: "RES 66 "+FileName+".res" [G0]
+			End line
+		End if
+		If: UseIBS=1
+			Start a new line
+				# File for reading IBS package information
+				Set Variable: IBSUnit:= MF_GetUnitNumber("IBSUnit")
+				Export expression: "IBS " [G0]
+				Export expression: IBSUnit; [G0]
+				Export expression: FileName+".ibs" [G0]
+				# Export expression: "IBS 61 "+FileName+".ibs" [G0]
+			End line
+			# 63 IBS subsidence files
+			# 64 IBS compaction files
+			# 65 IBS preconsolidation head files
+			Start a new line
+				Set Variable: IBSSubsidenceUnit:= MF_GetUnitNumber("IBSSubsidenceUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: IBSSubsidenceUnit; [G0]
+				Export expression: FileName+".iss" [G0]
+				# Export expression: "DATA(BINARY) 63 "+FileName+".iss" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".iss")
+			End line
+			Start a new line
+				Set Variable: IBSCompactionUnit:= MF_GetUnitNumber("IBSCompactionUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: IBSCompactionUnit; [G0]
+				Export expression: FileName+".isc" [G0]
+				# Export expression: "DATA(BINARY) 64 "+FileName+".isc" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".isc")
+			End line
+			Start a new line
+				Set Variable: IBSPreconsolidationHeadUnit:= MF_GetUnitNumber("IBSPreconsolidationHeadUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: IBSPreconsolidationHeadUnit; [G0]
+				Export expression: FileName+".ish" [G0]
+				# Export expression: "DATA(BINARY) 65 "+FileName+".ish" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".ish")
+			End line
+		End if
+		If: UseTLK=1
+			Start a new line
+				# File for reading TLK package information
+				Set Variable: TLKUnit:= MF_GetUnitNumber("TLKUnit")
+				Export expression: "TLK " [G0]
+				Export expression: TLKUnit; [G0]
+				Export expression: FileName+".tlk" [G0]
+				# Export expression: "TLK 68 "+FileName+".tlk" [G0]
+			End line
+			# 69 TLK budget file
+			# 71 TLK input restart record
+			# 72 TLK output restart record
+			If: ITLKSV>0
+				Start a new line
+					Set Variable: TLKSaveUnit:= MF_GetUnitNumber("TLKSaveUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: TLKSaveUnit; [G0]
+					Export expression: FileName+".tks" [G0]
+					# Export expression: "DATA(BINARY) " + ITLKSV + " " + FileName + ".tks" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".tks")
+				End line
+			End if
+			If: ITLKRS>0
+				Start a new line
+					Set Variable: TLKRestartUnit:= MF_GetUnitNumber("TLKRestartUnit ")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: TLKRestartUnit ; [G0]
+					Export expression: "@edTLKRestartFile@" [G0]
+					# Export expression: "DATA(BINARY) " + ITLKRS + " " + "@edTLKRestartFile@" [G0]
+				End line
+			End if
+		End if
+		# 
+		If: FlowHeadChoice=1
+			Start a new line
+				# File for reading FHB package information
+				Set Variable: FHBUnit:= MF_GetUnitNumber("FHBUnit")
+				Export expression: "FHB " [G0]
+				Export expression: FHBUnit; [G0]
+				Export expression: FileName+".fhb" [G0]
+				# Export expression: "FHB 40  "+FileName+".fhb" [G0]
+			End line
+		End if
+		# 
+		If: StreamChoice
+			Start a new line
+				# file for the stream package
+				Set Variable: STRUnit:= MF_GetUnitNumber("STRUnit")
+				Export expression: "STR " [G0]
+				Export expression: STRUnit; [G0]
+				Export expression: FileName+".str" [G0]
+				# Export expression: "STR 41 " + Filename + ".str" [G0]
+			End line
+		End if
+		If: SolverChoice=0
+			Start a new line
+				# File for reading SIP package information
+				Set Variable: SIPUnit:= MF_GetUnitNumber("SIPUnit")
+				Export expression: "SIP " [G0]
+				Export expression: SIPUnit; [G0]
+				Export expression: FileName+".sip" [G0]
+				# Export expression: "SIP 20 "+FileName+".sip" [G0]
+			End line
+		End if
+		# 
+		If: SolverChoice=3
+			Start a new line
+				# File for reading SOR package information
+				Set Variable: SORUnit:= MF_GetUnitNumber("SORUnit")
+				Export expression: "SOR " [G0]
+				Export expression: SORUnit; [G0]
+				Export expression: FileName+".sor" [G0]
+				# Export expression: "SOR 21 "+FileName+".sor" [G0]
+			End line
+		End if
+		# 
+		If: SolverChoice=2
+			Start a new line
+				# File for reading PCG information:
+				Set Variable: PCGUnit:= MF_GetUnitNumber("PCGUnit")
+				Export expression: "PCG " [G0]
+				Export expression: PCGUnit; [G0]
+				Export expression: FileName+".pcg" [G0]
+				# Export expression: "PCG 34 "+FileName+".pcg" [G0]
+			End line
+		End if
+		# 
+		If: SolverChoice=1
+			Start a new line
+				# File for reading DE4 information:
+				Set Variable: DE4Unit:= MF_GetUnitNumber("DE4Unit")
+				Export expression: "DE4 " [G0]
+				Export expression: DE4Unit; [G0]
+				Export expression: FileName+".de4" [G0]
+				# Export expression: "DE4 35 "+FileName+".de4" [G0]
+			End line
+		End if
+		# 
+		If: TransportFlag=1
+			If: Transport>0
+				If: RunMoc3d!=0
+					Start a new line
+						# File for reading MOC3D information:
+						Set Variable: MOC3DUnit:= MF_GetUnitNumber("MOC3DUnit")
+						Export expression: "CONC " [G0]
+						Export expression: MOC3DUnit; [G0]
+						Export expression: FileName+".mcn" [G0]
+						# Export expression: "CONC 70 "+FileName+".mcn" [G0]
+					End line
+				Else
+					Start a new line
+						# File for reading MOC3D information:
+						Set Variable: MOC3DUnit:= MF_GetUnitNumber("MOC3DUnit")
+						Export expression: "#CONC " [G0]
+						Export expression: MOC3DUnit; [G0]
+						Export expression: FileName+".mcn" [G0]
+						# Export expression: "#CONC 70 "+FileName+".mcn" [G0]
+					End line
+				End if
+			End if
+		End if
+		# 
+		If: OutputHead=1
+			Start a new line
+				# File for writing heads in text format
+				Set Variable: FHDUnit:= MF_GetUnitNumber("FHDUnit")
+				Export expression: "DATA " [G0]
+				Export expression: FHDUnit; [G0]
+				Export expression: FileName+".fhd" [G0]
+				# Export expression: "DATA 23 "+FileName+".fhd" [G0]
+			End line
+		End if
+		# 
+		If: OutputHead=2
+			Start a new line
+				# File for writing heads in binary format
+				Set Variable: BHDUnit:= MF_GetUnitNumber("BHDUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: BHDUnit; [G0]
+				Export expression: FileName+".bhd" [G0]
+				# Export expression: "DATA(BINARY) 22 "+FileName+".bhd" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bhd")
+			End line
+		End if
+		# 
+		If: OutputDrawdown=1
+			Start a new line
+				# File for writing drawdown in text format
+				Set Variable: FDNUnit:= MF_GetUnitNumber("FDNUnit")
+				Export expression: "DATA " [G0]
+				Export expression: FDNUnit; [G0]
+				Export expression: FileName+".fdn" [G0]
+				# Export expression: "DATA 25 "+FileName+".fdn" [G0]
+			End line
+		End if
+		# 
+		If: OutputDrawdown=2
+			Start a new line
+				# File for writing drawdown in binary format
+				Set Variable: BDNUnit:= MF_GetUnitNumber("BDNUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: BDNUnit; [G0]
+				Export expression: FileName+".bdn" [G0]
+				# Export expression: "DATA(BINARY) 24 "+FileName+".bdn" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bdn")
+			End line
+		End if
+		# 
+		If: (OneCBCFile=1 & (IBCFCB=1|(WellChoice=1&IWELCB=1)|(RechargeChoice=1&IRCHCB=1)|(DrainChoice=1&IDRNCB=1)|(RiverChoice=1&IRIVCB=1)|(EvapotranspirationChoice=1&IEVTCB=1)|(GeneralHeadChoice=1&IGHBCB=1)|(StreamChoice=1&ISTCB1=1)|(FlowHeadChoice&IFHBCB>0)|(UseLakes=1&ILKCB=1)))
+			Start a new line
+				# File for writing binary cell by cell flows
+				Set Variable: BUDUnit:= MF_GetUnitNumber("BUDUnit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: BUDUnit; [G0]
+				Export expression: FileName+".bud" [G0]
+				# Export expression: "DATA(BINARY) 33 "+FileName+".bud" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bud")
+			End line
+		Else
+			If: IBCFCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BUDUnit:= MF_GetUnitNumber("BUDUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BUDUnit; [G0]
+					Export expression: FileName+".bud" [G0]
+					# Export expression: "DATA(BINARY) 33 "+FileName+".bud" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bud")
+				End line
+			End if
+			If: WellChoice=1&IWELCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BWEUnit:= MF_GetUnitNumber("BWEUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BWEUnit; [G0]
+					Export expression: FileName+".bwe" [G0]
+					# Export expression: "DATA(BINARY) 29 "+FileName+".bwe" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bwe")
+				End line
+			End if
+			If: RechargeChoice=1&IRCHCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BRCUnit:= MF_GetUnitNumber("BRCUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BRCUnit; [G0]
+					Export expression: FileName+".brc" [G0]
+					# Export expression: "DATA(BINARY) 28 "+FileName+".brc" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".brc")
+				End line
+			End if
+			If: DrainChoice=1&IDRNCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BDRUnit:= MF_GetUnitNumber("BDRUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BDRUnit; [G0]
+					Export expression: FileName+".bdr" [G0]
+					# Export expression: "DATA(BINARY) 30 "+FileName+".bdr" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bdr")
+				End line
+			End if
+			If: RiverChoice=1&IRIVCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BRIUnit:= MF_GetUnitNumber("BRIUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BRIUnit; [G0]
+					Export expression: FileName+".bri" [G0]
+					# Export expression: "DATA(BINARY) 27 "+FileName+".bri" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bri")
+				End line
+			End if
+			If: EvapotranspirationChoice=1&IEVTCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BEVUnit:= MF_GetUnitNumber("BEVUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BEVUnit; [G0]
+					Export expression: FileName+".bev" [G0]
+					# Export expression: "DATA(BINARY) 31 "+FileName+".bev" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bev")
+				End line
+			End if
+			If: GeneralHeadChoice=1&IGHBCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BGHUnit:= MF_GetUnitNumber("BGHUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BGHUnit; [G0]
+					Export expression: FileName+".bgh" [G0]
+					# Export expression: "DATA(BINARY) 32 "+FileName+".bgh" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bgh")
+				End line
+			End if
+			If: FlowHeadChoice&IFHBCB>0
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BFHUnit:= MF_GetUnitNumber("BFHUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BFHUnit; [G0]
+					Export expression: FileName+".bfh" [G0]
+					# Export expression: "DATA(BINARY) " [G0]
+					# Export expression: IFHBCB; [G0]
+					# Export expression: FileName+".bfh" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bfh")
+				End line
+			End if
+			If: StreamChoice=1&ISTCB1=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BS1Unit:= MF_GetUnitNumber("BS1Unit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BS1Unit; [G0]
+					Export expression: FileName+".bs1" [G0]
+					# Export expression: "DATA(BINARY) 36 "+FileName+".bs1" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bs1")
+				End line
+			End if
+			If: UseLakes=1&ILKCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BLKUnit:= MF_GetUnitNumber("BLKUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BLKUnit; [G0]
+					Export expression: FileName+".blk" [G0]
+					# Export expression: "DATA(BINARY) 59 "+FileName+".blk" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".blk")
+				End line
+			End if
+			If: UseReservoirs=1&IRESCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BRSUnit:= MF_GetUnitNumber("RESBUD")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BRSUnit; [G0]
+					Export expression: FileName+".brs" [G0]
+					# Export expression: "DATA(BINARY) 59 "+FileName+".brs" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".brs")
+				End line
+			End if
+			If: UseIBS=1&IIBSCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: BIBUnit:= MF_GetUnitNumber("BIBUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: BIBUnit; [G0]
+					Export expression: FileName+".bib" [G0]
+					# Export expression: "DATA(BINARY) 62 "+FileName+".bib" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".bib")
+				End line
+			End if
+			If: UseTLK=1&ITLKCB=1
+				Start a new line
+					# File for writing binary cell by cell flows
+					Set Variable: TLKBudgetUnit:= MF_GetUnitNumber("TLKBudgetUnit")
+					Export expression: "DATA(BINARY) " [G0]
+					Export expression: TLKBudgetUnit; [G0]
+					Export expression: FileName+".btl" [G0]
+					Evaluate expression: MODFLOW_Delete_File(FileName+".btl")
+				End line
+			End if
+		End if
+		If: StreamChoice=1&ISTCB2=1
+			Start a new line
+				# File for writing binary cell by cell flows
+				Set Variable: BS2Unit:= MF_GetUnitNumber("BS2Unit")
+				Export expression: "DATA(BINARY) " [G0]
+				Export expression: BS2Unit; [G0]
+				Export expression: FileName+".bs2" [G0]
+				# Export expression: "DATA(BINARY) 37 "+FileName+".bs2" [G0]
+				Evaluate expression: MODFLOW_Delete_File(FileName+".bs2")
+			End line
+		End if
+	End file
+End if
+# 
+

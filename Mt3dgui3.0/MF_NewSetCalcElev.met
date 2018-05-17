@@ -1,0 +1,9 @@
+# 
+# 
+If: LakeChoice&ExportLAK
+	Set Variable: CalcElev:= 1
+End if
+If: SeepageChoice&ExportSPG
+	Set Variable: CalcElev:= 1
+End if
+

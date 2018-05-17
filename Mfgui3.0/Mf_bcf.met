@@ -1,0 +1,395 @@
+# 
+# MF_BCF.met
+# ----------------------------------------------------
+# Block-Centered Flow Package:
+# ----------------------------------------------------
+If: ContinueSimulation&(ExportBCF!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package")
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.bcf
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Item 1")
+			If: ContinueSimulation
+				# Data item 1
+				Start a new line
+					Export expression: ISS [I5]
+					If: IBCFCB=0
+						Export expression: 0 [I5]
+					End if
+					If: IBCFCB!=0
+						Export expression: 33 [I5]
+					End if
+					Export expression: HDRY [E13.5]
+					Export expression: IWDFLG [I5]
+					Export expression: WETFCT [E13.5]
+					Export expression: IWETIT [I5]
+					Export expression: IHDWET [I5]
+				End line
+			End if
+			# Data item 2
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: LAYCON")
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					If: MODFLOW_LAYCON(LayIndex)=1&LayIndex!=TopSimul
+						Set Variable: err_bcf_1:= 1
+						# Alert: "Only the top simulated geologic unit can be unconfined!"
+						If: ShowWarnings
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Layer " + LayIndex + " is unconfined but only the top simulated geologic unit can be unconfined!")
+						End if
+					End if
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						If: MODFLOW_LAYCON(LayIndex)=1&DivIndex!=1
+							Start a new line
+								Export expression: MODFLOW_AVEMETHOD(LayIndex) [I1]
+								Export expression: 3 [I1]
+							End line
+						Else
+							Start a new line
+								Export expression: MODFLOW_AVEMETHOD(LayIndex) [I1]
+								Export expression: MODFLOW_LAYCON(LayIndex) [I1]
+							End line
+						End if
+					End loop
+				End if
+			End loop
+			# Data item 3
+			If: ContinueSimulation
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 1 [I5]
+				End line
+			End if
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Anisotropy")
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						Start a new line
+							Export expression: MODFLOW_TRPY(LayIndex) [E13.5]
+						End line
+					End loop
+				End if
+			End loop
+			# Data item 4
+			If: ContinueSimulation
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 1 [I5]
+				End line
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Columns positions")
+				Loop for: Columns
+					If: $Column$<NumColumns()
+						Start a new line
+							Export expression: Abs(NthColumnPos($Column$+1)-NthColumnPos($Column$)) [E13.5]
+						End line
+					End if
+				End loop
+				# Data item 5
+			End if
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Row positions")
+			If: ContinueSimulation
+				Start a new line
+					Export expression: "INTERNAL 1.0 (FREE)" [G0]
+					Export expression: 1 [I5]
+				End line
+				Loop for: Rows
+					If: $Row$<NumRows()
+						Start a new line
+							Export expression: Abs(NthRowPos($Row$+1)-NthRowPos($Row$)) [E13.5]
+						End line
+					End if
+				End loop
+			End if
+			# Data item 6 export to external file
+			Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation&(MODFLOW_SIMUL(LayIndex)!=0)
+					If: ISS=0
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Storage parameters")
+						Redirect output to: @adeFileName@.s$LOOP$
+							If: MODFLOW_LAYCON(LayIndex)=0
+								If: MODFLOW_SpecSF1(LayIndex)
+									Export matrix: Conf Storage Coef Unit[LayIndex] [G0]
+									If: ShowWarnings
+										Redirect output to: Dummy
+											Export matrix: If((Conf Storage Coef Unit[LayIndex]>1)|(Conf Storage Coef Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Confined Storage Coefficient in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+										End file
+										Evaluate expression: MODFLOW_Delete_File("Dummy")
+									End if
+								Else
+									Export matrix: MODFLOW FD Grid.Sp_Storage Unit[LayIndex]*MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [G0]
+									If: ShowWarnings
+										Redirect output to: Dummy
+											Export matrix: If((MODFLOW FD Grid.Sp_Storage Unit[LayIndex]>1)|(MODFLOW FD Grid.Sp_Storage Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Specific Storage in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+										End file
+										Evaluate expression: MODFLOW_Delete_File("Dummy")
+									End if
+								End if
+							End if
+							If: ((MODFLOW_LAYCON(LayIndex)=1)&(MODFLOW_NDIV(LayIndex)>1))|MODFLOW_LAYCON(LayIndex)=2|MODFLOW_LAYCON(LayIndex)=3
+								Export matrix: MODFLOW FD Grid.Sp_Storage Unit[LayIndex]*MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [G0]
+								If: MODFLOW_SpecSF1(LayIndex)
+									Export matrix: Conf Storage Coef Unit[LayIndex] [G0]
+									If: ShowWarnings
+										Redirect output to: Dummy
+											Export matrix: If((Conf Storage Coef Unit[LayIndex]>1)|(Conf Storage Coef Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Confined Storage Coefficient in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+										End file
+										Evaluate expression: MODFLOW_Delete_File("Dummy")
+									End if
+								Else
+									Export matrix: MODFLOW FD Grid.Sp_Storage Unit[LayIndex]*MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [G0]
+									If: ShowWarnings
+										Redirect output to: Dummy
+											Export matrix: If((MODFLOW FD Grid.Sp_Storage Unit[LayIndex]>1)|(MODFLOW FD Grid.Sp_Storage Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Specific Storage in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+										End file
+										Evaluate expression: MODFLOW_Delete_File("Dummy")
+									End if
+								End if
+								If: (MODFLOW_LAYCON(LayIndex)=1)&(MODFLOW_NDIV(LayIndex)>1)
+									Redirect output to: @adeFileName@.y$LOOP$
+										Export matrix: MODFLOW FD Grid.Sp_Yield Unit[LayIndex] [G0]
+									End file
+									Evaluate expression: MODFLOW_Rename_File("@adeFileName@.y" + $LOOP$, "@adeFileName@.y" + MODFLOW_Int2Str(LayIndex-1))
+									If: ShowWarnings
+										Redirect output to: Dummy
+											Export matrix: If((MODFLOW FD Grid.Sp_Yield Unit[LayIndex]>1)|(MODFLOW FD Grid.Sp_Yield Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Specific Yield in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+										End file
+										Evaluate expression: MODFLOW_Delete_File("Dummy")
+									End if
+								End if
+							Else
+								If: MODFLOW_LAYCON(LayIndex)!=0
+									Redirect output to: @adeFileName@.y$LOOP$
+										Export matrix: MODFLOW FD Grid.Sp_Yield Unit[LayIndex] [G0]
+									End file
+									Evaluate expression: MODFLOW_Rename_File("@adeFileName@.y" + $LOOP$, "@adeFileName@.y" + MODFLOW_Int2Str(LayIndex-1))
+									If: ShowWarnings
+										Redirect output to: Dummy
+											Export matrix: If((MODFLOW FD Grid.Sp_Yield Unit[LayIndex]>1)|(MODFLOW FD Grid.Sp_Yield Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Specific Yield in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+										End file
+										Evaluate expression: MODFLOW_Delete_File("Dummy")
+									End if
+								End if
+							End if
+						End file
+						Evaluate expression: MODFLOW_Rename_File("@adeFileName@.s" + $LOOP$, "@adeFileName@.s" + MODFLOW_Int2Str(LayIndex-1))
+					End if
+					# Data items 7 and 8 export to external files
+					If: MODFLOW_LAYCON(LayIndex)=0|MODFLOW_LAYCON(LayIndex)=2
+						# Data item 7 export to external file
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Transmissivity " + LayIndex)
+						If: ContinueSimulation
+							Redirect output to: @adeFileName@.k$LOOP$
+								If: MODFLOW_SpecTrans(LayIndex)
+									Export matrix: Trans Unit[LayIndex] / MODFLOW_NDIV(LayIndex) [G0]
+								Else
+									Export matrix: MODFLOW FD Grid.Kx Unit[LayIndex]*MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex) [G0]
+								End if
+							End file
+							Evaluate expression: MODFLOW_Rename_File("@adeFileName@.k" + $LOOP$, "@adeFileName@.k" + MODFLOW_Int2Str(LayIndex-1))
+						End if
+					Else
+						# Data item 8 export to external file
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: Hydraulic conductivity")
+						If: ContinueSimulation
+							Redirect output to: @adeFileName@.k$LOOP$
+								Export matrix: MODFLOW FD Grid.Kx Unit[LayIndex] [G0]
+							End file
+							Evaluate expression: MODFLOW_Rename_File("@adeFileName@.k" + $LOOP$, "@adeFileName@.k" + MODFLOW_Int2Str(LayIndex-1))
+						End if
+					End if
+					If: ShowWarnings&ContinueSimulation
+						Redirect output to: Dummy
+							Export matrix: If(MODFLOW FD Grid.Kx Unit[LayIndex]<0, MODFLOW_ProgressBarAddLine("Error: Kx in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative."), 0) [G0]
+						End file
+						Evaluate expression: MODFLOW_Delete_File("Dummy")
+					End if
+					# Data item 10 export to external file
+					If: MODFLOW_NDIV(LayIndex) > 1
+						Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: VCONT")
+						If: ContinueSimulation
+							Redirect output to: @adeFileName@.z$LOOP$
+								If: MODFLOW_SpecVcont(LayIndex)
+									Export matrix: Vert Cond Unit[LayIndex] [G0]
+								Else
+									Export matrix: (MODFLOW_L_GetFromOneBased3DList(KzList, Column(), Row(), LayIndex))/(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+								End if
+							End file
+							Evaluate expression: MODFLOW_Rename_File("@adeFileName@.z" + $LOOP$, "@adeFileName@.z" + MODFLOW_Int2Str(LayIndex-1))
+						End if
+					End if
+					# Data item 6
+					Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+						If: ISS=0
+							Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Block-Centered Flow Package: storage")
+							If: ContinueSimulation
+								Start a new line
+									If: (MODFLOW_LAYCON(LayIndex)=1)&(DivIndex=1)
+										Export expression: "OPEN/CLOSE @adeFileName@.y" + MODFLOW_Int2Str(LayIndex-1) + " 1.0 (FREE)" [G0]
+										Export expression: 12 [I5]
+									Else
+										Export expression: "OPEN/CLOSE @adeFileName@.s" + MODFLOW_Int2Str(LayIndex-1) + " 1.0 (FREE)" [G0]
+										Export expression: 12 [I5]
+									End if
+								End line
+							End if
+						End if
+						# Data items 7 and 8
+						If: ContinueSimulation
+							If: (MODFLOW_LAYCON(LayIndex)=0|MODFLOW_LAYCON(LayIndex)=2)
+								# Data item 7
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.k" + MODFLOW_Int2Str(LayIndex-1) + " 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+							Else
+								# Data item 8
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.k" + MODFLOW_Int2Str(LayIndex-1) + " 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								# Data item 9
+								# YBI: note that the next matrix is different for each sub division!
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-DivIndex*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+							End if
+							# Data item 10
+							If: DivIndex<MODFLOW_NDIV(LayIndex)
+								Start a new line
+									Export expression: "OPEN/CLOSE @adeFileName@.z" + MODFLOW_Int2Str(LayIndex-1) + " 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+							End if
+							If: DivIndex=MODFLOW_NDIV(LayIndex)
+								If: MODFLOW_SpecVcont(LayIndex)
+									Start a new line
+										Export expression: "INTERNAL 1.0 (FREE)" [G0]
+										Export expression: 12 [I5]
+									End line
+									Export matrix: Vert Cond Unit[LayIndex] [G0]
+								Else
+									# the case of the bottom subdivision is different from all the other sub divisions
+									If: LayIndex<BotSimul
+										Start a new line
+											Export expression: "INTERNAL 1.0 (FREE)" [G0]
+											Export expression: 12 [I5]
+										End line
+										Set Variable: ocflag:= 0
+										Loop for: Variable k from: LayIndex+1 to: BotSimul step: 1
+											If: MODFLOW_SIMUL(k)!=0&ocflag=0
+												Set Variable: M:= k
+												Set Variable: ocflag:= 1
+											End if
+										End loop
+										Set Variable: ResultList:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), 1)
+										Loop for: Variable k from: LayIndex to: M step: 1
+											Set Variable: TempThickListStart:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), 1)
+										End loop
+										Set Variable: TempThickListStart:= TempThickListStart - (M - LayIndex)
+										Loop for: Variable k from: LayIndex to: M step: 1
+											Set Variable: TempKzListStart:= MODFLOW_L_CreateNew3DList(NumColumns(), NumRows(), 1)
+										End loop
+										Set Variable: TempKzListStart:= TempKzListStart - (M - LayIndex)
+										Set Variable: TempThickIndex:= TempThickListStart - 1
+										Set Variable: TempKzListIndex:= TempKzListStart - 1
+										Loop for: Variable k from: LayIndex to: M step: 1
+											Set Variable: TempThickIndex:= TempThickIndex + 1
+											Set Variable: TempKzListIndex:= TempKzListIndex + 1
+											Redirect output to: Dummy
+												Export matrix: MODFLOW_L_SetOneBased3DListItem(TempThickIndex, Column(), Row(), 1, MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), k)) [G0]
+												Export matrix: MODFLOW_L_SetOneBased3DListItem(TempKzListIndex, Column(), Row(), 1, MODFLOW_L_GetFromOneBased3DList(KzList, Column(), Row(), k)) [G0]
+											End file
+											Evaluate expression: MODFLOW_Delete_File("Dummy")
+											If: (k=LayIndex)|(k=M)
+												Evaluate expression: MODFLOW_L_Multipy3DByConstant(TempThickIndex, TempThickIndex, 0.5)
+											End if
+										End loop
+#
+#										Set Variable: TempThickIndex:= TempThickListStart - 1
+#										Set Variable: TempKzListIndex:= TempKzListStart - 1
+#										Loop for: Variable k from: LayIndex to: M step: 1
+#											Export matrix: If((MODFLOW_L_GetFromOneBased3DList(TempThickIndex, Column(), Row(), 1)=0)|(MODFLOW_L_GetFromOneBased3DList(TempKzListIndex, Column(), Row(), 1)=0),MODFLOW_L_SetOneBased3DListItem(ResultList, Column(), Row(), 1, 0),MODFLOW_L_SetOneBased3DListItem(ResultList, Column(), Row(), 1, MODFLOW_L_GetFromOneBased3DList(TempThickIndex, Column(), Row(), 1) / MODFLOW_L_GetFromOneBased3DList(TempKzListIndex, Column(), Row(), 1) + MODFLOW_L_GetFromOneBased3DList(ResultList, Column(), Row(), 1))) [G0]
+#										End loop
+#
+										Loop for: Blocks
+											Set Variable: ocflag:= 1
+											Set Variable: TempThickIndex:= TempThickListStart - 1
+											Set Variable: TempKzListIndex:= TempKzListStart - 1
+											Set Variable: DumCol:= Column()
+											Set Variable: DumRow:= Row()
+											Loop for: Variable k from: LayIndex to: M step: 1
+												If: ocflag
+													Set Variable: TempThickIndex:= TempThickIndex + 1
+													Set Variable: TempKzListIndex:= TempKzListIndex + 1
+													Set Variable: TempValue1:= MODFLOW_L_GetFromOneBased3DList(TempThickIndex, DumCol, DumRow, 1)
+													Set Variable: TempValue2:= MODFLOW_L_GetFromOneBased3DList(TempKzListIndex, DumCol, DumRow, 1)
+													If: (TempValue1=0)|(TempValue2=0)
+														Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ResultList, DumCol, DumRow, 1, 0)
+														Set Variable: ocflag:= 0
+													Else
+														Evaluate expression: MODFLOW_L_SetOneBased3DListItem(ResultList, DumCol, DumRow, 1, TempValue1 / TempValue2 + MODFLOW_L_GetFromOneBased3DList(ResultList, DumCol, DumRow, 1))
+													End if
+												End if
+											End loop
+										End loop
+										Evaluate expression: MODFLOW_L_Invert3DListMembers(ResultList, ResultList)
+										Export matrix: MODFLOW_L_GetFromOneBased3DList(ResultList, Column(), Row(), 1) [G0]
+										Evaluate expression: MODFLOW_L_FreeA3DList(ResultList)
+										Set Variable: TempThickIndex:= TempThickListStart - 1
+										Set Variable: TempKzListIndex:= TempKzListStart - 1
+										Loop for: Variable k from: LayIndex to: M step: 1
+											Set Variable: TempThickIndex:= TempThickIndex + 1
+											Set Variable: TempKzListIndex:= TempKzListIndex + 1
+											Evaluate expression: MODFLOW_L_FreeA3DList(TempThickIndex)
+											Evaluate expression: MODFLOW_L_FreeA3DList(TempKzListIndex)
+										End loop
+									End if
+								End if
+							End if
+						End if
+						# Data item 11
+						If: ContinueSimulation
+							If: ISS=0&(MODFLOW_LAYCON(LayIndex)=2|MODFLOW_LAYCON(LayIndex)=3|(MODFLOW_LAYCON(LayIndex)=1&DivIndex>1))
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								Export matrix: MODFLOW FD Grid.Sp_Yield Unit[LayIndex] [G0]
+								If: ShowWarnings
+									Redirect output to: Dummy
+										Export matrix: If((MODFLOW FD Grid.Sp_Yield Unit[LayIndex]>1)|(MODFLOW FD Grid.Sp_Yield Unit[LayIndex]<0), MODFLOW_ProgressBarAddLine("Error: Specific Yield in Unit " + LayIndex + ", Row " + Row() + ", Column " + Column() + " is negative or greater than 1."), 0) [G0]
+									End file
+									Evaluate expression: MODFLOW_Delete_File("Dummy")
+								End if
+							End if
+						End if
+						# Data item 12
+						If: ContinueSimulation
+							If: MODFLOW_LAYCON(LayIndex)=2|MODFLOW_LAYCON(LayIndex)=3|(MODFLOW_LAYCON(LayIndex)=1&DivIndex>1)
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								# Export matrix: MODFLOW FD Grid.Elev Top Unit[LayIndex]-(DivIndex-1)*(MODFLOW FD Grid.Thickness Unit[LayIndex]/MODFLOW_NDIV(LayIndex)) [G0]
+								Export matrix: MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-(DivIndex-1)*(MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)) [G0]
+							End if
+						End if
+						# Data item 13
+						If: ContinueSimulation
+							If: IWDFLG!=0&(MODFLOW_LAYCON(LayIndex)=1|MODFLOW_LAYCON(LayIndex)=3)
+								Start a new line
+									Export expression: "INTERNAL 1.0 (FREE)" [G0]
+									Export expression: 12 [I5]
+								End line
+								Export matrix: MODFLOW FD Grid.Wetting Unit[LayIndex] [G0]
+							End if
+						End if
+					End loop
+				End if
+			End loop
+		End file
+	End if
+End if

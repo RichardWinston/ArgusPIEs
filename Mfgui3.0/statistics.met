@@ -1,0 +1,92 @@
+# 
+# statistics.met
+# Sample template for exporting calibration statistics
+# Richard B. Winston
+# Feb. 18, 1999
+# 
+# For usage of this export template, see the topic
+# "Q. How can I compare my model results with observations?"
+# in the help file for the MODFLOW GUI under
+# PIEs|MODFLOW Help|General Information|Frequently Asked Questions"
+# 
+Define Variable: LayerIndex [Integer]
+Define Variable: ParameterIndex [Integer]
+Define Variable: Difference [Real]
+Define Variable: N [Integer]
+Define Variable: Sum [Real]
+Define Variable: AbsoluteSum [Real]
+Define Variable: SumOfSquares [Real]
+Define Variable: Variance [Real]
+Set Variable: Sum:= 0
+Set Variable: SumOfSquares:= 0
+Set Variable: N:= 0
+Redirect output to: $BaseName$
+	Start a new line
+		Export expression: "         N"; [G0]
+		Export expression: "            X"; [G0]
+		Export expression: "            Y"; [G0]
+		Export expression: "     Layer"; [G0]
+		Export expression: "  Observation"; [G0]
+		Export expression: " Model Result"; [G0]
+		Export expression: "   Difference" [G0]
+	End line
+	Loop for: Variable LayerIndex from: 1 to: Number of Model Layers step: 1
+		Loop for: Objects in layer: Observations Layer[LayerIndex]
+			Loop for: Variable ParameterIndex from: 1 to: Number of Observation Times step: 1
+				If: IsNumber(Observations[ParameterIndex])
+					Set Variable: N:= N + 1
+					Start a new line
+						Export expression: N; [I10]
+						Export expression: NthVertexX(0); [E13.6]
+						Export expression: NthVertexY(0); [E13.6]
+						Export expression: LayerIndex; [I10]
+						Export expression: Observations[ParameterIndex]; [E13.6]
+						Export expression: Model Results[ParameterIndex]; [E13.6]
+						Set Variable: Difference:= Observations[ParameterIndex] - Model Results[ParameterIndex]
+						Export expression: Difference [E13.6]
+					End line
+					Set Variable: Sum:= Sum + Difference
+					Set Variable: AbsoluteSum:= AbsoluteSum + Abs(Difference)
+					Set Variable: SumOfSquares:= SumOfSquares + Difference * Difference
+				End if
+			End loop
+		End loop
+	End loop
+	Start a new line
+		Export expression: "------------------------------------------------------------" [G0]
+		Export expression: "------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: "Number of observations               "; [G0]
+		Export expression: N [G0]
+	End line
+	Start a new line
+		Export expression: "Sum of differences                   "; [G0]
+		Export expression: Sum [G0]
+	End line
+	Start a new line
+		Export expression: "Sum of Squares of differences        "; [G0]
+		Export expression: SumOfSquares [G0]
+	End line
+	Start a new line
+		Export expression: "Mean difference                      "; [G0]
+		Export expression: Sum / N [G0]
+	End line
+	Start a new line
+		Export expression: "Sum of absolute values of differences"; [G0]
+		Export expression: AbsoluteSum [G0]
+	End line
+	Start a new line
+		Export expression: "Mean absolute difference             "; [G0]
+		Export expression: AbsoluteSum / N [G0]
+	End line
+	Start a new line
+		Export expression: "Sample Variance                      "; [G0]
+		Set Variable: Variance:= (SumOfSquares - Sum * Sum / N) / (N - 1)
+		Export expression: Variance [G0]
+	End line
+	Start a new line
+		Export expression: "Sample Standard Deviation            "; [G0]
+		Export expression: Sqrt(Variance) [G0]
+	End line
+End file

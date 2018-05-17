@@ -1,0 +1,319 @@
+# 
+# ZoneBud.met
+# ZONEBDGT Export Template
+# By Richard B. Winston
+# 
+# 
+# ----------------------------------------------------
+# 1. Define ZONEBDGT variables
+# ----------------------------------------------------
+# 
+# NumLay is the number of model layers in the MODFLOW model.
+Define Variable: DivIndex [Integer]
+# 
+# FileName is the root name specified by the user in the Edit
+# Project Info dialog box.
+Define Variable: FileName [String]
+# 
+# LayIndex is an index to the number of geologic units
+Define Variable: LayIndex [Integer]
+# 
+# Line Count is the number of lines in the file saved by the
+# Progressbar PIE
+Define Variable: LineCount [Integer]
+# 
+# NumCompositeZones is the number of composite zones
+# that the user has specified.
+Define Variable: NumCompositeZones [Integer]
+# 
+# NumLay is the number of MODFLOW layers in the model
+Define Variable: NumLay [Integer]
+# 
+# UseProgressBar tells whether the progress bar PIE
+# is used.
+Define Variable: UseProgressBar [Boolean]
+# 
+# ProgressMax is the maximum value that will be reached by the
+# progress bar
+Define Variable: ProgressMax [Integer]
+# 
+# RunZoneBud determines whether or not ZONEBDGT will be run
+# after the input files have been created
+Define Variable: RunZoneBud [Boolean]
+# 
+# if ShowWarnings is true, error and warning messages will
+# be displayed in the progress bar PIE
+Define Variable: ShowWarnings [Boolean]
+# 
+# TimeIndex is an index to the stress period
+Define Variable: TimeIndex [Integer]
+# 
+# ZoneBudPath is the fully qualified path of ZONEBDGT
+Define Variable: ZoneBudPath [String]
+# 
+# ZoneBudTimeChoice determines whether a budget will be created
+# for all stress periods or just some of them.
+Define Variable: ZoneBudTimeChoice [Integer]
+# 
+# ZoneBudTitle is the title to be displayed in
+# the ZONEBDGT output
+Define Variable: ZoneBudTitle [String]
+# 
+# ZoneIndex to the zones.
+Define Variable: ZoneIndex [Integer]
+# 
+# The maximum number of zones.
+Define Variable: MaxZones [Integer]
+# 
+# ----------------------------------------------------
+# 2. Set ZONEBDGT variables from Edit Project Info dialog box.
+# ----------------------------------------------------
+Set Variable: FileName:= "@adeFileName@"
+Set Variable: NumCompositeZones:= @adeZoneBudCompZoneCount@
+Set Variable: RunZoneBud:= "@rbRunZonebudget@"
+Set Variable: ShowWarnings:= @cbShowWarnings@
+Set Variable: ZoneBudPath:= "@adeZonebudgetPath@"
+Set Variable: ZoneBudTimeChoice:= @rgZonebudTimesChoice@
+Set Variable: ZoneBudTitle:= "@adeZonebudgetTitle@"
+Set Variable: UseProgressBar:= @cbProgressBar@
+If: @rbModflow96@
+	Set Variable: MaxZones:= 25
+Else
+	Set Variable: MaxZones:= 999
+End if
+# 
+# ----------------------------------------------------
+# 3. Determine the maximum value reached by the progress bar
+# ----------------------------------------------------
+If: UseProgressBar
+	Set Variable: ProgressMax:= 2 * MODFLOW_NLAY()
+	If: ZoneBudTimeChoice=1
+		Set Variable: ProgressMax:= ProgressMax + MODFLOW_ZonebudTimeCount()
+	End if
+End if
+# 
+# ----------------------------------------------------
+# 4. Display the progress bar with the initial line in the memo and
+# the initial message
+# ----------------------------------------------------
+If: UseProgressBar
+	Evaluate expression: MODFLOW_ProgressBarInitialize(ProgressMax)
+	Evaluate expression: MODFLOW_ProgressBarAddLine("Error and Warning messages")
+	Evaluate expression: MODFLOW_ProgressBarSetMessage("Exporting ZONEBDGT Data")
+End if
+# 
+# ----------------------------------------------------
+# 5. Determine the number of model layers in the MODFLOW model.
+# ----------------------------------------------------
+Set Variable: NumLay:= 0
+Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+	If: UseProgressBar
+		Evaluate expression: MODFLOW_ProgressBarAdvance()
+	End if
+	Set Variable: NumLay:= NumLay+MODFLOW_SIMUL(LayIndex)*MODFLOW_NDIV(LayIndex)
+End loop
+# 
+# ----------------------------------------------------
+# 6. Create Batch file to run ZONEBDGT
+# ----------------------------------------------------
+Redirect output to: zonebdgt.bat
+	Start a new line
+		Export expression: ZoneBudPath + " <"+"@adeFileName@.zbi /wait" [G0]
+	End line
+	If: @cbOpenOutputInNotepad@
+		Start a new line
+			Export expression: "Start Notepad "+FileName+".zblst" [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "Pause" [G0]
+	End line
+End file
+# 
+# ----------------------------------------------------
+# 7. Create input file for ZONEBUD.
+# ----------------------------------------------------
+Redirect output to: @adeFileName@.zbi
+	# 
+	# ----------------------------------------------------
+	# 7A. Prompt 1
+	# ----------------------------------------------------
+	# ZONEBUD Output file name.
+	Start a new line
+		If: @rbModflow96@
+			Export expression: FileName +".zblst" [G0]
+		Else
+			Export expression: FileName; [G0]
+			Export expression: "ZBLST"; [G0]
+			Export expression: "CSV"; [G0]
+			Export expression: "CSV2" [G0]
+		End if
+	End line
+	# 
+	# ----------------------------------------------------
+	# 7B. Prompt 2
+	# ----------------------------------------------------
+	# MODFLOW cell-by-cell flow file (in binary format but not in compact format.)
+	Start a new line
+		Export expression: FileName +".bud" [G0]
+	End line
+	# 
+	# ----------------------------------------------------
+	# 7C. Prompt 3
+	# ----------------------------------------------------
+	# Give the ZONEBUD Title.
+	Start a new line
+		Export expression: ZoneBudTitle [G0]
+	End line
+	# 
+	# ----------------------------------------------------
+	# 7D. Prompt 4
+	# ----------------------------------------------------
+	# Give the name of the Zone Input File.
+	Start a new line
+		Export expression: FileName + ".zne" [G0]
+	End line
+	# 
+	# ----------------------------------------------------
+	# 7E. Prompt 5
+	# ----------------------------------------------------
+	# Tell whether to produce a budget for all time steps or just some of them.
+	# Valid Responses are "A", "P", and "L".
+	# Only "A" and "P" are used here because they provide all the needed flexibility.
+	Start a new line
+		If: ZoneBudTimeChoice=0
+			Export expression: "A" [G0]
+		End if
+		If: ZoneBudTimeChoice=1
+			Export expression: "L" [G0]
+		End if
+		If: ZoneBudTimeChoice=2
+			Export expression: "P" [G0]
+		End if
+	End line
+	# ----------------------------------------------------
+	# 7F. Export the time steps for which the user wishes to prepare a water budget
+	# ----------------------------------------------------
+	If: ZoneBudTimeChoice=1
+		Loop for: Variable TimeIndex from: 1 to: MODFLOW_ZonebudTimeCount() step: 1
+			If: UseProgressBar
+				Evaluate expression: MODFLOW_ProgressBarAdvance()
+			End if
+			Start a new line
+				Export expression: MODFLOW_ZonebudTimeStep(TimeIndex) [G0]
+				Export expression: "," [G0]
+				Export expression: MODFLOW_ZonebudStessPeriod(TimeIndex) [G0]
+			End line
+		End loop
+		Start a new line
+			Export expression: "0,0" [G0]
+		End line
+	End if
+	# 
+End file
+# 
+# ----------------------------------------------------
+# 8. Set up the Zone Input File
+# ----------------------------------------------------
+Redirect output to: @adeFileName@.zne
+	# 
+	# ----------------------------------------------------
+	# 8A.
+	# ----------------------------------------------------
+	# NumLay is the number of MODFLOW model layers.
+	# NumRows() and NumColumns() return the number of rows and columns respectively.
+	Start a new line
+		Export expression: NumLay; [G0]
+		Export expression: NumRows(); [G0]
+		Export expression: NumColumns() [G0]
+	End line
+	# 
+	# ----------------------------------------------------
+	# 8B.
+	# ----------------------------------------------------
+	# Zone information needs to be provided for each MODFLOW model layer but
+	# some ArgusONE Units may represent more than one model layer
+	# and some may not be simulated.
+	# 
+	# Loop over the geologic units
+	Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+		# 
+		# advance the progress bar at each geologic unit
+		If: UseProgressBar
+			Evaluate expression: MODFLOW_ProgressBarAdvance()
+		End if
+		# 
+		# This causes non-simulated layers to be skipped.
+		If: MODFLOW_SIMUL(LayIndex)
+			# 
+			# loop over divisions within a geologic unit
+			Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+				Start a new line
+					Export expression: "INTERNAL" [G10]
+					Export expression: 0 [I10]
+					Export expression: " ("+NumColumns()+"I5)" [G20]
+					Export expression: 1 [I10]
+				End line
+				Export matrix: ZONEBDGT Zone Unit[LayIndex] [I4]
+			End loop
+			# 
+			# generate error and warning messages
+			If: ShowWarnings&UseProgressBar
+				Redirect output to: Dummy
+					# Show a warning if any zone is greater than MaxZones
+					Export matrix: If(ZONEBDGT Unit[LayIndex].Primary Zone>MaxZones, MODFLOW_ProgressBarAddLine("Error: In Unit " + LayIndex + " the ZONEBDGT primary zone is greater than " + MaxZones +" at Row: "+ Row() + " Column: " + Column()), 0) [G0]
+					# Show a warning if any zone is less than 0
+					Export matrix: If(ZONEBDGT Unit[LayIndex].Primary Zone<0, MODFLOW_ProgressBarAddLine("Error: In Unit " + LayIndex + " the ZONEBDGT primary zone is less than 0 at Row: "+ Row() + " Column: " + Column()), 0) [G0]
+				End file
+				Evaluate expression: MODFLOW_Delete_File("Dummy")
+			End if
+		End if
+	End loop
+	# 
+	# ----------------------------------------------------
+	# 8C.
+	# ----------------------------------------------------
+	# add the composite zones to the ZONEBDGT input file.
+	Loop for: Variable ZoneIndex from: 1 to: NumCompositeZones step: 1
+		Start a new line
+			Export expression: MODFLOW_ZonebudCompositeZone(ZoneIndex) [G0]
+		End line
+	End loop
+End file
+# 
+# ----------------------------------------------------
+# 9. Check if ZONEBDGT is to be run. Run it when appropriate.
+# ----------------------------------------------------
+If: RunZoneBud
+	Execute external code: "ZoneBdgt.bat"
+End if
+# 
+# ----------------------------------------------------
+# 10. Save any error messages to a file
+# ----------------------------------------------------
+If: UseProgressBar
+	Set Variable: LineCount:= MODFLOW_ProgressBarSaveToFile("@adeFileName@.err")
+End if
+# 
+# ----------------------------------------------------
+# 11. Display an alert message about the errors
+# ----------------------------------------------------
+If: (LineCount>1)&ShowWarnings
+	Alert: "Error or warning messages while exporting!  See error file (@adeFileName@.err)"
+End if
+# 
+# ----------------------------------------------------
+# 12. If it is impossible to save the error and warning messages to the disk,
+# ----------------------------------------------------
+# display an error message.
+If: (LineCount<0)&ShowWarnings
+	Alert: "Error when attempting to save (@adeFileName@.err) to disk."
+End if
+# 
+# ----------------------------------------------------
+# 13. Get rid of the progress bar
+# ----------------------------------------------------
+If: UseProgressBar
+	Evaluate expression: MODFLOW_ProgressBarFree()
+End if
+

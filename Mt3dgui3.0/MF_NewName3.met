@@ -1,0 +1,8 @@
+			# Export file name and unit number of the MT3D Flow file.
+			If: MT3D_FlowFile
+				Start a new line
+					# RBW - This line exports uses the format for specifying the MT3D flow file used by the free version of MODFLOW at http://www.mindspring.com/~rbwinston/ModDyn.htm
+					Export expression: "MT3 71 " + FileName + ".FLO UNFORMATTED" [G0]
+				End line
+			End if
+

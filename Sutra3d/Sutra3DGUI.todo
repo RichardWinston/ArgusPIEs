@@ -1,0 +1,20 @@
+{TODO 1 : ModelViewer needs to do the things Alden stated in his email.}{TODO 1 : save file pieces switch (at least for 2D) does not stop pieces from appearing}{TODO 1 : add COMMENT to 2D GUI layers}{TODO : make a ModelViewer file by default and use it}{TODO : Allow "uniform" specification of aquifer properties.}{TODO : Make new fishnet mesh PIE that conforms to sources for 2D}{TODO : Allow editting of multiple post processing charts simultaneously}{TODO 4 : Warn users if they use an incorrect contour type}{TODO 4 : Warn users if they use the SutraZ function in a weird or invalid location}
+
+
+
+
+
+
+
+{TODO 5 : Show angles in 3D}
+{TODO 5 : Save virtual mesh until it project closes unless user wishes it destroyed.}
+
+{TODO 5 : Make it easy for users to convert from virtual nodes to Argus nodes and back}
+{TODO 5 : Get angles used by SUTRA from one or more contours}
+{TODO 5 : Automate comparison of boundary conditions with results}
+
+
+
+
+
+ 

@@ -1,0 +1,387 @@
+# Editable SUTRA TEMPLATE for UCODE EXTERNAL (.ext) input file goes here
+Define Variable: Column [Integer]
+Define Variable: ICountNodesInContour [Integer]
+Define Variable: InterpolationIndicator [Integer]
+Define Variable: NewStep [Integer]
+Define Variable: NodeIndex [Integer]
+Define Variable: ObservationNodeCount [Integer]
+Define Variable: ObsNumberInSutraObs [Integer]
+Define Variable: PreviousStep [Integer]
+Define Variable: Time [Integer]
+Define Variable: VectorOfColumns [Integer]
+Define Variable: 1stTemporalFactor [Real]
+Define Variable: 2ndTemporalFactor [Real]
+Define Variable: ContourInterpolationFactor [Real]
+Define Variable: UseTemporalInterpolation [Boolean]
+Define Variable: ObservationName [String]
+#
+Define Variable: StateVariableType [Integer]
+# StateVariableType: 1=Head, 2=Pressure
+If: @rbSpecific@&@rbSoluteConstDens@
+	Set Variable: StateVariableType:= 1
+Else
+	Set Variable: StateVariableType:= 2
+End if
+Define Variable: TransportType [Integer]
+# TransportType: 1=Energy, 2=Solute
+If: @rbEnergy@=1
+	Set Variable: TransportType:= 1
+Else
+	Set Variable: TransportType:= 2
+End if
+Evaluate expression: Sutra_InitializeSimulationTimes()
+#Define the position (column) of the observations values for each observation point, in SUTRA.obs file
+Set Variable: NodeIndex:= 0
+Loop for: MAX.OBS.NUMBER.IN.SUTRA.OBS.FILE (not only Mesh nodes)
+	Set Variable: NodeIndex:= NodeIndex+1
+	Evaluate expression: SUTRA_L_AddToList(VectorOfColumns,(NodeIndex-1)*48+33)
+End loop
+Redirect output to: @edRoot@.ext
+	# INITIALIZING THE EXPORTABLE FILE
+	# Writing the file head
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: "# THIS IS THE EXTRACT UCODE INPUT FILE (.ext)" [G0]
+	End line
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	# 
+	# Managing for HEAD/PRESSURE Observations, listed by Observation Contour, then by Nodes in Contour and finally by Observation Time
+	# 
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		If: StateVariableType=1
+			Export expression: "#HEAD Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		Else
+			Export expression: "#PRESSURE Observations, listed first by Time-Step Number, and then by Node Number" [G0]
+		End if
+	End line
+	Start a new line
+		Export expression: "#-----------------------------------------------------------------" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	# Selecting the SUTRA Observation Output File, from which Observation Values will be extracted
+	Start a new line
+		Export expression: "#SUTRA Observation Output File (.obs): BE SURE THE FILE ROOT IS CORRECT!!" [G0]
+	End line
+	# Define the SUTRA Observation Output File (.obs) name in the simulation
+	Start a new line
+		Export expression: "<@edRoot@.obs" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	Start a new line
+		Export expression: "#<>--<>--<>--<>" [G0]
+	End line
+	# Going to the initial position in Sutra Observation Output File
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	Start a new line
+		Export expression: "/========/" [G0]
+	End line
+	# CSSTRA
+	If: @sicomboCSSFLO_and_CSSTRA@=0
+	# The problem is 'STEADY TRANSPORT'
+		Start a new line
+			Export expression: "+6"; [G0]
+		End line
+	Else
+		Start a new line
+			Export expression: "+7"; [G0]
+		End line
+	End if
+	Start a new line
+		Export expression: "#<>--<>--<>--<>" [G0]
+	End line
+	Start a new line
+		Export expression: " " [G0]
+	End line
+	#Here goes the title of the Head/Pressure Observation List
+	Start a new line
+		Export expression: "#List of observations" [G0]
+	End line
+	#Set Counter for Observation Number in Sutra.obs file
+	Set Variable: ObsNumberInSutraObs:= 0
+	# Loop for Observation Contours
+	Set Variable: PreviousStep:= 0
+	Set Variable: NewStep:= 0
+	Loop for: Objects in layer: Observation
+		If: is_observed
+			Set Variable: ObservationName:= Observation.Obs Name
+			# Loop for Observation Times
+			Set Variable: ICountObsTimes:= 0
+#			Set Variable: PreviousStep:= 0
+			Loop for: Variable ObsTimeNumber from: 1 to: @adeObservationTimes@ step: 1
+				If: StateVariableType=1
+					Set Variable: Time:= Observation.Head Obs Time[ObsTimeNumber]
+				Else
+					Set Variable: Time:= Observation.Pres Obs Time[ObsTimeNumber]
+				End if
+				If: Time > 0
+#WARNING!: "NewStep" VARIABLE MUST BE THE MINIMUM CLOSEST TIME-STEP BOUNDARY, NOT THE CLOSEST!!				
+					Set Variable: NewStep:= Sutra_GetTimeStep(Time)
+					Set Variable: ICountObsTimes:= ICountObsTimes+1
+					#Go to Time-Step line for this observation in (*.obs) file
+					If: PreviousStep!=NewStep
+						Start a new line
+							Export expression: " " [G0]
+						End line
+						Start a new line
+							If: NewStep - PreviousStep > 0
+								Export expression: "+" [G0]
+								Export expression: NewStep - PreviousStep [G0]
+							Else
+								Export expression: NewStep - PreviousStep [G0]
+							End if
+							Export expression: "  " [G0]
+						End line
+					End if
+					#Count observation nodes in the particular Observation Object
+					Set Variable: ObservationNodeCount:= 0
+					Loop for: Nodes
+						If: ObservationName=Ucode_Observation
+							Set Variable: ObservationNodeCount:= ObservationNodeCount + 1
+						End if
+					End loop
+					#Use Temporal Interpolation?
+					Set Variable: UseTemporalInterpolation:= 0
+					If: Time>NewStep
+						Set Variable: UseTemporalInterpolation:= 1
+						Set Variable: 1stTemporalFactor:= (Time - (NewStep*DELTA.TIME-STEP))/DELTA.TIME-STEP
+						Set Variable: 2ndTemporalFactor:= 1 - 1stTemporalFactor
+					End if
+					#Start printing-out 
+					Loop for: Objects in layer: Observation
+						If: (Observation.Obs Name=ObservationName) 
+							#Point-observation objects
+							If: ObservationNodeCount=1
+								#Export Observation Name
+								Start a new line
+									Export expression: " " [G0]
+								End line
+								Start a new line
+									Export expression: "o " [G0]
+									Export expression: ObservationName [G0]
+									If: StateVariableType=1
+										Export expression: "/h" [G0]
+									Else
+										Export expression: "/p" [G0]
+									End if
+									Export expression: "/&1/" [G0]
+									Export expression: ICountObsTimes [G0]
+								End line
+								#Export Interpolation Function indicator
+									If: UseTemporalInterpolation
+										Start a new line
+											Export expression: "i2" [G0]
+										End line
+									End if
+								#Export location of 1st observation value
+								Set Variable: ObsNumberInSutraObs = ObsNumberInSutraObs +1
+								Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, ObsNumberInSutraObs)
+								Start a new line
+									Export expression: "c" [G0]
+									Export expression: Column [I0]
+									Export expression: "_" [G0]
+									Export expression: Column+12 [I0]
+									If: UseTemporalInterpolation
+										Export expression: "_" [G0]
+										Export expression: 1stTemporalFactor [G0]
+									End if
+								End line
+								If: UseTemporalInterpolation
+									#Go down one time-step line in SUTRA.obs file
+									Start a new line
+										Export expression: "+1" [G0]
+									End line
+									#Export location of 2nd observation value
+									Start a new line
+										Export expression: "c" [G0]
+										Export expression: Column [I0]
+										Export expression: "_" [G0]
+										Export expression: Column+12 [I0]
+										Export expression: "_" [G0]
+										Export expression: 2ndTemporalFactor [G0]
+									End line
+									#Back one time-step line in SUTRA.obs file
+									Start a new line
+										Export expression: "-1" [G0]
+									End line
+								End if
+							#Contour-observation objects
+							Else
+								#Contour-observations reduced to one observation point
+								If: Move to Node
+									#Export Observation Name
+									Start a new line
+										Export expression: " " [G0]
+									End line
+									Start a new line
+										Export expression: "o " [G0]
+										Export expression: ObservationName [G0]
+										If: StateVariableType=1
+											Export expression: "/h" [G0]
+										Else
+											Export expression: "/p" [G0]
+										End if
+										Export expression: "/+1/" [G0]
+										Export expression: ICountObsTimes [G0]
+									End line
+									#Export Interpolation Function indicator
+									Set Variable: InterpolationIndicator:= 0
+									If: UseTemporalInterpolation
+										Set Variable: InterpolationIndicator:= 2*ObservationNodeCount
+										Start a new line
+											Export expression: "i" [G0]
+											Export expression: InterpolationIndicator [G0]
+										End line
+									Else
+										Set Variable: InterpolationIndicator:= ObservationNodeCount
+										Start a new line
+											Export expression: "i" [G0]
+											Export expression: InterpolationIndicator [G0]
+										End line
+									End if
+									#Export location for every observation point in object
+									If: UseTemporal Interpolation
+										#First set of observation points
+										Loop for: Nodes
+											Set Variable: ObsNumberInSutraObs = ObsNumberInSutraObs +1
+											Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, ObsNumberInSutraObs)
+											Start a new line
+												Export expression: "c" [G0]
+												Export expression: Column [I0]
+												Export expression: "_" [G0]
+												Export expression: Column+12 [I0]
+												Export expression: "_" [G0]
+												Set Variable: ContourInterpolationFactor:= CONTOUR.CONTRIBUTION.FACTOR * 1stTemporalFactor
+												Export expression: ContourInterpolationFactor [G0]
+											End line
+										End loop
+										#Go down one time-step line in SUTRA.obs file
+										Start a new line
+											Export expression: "+1" [G0]
+										End line
+										#Second set of observation points
+										Loop for: Nodes
+											Set Variable: ObsNumberInSutraObs = ObsNumberInSutraObs +1
+											Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, ObsNumberInSutraObs)
+											Start a new line
+												Export expression: "c" [G0]
+												Export expression: Column [I0]
+												Export expression: "_" [G0]
+												Export expression: Column+12 [I0]
+												Export expression: "_" [G0]
+												Set Variable: ContourInterpolationFactor:= CONTOUR.CONTRIBUTION.FACTOR * 2ndTemporalFactor
+												Export expression: ContourInterpolationFactor [G0]
+											End line
+										End loop
+										#Back one time-step line in SUTRA.obs file
+										Start a new line
+											Export expression: "-1" [G0]
+										End line
+									Else
+										Loop for: Nodes
+											Set Variable: ObsNumberInSutraObs = ObsNumberInSutraObs +1
+											Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, ObsNumberInSutraObs)
+											Start a new line
+												Export expression: "c" [G0]
+												Export expression: Column [I0]
+												Export expression: "_" [G0]
+												Export expression: Column+12 [I0]
+												Export expression: "_" [G0]
+												Export expression: CONTOUR.CONTRIBUTION.FACTOR [G0]
+											End line
+										End loop
+									End if
+								#Contour-observations treated to have one observation point in each contour node	
+								Else
+									Set Variable: ICountNodesInContour:= 0
+									Loop for: Nodes
+										Set Variable: ICountNodesInContour:= ICountNodesInContour + 1
+										#Export Observation Name
+										Start a new line
+											Export expression: " " [G0]
+										End line
+										Start a new line
+											Export expression: "o " [G0]
+											Export expression: ObservationName [G0]
+											If: StateVariableType=1
+												Export expression: "/h" [G0]
+											Else
+												Export expression: "/p" [G0]
+											End if
+											If: ICountNodesInContour = ObservationNodeCount
+												Export expression: "/&" [G0]
+											Else
+												Export expression: "/" [G0]
+											End if
+											Export expression: ICountNodesInContour [G0]
+											Export expression: "/" [G0]
+											Export expression: ICountObsTimes [G0]
+										End line
+										#Export Interpolation Function indicator
+										If: UseTemporalInterpolation
+											Start a new line
+												Export expression: "i2" [G0]
+											End line
+										End if
+										#Export location of 1st observation value
+										Set Variable: ObsNumberInSutraObs = ObsNumberInSutraObs +1
+										Set Variable: Column:= Round(SUTRA_L_GetFromList(VectorOfColumns, ObsNumberInSutraObs)
+										Start a new line
+											Export expression: "c" [G0]
+											Export expression: Column [I0]
+											Export expression: "_" [G0]
+											Export expression: Column+12 [I0]
+											If: UseTemporalInterpolation
+												Export expression: "_" [G0]
+												Export expression: 1stTemporalFactor [G0]
+											End if
+										End line
+										If: UseTemporalInterpolation
+											#Go down one time-step line in SUTRA.obs file
+											Start a new line
+												Export expression: "+1" [G0]
+											End line
+											#Export location of 2nd observation value
+											Start a new line
+												Export expression: "c" [G0]
+												Export expression: Column [I0]
+												Export expression: "_" [G0]
+												Export expression: Column+12 [I0]
+												Export expression: "_" [G0]
+												Export expression: 2ndTemporalFactor [G0]
+											End line
+											#Back one time-step line in SUTRA.obs file
+											Start a new line
+												Export expression: "-1" [G0]
+											End line
+										End if
+									End loop
+								End if
+							End if
+						End if
+					End loop
+				End if
+				Set Variable: PreviousStep:= NewStep				
+			End loop
+		End if
+	End loop
+#
+End file

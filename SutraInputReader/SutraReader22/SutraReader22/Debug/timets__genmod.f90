@@ -1,0 +1,9 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE TIMETS__genmod
+          INTERFACE 
+            FUNCTION TIMETS(NSTEP) RESULT(TIMETS_0)
+              INTEGER(KIND=4) :: NSTEP
+              REAL(KIND=8) :: TIMETS_0
+            END FUNCTION TIMETS
+          END INTERFACE 
+        END MODULE TIMETS__genmod

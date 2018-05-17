@@ -1,0 +1,15 @@
+# Editable SUTRA TEMPLATE for UCODE BATCH FILE, containing the Run Command line
+Define Variable: UcodePath [String]
+Set Variable: UcodePath:= "@jvfnUcode@"
+Redirect output to: @edRoot@.bat
+	# INITIALIZING THE EXPORTABLE FILE
+	Start a new line
+		Export expression: "\"" [G0]
+		Export expression: UcodePath [G0]
+		Export expression: "\""; [G0]
+		Export expression: "@edRoot@" [G0]
+		Export expression: ".mai"; [G0]
+		Export expression: "@edRoot@" [G0]
+	End line
+End file
+

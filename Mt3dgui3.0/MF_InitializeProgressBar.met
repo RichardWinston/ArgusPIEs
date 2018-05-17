@@ -1,0 +1,91 @@
+# 
+# MF_InitializeMODFLOW_ProgressBar.met
+# 
+Set Variable: PIEVersionOK:= MODFLOW_ProgressBarCheckVersion(1, 3, 0, 0)
+If: IsNAN(PIEVersionOK)
+	Alert: "Error: MODFLOW Progress Bar PIE is not installed!"
+Else
+	If: !PIEVersionOK
+		Alert: "Error: MODFLOW Progress Bar PIE is not up to date! Check that the correct version is installed and that there are not multiple copies of it."
+	End if
+End if
+# Initialize progress bar
+Evaluate expression: MODFLOW_ProgressBarInitialize(ProgressMax, 1)
+Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error and warning messages")
+# 
+# Show error message about number of particles per cell for MOC3D
+If: MOC_NPTPNDError&ShowWarnings
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Initial number of particles per cell for MOC3D is invalid")
+End if
+# 
+# show error message abut no simulated geologic unts.
+If: TopSimul=0&BotSimul=0&ShowWarnings&ContinueSimulation
+	Set Variable: err_geo:= 1
+	# Alert: "No geologic units are specified for simulation!"
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("No geologic units are specified for simulation!")
+End if
+# 
+# show error messages about non-uniform MOC3D subgrid
+If: Transport&TransportFlag&RunMoc3d&ContinueSimulation
+	Set Variable: RowHeightList:= MODFLOW_L_CreateNewList()
+	Set Variable: ColumnWidthList:= MODFLOW_L_CreateNewList()
+	Loop for: Variable RowIndex from: MOC_ISROW1-1 to: MOC_ISROW2-1 step: 1
+		Evaluate expression: MODFLOW_L_AddToList(RowHeightList, NthRowHeight(RowIndex))
+	End loop
+	Loop for: Variable ColumnIndex from: MOC_ISCOL1-1 to: MOC_ISCOL2-1 step: 1
+		Evaluate expression: MODFLOW_L_AddToList(ColumnWidthList, NthColumnWidth(ColumnIndex))
+	End loop
+	If: !MODFLOW_L_IsSingPrecUniform(ColumnWidthList)&ShowWarnings
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: Column widths are not uniform in the MOC3D subgrid.")
+	End if
+	If: !MODFLOW_L_IsSingPrecUniform(RowHeightList)&ShowWarnings
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Error: Row heights are not uniform in the MOC3D subgrid.")
+	End if
+	Evaluate expression: MODFLOW_L_FreeAList(ColumnWidthList)
+	Evaluate expression: MODFLOW_L_FreeAList(RowHeightList)
+End if
+# 
+# Show warning message about excessive changes in row and column widths
+Set Variable: FirstRowHeight:= NthRowHeight(1)
+Set Variable: MinRow:= FirstRowHeight
+Set Variable: MaxRow:= FirstRowHeight
+Set Variable: FirstColumnWidth:= NthColumnWidth(1)
+Set Variable: MinColumn:= FirstRowHeight
+Set Variable: MaxColumn:= FirstColumnWidth
+Loop for: Rows
+	Set Variable: CurrentRowHeight:= NthRowHeight($Row$)
+	Set Variable: CurrentRow:= $Row$
+	If: CurrentRowHeight>MaxRow
+		Set Variable: MaxRow:= CurrentRowHeight
+	End if
+	If: CurrentRowHeight<MinRow
+		Set Variable: MinRow:= CurrentRowHeight
+	End if
+	If: ShowWarnings&(((CurrentRowHeight / FirstRowHeight)>1.5)|((FirstRowHeight / CurrentRowHeight)>1.5))
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Ratio of adjacent row heights exceeds the recommended maximum of 1.5 for Rows " +CurrentRow + " and " + (CurrentRow -1))
+	End if
+	Set Variable: FirstRowHeight:= CurrentRowHeight
+End loop
+Loop for: Columns
+	Set Variable: CurrentColumnWidth:= NthColumnWidth($Column$)
+	Set Variable: CurrentColumn:= $Column$
+	If: CurrentColumnWidth>MaxColumn
+		Set Variable: MaxColumn:= CurrentColumnWidth
+	End if
+	If: CurrentColumnWidth<MinColumn
+		Set Variable: MinColumn:= CurrentColumnWidth
+	End if
+	If: ShowWarnings&(((CurrentColumnWidth / FirstColumnWidth)>1.5)|((FirstColumnWidth / CurrentColumnWidth)>1.5))
+		Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: Ratio of adjacent column widths exceeds the recommended maximum of 1.5 for Columns " + CurrentColumn + " and " + (CurrentColumn -1))
+	End if
+	Set Variable: FirstColumnWidth:= CurrentColumnWidth
+End loop
+# 
+# Show warnings about excessive ratios of row and column widths
+If: ShowWarnings&ContinueSimulation&((MaxColumn / MinRow)>10)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: the ratio of the column width to row height exceeds the recomended maximum of 10 in some cases.")
+End if
+If: ShowWarnings&ContinueSimulation&((MaxRow / MinColumn)>10)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: the ratio of the row height to column width exceeds the recomended maximum of 10 in some cases.")
+End if
+# 

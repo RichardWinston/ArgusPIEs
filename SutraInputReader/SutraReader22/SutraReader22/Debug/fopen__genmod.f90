@@ -1,0 +1,8 @@
+        !COMPILER-GENERATED INTERFACE MODULE: Mon Feb 28 11:50:10 2011
+        MODULE FOPEN__genmod
+          INTERFACE 
+            SUBROUTINE FOPEN(INPUTFILE)
+              CHARACTER(*), INTENT(IN) :: INPUTFILE
+            END SUBROUTINE FOPEN
+          END INTERFACE 
+        END MODULE FOPEN__genmod

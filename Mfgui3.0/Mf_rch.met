@@ -1,0 +1,143 @@
+# 
+# MF_RCH.met
+# ----------------------------------------------------
+# Recharge Package:
+# ----------------------------------------------------
+If: ContinueSimulation&(RechargeChoice!=0&ExportRCH!=0)
+	Set Variable: ContinueSimulation:= MODFLOW_ProgressBarSetMessage("Recharge Package")
+	If: ContinueSimulation
+		Redirect output to: @adeFileName@.rch
+			Start a new line
+				# Export NRCHOP
+				Export expression: NRCHOP [I5]
+				If: IRCHCB>0&OneCBCFile=1
+					Export expression: 33; [I5]
+				End if
+				If: IRCHCB>0&OneCBCFile=0
+					Export expression: 28; [I5]
+				End if
+				If: IRCHCB=0
+					Export expression: 0; [I5]
+				End if
+				If: MODPATHChoice
+					Export expression: RechargeITOP [G0]
+				End if
+			End line
+			# Stress period 1
+			Start a new line
+				Export expression: 1 [I5]
+				If: NRCHOP=2
+					Export expression: 1 [I5]
+				End if
+				If: NRCHOP!=2
+					Export expression: -1 [I5]
+				End if
+			End line
+			# Export Recharge flux for stress period 1
+			Start a new line
+				Export expression: "INTERNAL 1.0  (FREE)" [G0]
+				Export expression: 2 [I5]
+			End line
+			Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+			If: ContinueSimulation
+				Export matrix: Recharge.Stress1 [G0]
+			End if
+			# Export Layer number of recharge if NRCHOP=2
+			If: ContinueSimulation&(NRCHOP=2)
+				Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+				If: ContinueSimulation
+					Start a new line
+						Export expression: "INTERNAL 1  (FREE)" [G0]
+						Export expression: 9 [I5]
+					End line
+				End if
+				If: ContinueSimulation
+					If: @cbRechLayer@&(@comboRchOpt@=1)
+						Export matrix: Recharge Layer [I5]
+					Else
+						Loop for: Blocks
+							If: ContinueSimulation
+								Set Variable: ocflag:= 0
+								If: Recharge.Stress1!=0&(Recharge Elevation<=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), 1)&Recharge Elevation>MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), MODFLOW_NLAY()))
+									Set Variable: M:= 0
+									Loop for: Variable LayIndex from: 1 to: MODFLOW_NLAY() step: 1
+										If: ocflag=0
+											If: LayIndex=1
+												Set Variable: M:= 0
+											Else
+												Set Variable: M:= M+MODFLOW_NDIV(LayIndex-1)*MODFLOW_SIMUL(LayIndex-1)
+											End if
+											If: Recharge Elevation<=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)&Recharge Elevation>MODFLOW_L_GetFromOneBased3DList(BottomElevationList, Column(), Row(), LayIndex)
+												Set Variable: ocflag:= 1
+												If: MODFLOW_SIMUL(LayIndex)!=0
+													Loop for: Variable DivIndex from: 1 to: MODFLOW_NDIV(LayIndex) step: 1
+														Set Variable: CellThickness:= MODFLOW_L_GetFromOneBased3DList(ThicknessList, Column(), Row(), LayIndex)
+														If: (Recharge Elevation<=MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-(DivIndex-1)*CellThickness)&(Recharge Elevation>(MODFLOW_L_GetFromOneBased3DList(TopElevationList, Column(), Row(), LayIndex)-DivIndex*CellThickness))
+															Set Variable: k:= M+DivIndex
+															Start a new line
+																Export expression: k [I5]
+															End line
+														End if
+													End loop
+												Else
+													Start a new line
+														Set Variable: err_rch_1:= 1
+														# Alert: "Recharge elevation is located in a non-simulated geologic unit!"
+														If: ShowWarnings
+															Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("At column " + Column() + " and Row " + Row() +  ", recharge elevation is located in a non-simulated geologic unit!")
+														End if
+														Export expression: 999 [I5]
+													End line
+												End if
+											End if
+										End if
+									End loop
+								Else
+									Start a new line
+										Export expression: 1 [I5]
+									End line
+								End if
+							End if
+						End loop
+					End if
+				End if
+			End if
+			If: MODFLOW_NPER()>=2
+				Loop for: Variable PeriodIndex from: 2 to: MODFLOW_NPER() step: 1
+					Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAdvance()
+					If: ContinueSimulation
+						If: SteadyRecharge=0
+							Start a new line
+								Export expression: -1 [I5]
+								Export expression: -1 [I5]
+							End line
+						Else
+							Start a new line
+								Export expression: 1 [I5]
+								# assume recharge elevation does not change if NRCHOP=2
+								Export expression: -1 [I5]
+							End line
+							# Export Recharge flux for stress period
+							Start a new line
+								Export expression: "INTERNAL 1.0  (FREE)" [G0]
+								Export expression: 2 [I5]
+							End line
+							Export matrix: Recharge.Stress[PeriodIndex] [G0]
+							If: ShowWarnings
+								Set Variable: RechargeTest:= 0
+								Loop for: Blocks
+									If: Recharge.Stress[PeriodIndex]<0
+										Set Variable: RechargeTest:= 1
+									End if
+								End loop
+								If: RechargeTest
+									Set Variable: ContinueSimulation:= MODFLOW_ProgressBarAddLine("Warning: one or more recharge values in Stress Period " + PeriodIndex + " is negative.")
+								End if
+							End if
+						End if
+					End if
+				End loop
+			End if
+		End file
+	End if
+End if

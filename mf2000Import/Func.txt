@@ -1,0 +1,1 @@
+-implib Mfgui_40.dll -import CreateNewHeadObs -import ReadLayerProportion -import ReadITT -import ReadHeadObsTime -import ReadNewHufParameter -import ReadNewHufCluster -import ReadNewFHB_Flow -import ReadNewFHB_Head -import NewArrayInstance -import CreateNewHfbParameter -import ReadNewHFB -import ReadCurrentHfbParameter -import CopyParameters

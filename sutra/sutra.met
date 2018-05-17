@@ -1,0 +1,1302 @@
+# =============================================================================
+# Export template for SUTRA PIE
+# =============================================================================
+# David Boldt                                                     Oct. 16, 1997
+# modified by Richard Winston version 1.02                        Jan. 17, 1999
+# modified by Richard Winston                                     Feb. 17, 1999
+# 
+# template changes: fixed bug in export of NOBS (Dataset 3), Added calls to ProgressBar PIE
+# Allow user to cancel export immediately if bandwidth has not been optimized.
+# Export cancelled if any elements have angles greater than 180 degrees.
+# Bypasses test for 'BadFluidSourceConc" for energy simulations.
+# Added option to allow user to run Argus ONE from an external program.
+# Added check for proper locations of sources of fluid.
+# Added check for the presence of observations when NOBCYC on the output tab is 0
+# Added Check for sources of fluid over nodes.
+# 
+# PIE changes: tabs changed from a single line to multi-line. Allowed user to set
+# Alert level with radio buttons rather than a global variable. Exports the model type (solute, heat, etc.)
+# Added checkbox to allow user to run Argus ONE from an external program
+# 
+# RBW Begin New code 1/12/99
+Evaluate expression: RF_Clear_Files()
+# RBW End New code 1/12/99
+# variable definitions
+# 
+# RBW Begin New code 3/5/99
+Define Variable: Calibrate [Boolean]
+Set Variable: Calibrate:= @Calibrate@
+Define Variable: ContinueSimulation [Boolean]
+# RBW End New code 3/5/99
+# RBW Begin New code 3/11/99
+Define Variable: VertexIndex [Integer]
+Define Variable: VertexCount [Integer]
+Define Variable: XPosition [Real]
+Define Variable: YPosition [Real]
+Define Variable: VertexFound [Boolean]
+Define Variable: InvalidSourcesCount [Integer]
+Set Variable: InvalidSourcesCount:= 0
+Define Variable: ObservationContourCount [Integer]
+Set Variable: ObservationContourCount:= 0
+# RBW End New code 3/11/99
+# RBW Begin New code 3/15/99
+Define Variable: XCoordList [Integer]
+Define Variable: YCoordList [Integer]
+Define Variable: NodeIndex [Integer]
+Define Variable: NodeCount [Integer]
+Define Variable: MinX [Real]
+Define Variable: MaxX [Real]
+Define Variable: MinY [Real]
+Define Variable: MaxY [Real]
+Define Variable: Epsilon [Real]
+Set Variable: XCoordList:= L_CreateNewList()
+Set Variable: YCoordList:= L_CreateNewList()
+Loop for: Nodes
+	Evaluate expression: L_AddToList(XCoordList,PositionX())
+	Evaluate expression: L_AddToList(YCoordList,PositionY())
+End loop
+Set Variable: Epsilon:= 1e-13
+Set Variable: NodeCount:= NumNodes()
+If: NodeCount>0
+	Set Variable: MinX:= L_GetFromList(XCoordList,0)
+	Set Variable: MaxX:= L_GetFromList(XCoordList,0)
+	Set Variable: MinY:= L_GetFromList(YCoordList,0)
+	Set Variable: MaxY:= L_GetFromList(YCoordList,0)
+	Loop for: Variable NodeIndex from: 1 to: NodeCount-1 step: 1
+		Set Variable: XPosition:= L_GetFromList(XCoordList,NodeIndex)
+		Set Variable: YPosition:= L_GetFromList(YCoordList,NodeIndex)
+		If: XPosition>MaxX
+			Set Variable: MaxX:= XPosition
+		End if
+		If: XPosition<MinX
+			Set Variable: MinX:= XPosition
+		End if
+		If: YPosition>MaxY
+			Set Variable: MaxY:= YPosition
+		End if
+		If: YPosition<MinY
+			Set Variable: MinY:= YPosition
+		End if
+	End loop
+End if
+# RBW End New code 3/15/99
+# RBW Begin New code 3/16/99
+Define Variable: NodeX [Real]
+Define Variable: NodeY [Real]
+Define Variable: SameX [Boolean]
+Define Variable: SameY [Boolean]
+# RBW End New code 3/15/99
+# 
+Define Variable: SutraPath [String]
+Set Variable: SutraPath:= "C:\SUTRA\sutra.exe"
+Define Variable: AcuteElement [Integer]
+Define Variable: CountEnergySoluteSources [Integer]
+Define Variable: CountFluidSources [Integer]
+Define Variable: CountInvalidPBCandQIN [Integer]
+Define Variable: CountInvalidSources [Integer]
+Define Variable: CountInvalidWellSources [Integer]
+Define Variable: CountInvalidUBCandQUIN [Integer]
+Define Variable: CountMissingSources [Integer]
+Define Variable: CountMissingSources2 [Integer]
+Define Variable: CountNodelessWells [Integer]
+Define Variable: CountObservationNodes [Integer]
+Define Variable: CountSpecifiedCorT [Integer]
+Define Variable: CountSpecifiedP [Integer]
+Define Variable: InValidOutput [Integer]
+Define Variable: i [Integer]
+Define Variable: NodeToBandwidthRatio [Real]
+Define Variable: TSTART [Real]
+Define Variable: OutputString [String]
+Define Variable: TempOutputString [String]
+Define Variable: StringLength [Integer]
+Define Variable: CharIndex [Integer]
+Define Variable: OutputIndex [Integer]
+Define Variable: BadFluidSourceConc [Boolean]
+Define Variable: ok [Boolean]
+# RBW begin new code 1/14/99
+Define Variable: ProgressMax [Integer]
+# RBW end new code 1/14/99
+# -----------------------------------------------------------------------------
+# Some error checking, much more could be done
+# 
+# Use variable "Alert" to set level of feedback
+#   0 - show all alert messages
+#   1 - turn off warnings, alert messages that could be problems
+#   2 - turn off alert messages on conditions that will certainly
+#       produce invalid model results
+Define Variable: Alert [Integer]
+Set Variable: Alert:= @ALERT@
+# If: IsNumber(Alert)
+# 	# for some reason the negation does not work here
+# Else
+# 	Define Variable: Alert [Integer]
+# 	Set Variable: Alert:= 0
+# End if
+# 
+Set Variable: ok:= 1
+# Warnings about potential trouble
+If: Alert<1
+	# 
+	# See if the bandwidth has been optimised
+	Set Variable: NodeToBandwidthRatio:= NumNodes()/BandWidth(1)
+	If: NodeToBandwidthRatio<2.5
+		# Alert: "The matrix bandwidth relative to the number of nodes is large.  Have you optimized the bandwidth under the menu 'Special', option 'Renumber'?  SUTRA may take a long time to run or run out of memory. (ratio "+NodeToBandwidthRatio+")"
+		Set Variable: ok:= IsOK("The matrix bandwidth relative to the number of nodes is large.  You may not have optimized the bandwidth under the menu 'Special', option 'Renumber'?  SUTRA may take a long time to run or run out of memory. (Node:Bandwidth ratio = "+NodeToBandwidthRatio+".) Do you wish to run Sutra?")
+		If: IsNAN(ok)
+			Alert: "Error: OkCancel PIE not installed."
+			Alert: "The matrix bandwidth relative to the number of nodes is large.  Have you optimized the bandwidth under the menu 'Special', option 'Renumber'?  SUTRA may take a long time to run or run out of memory. (Node:Bandwidth ratio = "+NodeToBandwidthRatio+")"
+			Set Variable: ok:= 1
+		End if
+	End if
+	If: ok
+		# Check for multiple boundary conditions for the same nodes
+		#  PBC = Specified pressure
+		#  QIN = Fluid Source
+		Set Variable: CountInvalidPBCandQIN:= CountNodes(if(isna(SUTRA Mesh.PBC),0,1)+if(isna(SUTRA Mesh.QIN),0,1)>1)
+		If: CountInvalidPBCandQIN!=0
+			# Set Variable: InValidOutput:= 1
+			Set Variable: InValidOutput:= 0
+			Alert: "Both a specified pressure or head and a fluid source were defined for "+CountInvalidPBCandQIN+" nodes. Check for overlap in objects for layers 'Specified Pressure/Head' and 'Sources of Fluid'."
+		End if
+		# 
+		# Check for multiple boundary conditions for the same nodes
+		#  UBC  = Specified Concentration|Temperature
+		#  QUIN = Solute|Energy Source
+		Set Variable: CountInvalidUBCandQUIN:= CountNodes(if(isna(SUTRA Mesh.UBC),0,1)+if(isna(SUTRA Mesh.QUIN),0,1)>1)
+		If: CountInvalidUBCandQUIN!=0
+			# Set Variable: InValidOutput:= 2
+			Set Variable: InValidOutput:= 0
+			Alert: "Both a specified concentration or temperature and an energy or solute source were defined for "+CountInvalidUBCandQUIN+" nodes. Check for overlap in objects for layers 'Specified Concentration/Temperature' and 'Sources of Solute/Energy'."
+		End if
+		# RBW Begin New code 3/11/99
+		Set Variable: InvalidSourcesCount:= 0
+		Redirect output to: InvalidSourcesLocations.txt
+			Loop for: Objects in layer: Sources of Fluid
+				If: ContourType()<3
+					Set Variable: VertexCount:= NumVertices()
+					Loop for: Variable VertexIndex from: 1 to: VertexCount step: 1
+						Set Variable: XPosition:= NthVertexX(VertexIndex)
+						Set Variable: YPosition:= NthVertexY(VertexIndex)
+						Set Variable: VertexFound:= 0
+						Loop for: Variable NodeIndex from: 0 to: NodeCount-1 step: 1
+							# RBW Begin New code 3/16/99
+							Set Variable: NodeX:= L_GetFromList(XCoordList,NodeIndex)
+							Set Variable: SameX:= 0
+							If: NodeX=XPosition
+								Set Variable: SameX:= 1
+							Else
+								If: (NodeX-XPosition)/(NodeX+XPosition+Epsilon)<Epsilon
+									Set Variable: SameX:= 1
+								End if
+							End if
+							If: SameX
+								Set Variable: NodeY:= L_GetFromList(YCoordList,NodeIndex)
+								Set Variable: SameY:= 0
+								If: NodeY=YPosition
+									Set Variable: SameY:= 1
+								Else
+									If: (NodeY-YPosition)/(NodeY+YPosition+Epsilon)<Epsilon
+										Set Variable: SameY:= 1
+									End if
+								End if
+								If: SameY
+									Set Variable: VertexFound:= 1
+								End if
+							End if
+							# RBW End New code 3/16/99
+						End loop
+						If: !VertexFound
+							Set Variable: InvalidSourcesCount:= InvalidSourcesCount + 1
+							Start a new line
+								Export expression: "Warning: Source of fluid at " [G0]
+								Export expression: XPosition [G0]
+								Export expression: ", " [G0]
+								Export expression: YPosition [G0]
+								Export expression: " is not at a node. It will not be included as a source of fluid in the SUTRA model." [G0]
+							End line
+						End if
+					End loop
+				End if
+			End loop
+		End file
+		If: InvalidSourcesCount
+			# Set Variable: InValidOutput:= 2
+			Set Variable: InValidOutput:= 0
+			Alert: "Warning: " + InvalidSourcesCount + " objects on the 'Sources of Fluid' layer were not at nodes. They will not be included as a source of fluid in the SUTRA model. See InvalidSourcesLocations.txt for details."
+		End if
+		If: @NOBCYC@=0
+			Loop for: Objects in layer: Observation
+				Set Variable: ObservationContourCount:= ObservationContourCount+1
+			End loop
+		End if
+		If: ObservationContourCount
+			Set Variable: InValidOutput:= 0
+			Alert: "There are " + ObservationContourCount + "contours on the 'Observation' layer but NOBCYC on the Output tab of the Edit Project Info dialog box is 0 so no observations will be used."
+		End if
+		# RBW End New code 3/11/99
+	End if
+End if
+# 
+# Warnings about big trouble, do not export mesh and do write to log file
+If: (Alert<2)&ok
+	# 
+	# Check for fluid sources with unspecified concentrations/temperatures
+	Set Variable: CountMissingSources:= CountNodes(IsNumber(SUTRA Mesh.QIN) & isna(SUTRA Mesh.UIN))
+	If: CountMissingSources!=0
+		Set Variable: InValidOutput:= 3
+		Alert: "No concentration or temperature is specified for at least one fluid source object ("+CountMissingSources+" nodes). Check layer 'Sources of Fluid' for parameter 'concentration_of_source', or layer 'Sources of Energy' for parameter 'temperature_of_source'.\n\nNo SUTRA data has been exported! See the log file sutra.log for details."
+	End if
+	Set Variable: CountMissingSources2:= CountNodes(IsNumber(SUTRA Mesh.PBC) & isna(SUTRA Mesh.pUBC))
+	If: CountMissingSources2!=0
+		Set Variable: InValidOutput:= 4
+		Alert: "No concentration/temperature is specified for at least one specified head or pressure object ("+CountMissingSources2+" nodes). Check layer 'Specified Head' for parameter 'concentration', or layer 'Specified Pressure' for parameter 'concentration' or 'temperature'.\n\nNo SUTRA data has been exported! See the log file sutra.log for details."
+	End if
+	# 
+	# Check for multiple kinds of source for the same nodes in the same layer
+	Set Variable: CountInvalidSources:= CountNodes(if(isna(Sources of Fluid.specific_source),0,1) + if(isna(Sources of Fluid.total_source),0,1)>1)
+	If: CountInvalidSources!=0
+		Set Variable: InValidOutput:= 5
+		Alert: "In layer 'Sources of Fluid' both specific AND total sources are defined for at least one object ("+CountInvalidSources+" nodes). Only one type of source at a time can be used by SUTRA.\n\nNo SUTRA data has been exported! See the log file sutra.log for details."
+	End if
+	# 
+	# Check for Well objects in layer 'Fluid Sources' using a specific source
+	Set Variable: CountInvalidWellSources:= CountNodes(Sources of Fluid.specific_source & NodeAboveCntr(Sources of Fluid.specific_source)=1)
+	# Set Variable: CountInvalidWellSources:= 1
+	If: CountInvalidWellSources!=0
+		Set Variable: InValidOutput:= 6
+		If: CountInvalidWellSources=1
+			Alert: "In layer 'Sources of Fluid' a well (point object) has been set with a value for 'specific_source'.  Use only 'total_source' for wells.\n\nNo SUTRA data has been exported!  See the log file sutra.log for details."
+		Else
+			Alert: "In layer 'Sources of Fluid' "+CountInvalidWellSources+" wells (point objects) have been set with a value for 'specific_source'.  Use only 'total_source' for wells.\n\nNo SUTRA data has been exported!  See the log file sutra.log for details."
+		End if
+	End if
+	# 
+	If: SumElements(Max(NthAngle(1),NthAngle(2),NthAngle(3),NthAngle(4))>=180.0,1)
+		Alert: "One or more elements have angles greater than 180 degrees. SUTRA will not be able to run. You can locate the problem elements with the 'Edit|Select Acute Elements' menu item. \n\nNo SUTRA data has been exported!"
+		Set Variable: InValidOutput:= 7
+	End if
+End if
+# 
+# We would Check for Well objects that do not overlie nodes if we could
+# 
+If: ok
+	# Don`t let User change MESH layer name
+	If: LayerName()!="SUTRA Mesh"
+		Set Variable: InValidOutput:= 5
+		Alert: "Mesh Layer Name has been changed! The Mesh layer must be called 'SUTRA Mesh'.\n\nNo SUTRA data has been exported!"
+	End if
+	# 
+	# Check that no "Sources of Fluid.concentration_of_source" = $N/A
+	Set Variable: BadFluidSourceConc:= 0
+	If: @transportConditions@ < 2
+		Loop for: Objects in layer: Sources of Fluid
+			If: IsNA(concentration_of_source)
+				Set Variable: BadFluidSourceConc:= 1
+			End if
+		End loop
+	End if
+	If: BadFluidSourceConc
+		Alert: "Warning: One or more objects on 'Sources of Fluid' has a 'concentration_of_source' = $N/A"
+	End if
+End if
+# ------------------------------------------------------------------------------
+# Start writing output
+# 
+# If we passed through the error checks
+If: !InValidOutput&ok
+	# 
+	# Write the SUTRA input dataset!
+	Redirect output to: $BaseNameNoExt$.d5
+		# DATA SET #1 - INPUT DATA HEADING - CHOOSE "ENERGY" OR "SOLUTE TRANSPORT"
+		Start a new line
+			# Enter either "SUTRA SOLUTE TRANSPORT" or "SUTRA ENERGY TRANSPORT"
+			Export expression: "@SIMULA@" [G0]
+		End line
+		# DATA SET #2 - OUTPUT HEADING
+		# Enter 2 title lines; each line cannot be more than 80 characters
+		Start a new line
+			Export expression: "@TITLE1@" [G0]
+		End line
+		Start a new line
+			Export expression: "@TITLE2@" [G0]
+		End line
+		# DATA SET #3 - SIMULATION CONTROL NUMBERS
+		Start a new line
+			Export expression: NumNodes() [I5]
+			Export expression: NumElements() [I5]
+			Export expression: 2*(BandWidth(1))+1 [I5]
+			# Pinchnodes (SET EQUAL TO 0)
+			Export expression: 0 [I5]
+			# 
+			# Number of specified pressure nodes
+			Set Variable: CountSpecifiedP:= CountNodes(IsNumber(SUTRA Mesh.PBC))
+			Export expression: CountSpecifiedP [I5]
+			# 
+			# Number of specified concentration/temperature nodes
+			Set Variable: CountSpecifiedCorT:= CountNodes(IsNumber(SUTRA Mesh.UBC))
+			Export expression: CountSpecifiedCorT [I5]
+			# 
+			# Number of fluid source nodes
+			Set Variable: CountFluidSources:= CountNodes(IsNumber(SUTRA Mesh.QIN))
+			Export expression: CountFluidSources [I5]
+			# 
+			# Number of solute flux or energy flux nodes
+			Set Variable: CountEnergySoluteSources:= CountNodes(IsNumber(SUTRA Mesh.QUIN))
+			Export expression: CountEnergySoluteSources [I5]
+			# 
+			# Number of observation nodes (set to zero for no observation nodes)
+			# RBW begin new code 1/24/99
+			If: @NOBCYC@
+				Set Variable: CountObservationNodes:= CountNodes(SUTRA Mesh.INOB>0)
+			Else
+				Set Variable: CountObservationNodes:= 0
+			End if
+			# RBW end new code 1/24/99
+			# RBW begin old code 1/24/99
+			# Set Variable: CountObservationNodes:= CountNodes(SUTRA Mesh.INOB>0)
+			# RBW end old code 1/24/99
+			Export expression: CountObservationNodes [I5]
+			# 
+			# Maximum number of time steps on which observations will be made
+			# (set to zero for no observations)
+			Export expression: @NTOBS@ [I5]
+		End line
+		# RBW Begin New code1/24/99
+		Set Variable: ProgressMax:= NumNodes() * 3 + NumElements() * 2
+		# RBW End New code1/24/99
+		If: CountFluidSources!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountEnergySoluteSources!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountSpecifiedP!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountSpecifiedCorT!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountObservationNodes!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountInvalidPBCandQIN!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountInvalidUBCandQUIN!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountMissingSources!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountMissingSources2!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountInvalidSources!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		If: CountInvalidWellSources!=0
+			Set Variable: ProgressMax:= ProgressMax + NumNodes()
+		End if
+		Evaluate expression: ProgressBarInitialize(ProgressMax, 1)
+		Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Sets 4-14A")
+		# RBW End New code1/24/99
+		# DATA SET #4 - SIMULATION MODES
+		Start a new line
+			# IUNSAT=1 implies saturated/unsaturated flow
+			# IUNSAT=0 implies saturated flow only
+			Export expression: @IUNSAT@ [I5]
+			# ISSFLOW=1 implies steady-state flow
+			# ISSFLOW=0 implies transient flow
+			Export expression: @ISSFLO@ [I5]
+			# ISSTRA=1 implies steady-state transport
+			# ISSTRA=0 implies transient transport
+			Export expression: @ISSTRA@ [I5]
+			# IREAD=1  implies cold start
+			# IREAD=-1 implies warm start
+			Export expression: @IREAD@ [I5]
+			# ISTORE=0  does not create restart file
+			# ISTORE=# creates restart file every # time steps
+			Export expression: @ISTORE@ [I5]
+		End line
+		# DATA SET #5 - NUMERICAL CONTROL PARAMETERS
+		Start a new line
+			# UP=0 implies no upstream weighting
+			# UP=1 implies full upstream weighting
+			Export expression: @UP@ [G10]
+			# GNUP - pressure boundary condition factor
+			Export expression: @GNUP@ [G15]
+			# GNUU - concentration/temperature boundary condition factor
+			Export expression: @GNUU@ [G15]
+		End line
+		# DATA SET #6 - TEMPORAL CONTROL AND SOLUTION CYCLING
+		Start a new line
+			# ITMAX - Max allow time steps
+			Export expression: @ITMAX@ [I5]
+			# DELT - Initial time step size in seconds
+			Export expression: @DELT@ [G15]
+			# TMAX - Max allowed simulation time in seconds
+			Export expression: @TMAX@ [G15]
+			# ITCYC - number of time steps in time step change cycle
+			Export expression: @ITCYC@ [I10]
+			# DTMULT - Time step multiplier
+			Export expression: @DTMULT@ [G10]
+			# DTMAX - Max allowed time step size in seconds
+			# RBW Begin new code 1/28/98
+			If: @DTMULT@=1
+				Export expression: @DELT@ [G15]
+			Else
+				Export expression: @DTMAX@ [G15]
+			End if
+			# RBW end new code 1/28/98
+			# RBW Begin old code 1/28/98
+			# Export expression: @DTMAX@ [G15]
+			# RBW end old code 1/28/98
+			# NPCYC - Number of time steps in pressure solution cycle
+			Export expression: @NPCYC@ [I5]
+			# NUCYC - Number of time stpes in concentration/temperature cycle
+			Export expression: @NUCYC@ [I5]
+		End line
+		# DATA SET #7 - OUTPUT CONTROLS AND OPTIONS
+		Start a new line
+			# NPRINT - Number of time steps between printed output
+			Export expression: @NPRINT@ [I5]
+			# KNODAL = 0  Cancels printout of nodewise data
+			Export expression: @KNODAL@ [I5]
+			# KELMNT = 0 Cancels printout of elementwise data
+			Export expression: @KELMNT@ [I5]
+			# KINCID = 0 Cancels printout of node incidences
+			Export expression: @KINCID@ [I5]
+			# KPLOTP = 0
+			Export expression: @KPLOTP@ [I5]
+			# KPLOTU = 0
+			Export expression: @KPLOTU@ [I5]
+			# KVEL = 1 Calculates fluid velocities
+			Export expression: @KVEL@ [I5]
+			# KBUDG = 1 Calculates fluid and energy/solute budgets
+			Export expression: @KBUDG@ [I5]
+		End line
+		# DATA SET #8 - ITERATION CONTROLS
+		Start a new line
+			# ITRMAX - Max iterations per time step
+			# set to 1 for noniterative solution
+			Export expression: @ITRMAX@ [I10]
+			# RPMAX - Pressure convergence criteria
+			Export expression: @RPMAX@ [G10]
+			# RUMAX - temperature/concentration convergence criteria
+			Export expression: @RUMAX@ [G10]
+		End line
+		# DATA SET #9 - FLUID PROPERTIES
+		Start a new line
+			# COMPFL - fluid compressibility
+			Export expression: @COMPFL@ [G10]
+			# CW - Specific heat (leave blank for solute transport)
+			Export expression: @CW@ [G10]
+			# SIGMAW
+			# - For solute: diffusivity of solute in fluid including tortuosity
+			# - For energy: thermal conductivity of fluid
+			Export expression: @SIGMAW@ [G10]
+			# RHOW0 - Base fluid density
+			Export expression: @RHOW0@ [G10]
+			# URHOW0 - temperature/concentration at  RHOW0
+			Export expression: @URHOW0@ [G10]
+			# DRWDU - coefficient of density change with respect to
+			# concentration/temperature
+			Export expression: @DRWDU@ [G10]
+			# VISC0
+			# - for solute transport: FLUID VISCOSITY
+			# - for energy transport: scales from MKS units to units of choice
+			Export expression: @VISCO@ [G10]
+		End line
+		# DATA SET #10 - SOLID MATRIX PROPERTIES
+		Start a new line
+			# COMPMA - Solid matrix compressibility
+			Export expression: @COMPMA@ [G10]
+			# CS - Solid grain specific heat (leave blank for solute transport)
+			Export expression: @CS@ [G10]
+			# SIGMAS - Solid grain diffusivity
+			# - For solute: leave blank
+			# - For energy: thermal conductivity of grains
+			Export expression: @SIGMAS@ [G10]
+			# RHOS - Solid grain density
+			Export expression: @RHOS@ [G10]
+		End line
+		# DATA SET #11 - ADSORPTION PARAMETERS
+		Start a new line
+			# ADSMOD - For no sorption or energy transport enter "      NONE",
+			#   and leave the remaining items in Data Set #10 blank
+			# for linear sorption enter                          "    LINEAR",
+			# for Freundlich sorption enter                      "FREUNDLICH",
+			# for Langmuir sorption enter                        "  LANGMUIR"
+			Export expression: "@ADSMOD@" [G0]
+			# CHI1 - Value of linear, Freundlich or Langmuir distribution coefficient
+			Export expression: @CHI1@ [G10]
+			# CHI2 - Value of Freundlich or Langmuir coefficient
+			Export expression: @CHI2@ [G10]
+		End line
+		# DATA SET #12 - PRODUCTION OF ENERGY OR SOLUTE MASS
+		Start a new line
+			# PRODFO - zero-order rate of production in fluid for energy
+			# or solute mass
+			Export expression: @PRODF0@ [G10]
+			# PRODSO -  zero-order rate of production in the immobile phase
+			# for energy or adsorbate mass
+			Export expression: @PRODS0@ [G10]
+			# PRODF1 - first-order rate of solute mass production in fluid
+			# (leave blank for energy transport)
+			Export expression: @PRODF1@ [G10]
+			# PRODS1 - first-order rate of production of adsorbate mass in
+			# immobile phase (leave blank for energy transport)
+			Export expression: @PRODS1@ [G10]
+		End line
+		# DATA SET #13 - ORIENTATION OF COORDINATES TO GRAVITY
+		Start a new line
+			# GRAVX - component of gravity vector in +x direction
+			Export expression: @GRAVX@ [G10]
+			# GRAVY - component of gravity vector in +y direction
+			Export expression: @GRAVY@ [G10]
+		End line
+		# DATA SET #14A - SCALE FACTORS FOR NODEWISE DATA
+		Start a new line
+			Export expression: "NODE      " [G0]
+			# SCALX - multiplier to scale x-coordinates in DATA SET#14B
+			Export expression: 1 [G10]
+			# SCALY - multiplier to scale y-coordinates in DATA SET#14B
+			Export expression: 1 [G10]
+			# SCALTH - multiplier to scale element thickness in DATA SET#14B
+			Export expression: 1 [G10]
+			# PORFAC - multiplier to scale porosity in DATA SET #14B
+			Export expression: 1 [G10]
+		End line
+		# DATA SET 14B - NODEWISE DATA
+		# RBW Begin New code1/24/99
+		Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 14B")
+		# RBW End New code1/24/99
+		If: ContinueSimulation
+			Loop for: Nodes
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarAdvance()
+				If: ContinueSimulation
+					# RBW End New code1/24/99
+					Start a new line
+						Export expression: NodeNumber() [I5]
+						# RBW begin old code 9/25/98
+						# Export expression: SUTRA Mesh.NREG [I5]
+						# RBW end old code 9/25/98
+						# RBW begin new code 9/25/98
+						If: IsNumber(SUTRA Mesh.NREG)
+							Export expression: SUTRA Mesh.NREG [I5]
+						Else
+							Export expression: 0 [I5]
+						End if
+						# RBW end new code 9/25/98
+						Export expression: " " [G0]
+						Export expression: PositionX() [G9]
+						Export expression: " " [G0]
+						Export expression: PositionY() [G9]
+						Export expression: SUTRA Mesh.THICK [G10]
+						Export expression: SUTRA Mesh.POR [G10]
+					End line
+				End if
+			End loop
+		End if
+		# DATA SET #15A - SCALE FACTORS FOR ELEMENTWISE DATA
+		If: ContinueSimulation
+			Start a new line
+				Export expression: "ELEMENT   " [G0]
+				# PMAXFA - multiplier for maximum permeability in DATA SET #15B
+				Export expression: 1 [G10]
+				# PMINFA - multiplier for minimum permeability in DATA SET #15B
+				Export expression: 1 [G10]
+				# ANGFAC - multiplier for ANGLEX in DATA SET #15B
+				Export expression: 1 [G10]
+				# ALMAXF - multiplier for longitudinal dispersivity in maximum
+				# permeability direction in DATA SET #15B
+				Export expression: 1 [G10]
+				# ALMINF - multiplier for longitudinal dispersivity in minimum
+				# permeability direction in DATA SET #15B
+				Export expression: 1 [G10]
+				# ATMAXF - multiplier for transverse dispersivity in maximum
+				# permeability direction in DATA SET #15B
+				Export expression: 1 [G10]
+				# ATMINF - multiplier for transverse dispersivity in minimum
+				# permeability direction in DATA SET #15B
+				Export expression: 1 [G10]
+			End line
+		End if
+		# DATA SET #15B - ELEMENTWISE DATA
+		# RBW Begin New code1/24/99
+		Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 15B")
+		# RBW End New code1/24/99
+		If: ContinueSimulation
+			Loop for: Elements
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarAdvance()
+				If: ContinueSimulation
+					# RBW End New code1/24/99
+					Start a new line
+						Export expression: ElementNumber() [I5]
+						# RBW begin old code 9/25/98
+						# Export expression: SUTRA Mesh.LREG [I5]
+						# RBW end old code 9/25/98
+						# RBW begin new code 9/25/98
+						If: IsNumber(SUTRA Mesh.LREG)
+							Export expression: SUTRA Mesh.LREG [I5]
+						Else
+							Export expression: 0 [I5]
+						End if
+						# RBW end new code 9/25/98
+						Export expression: SUTRA Mesh.PMAX [G10]
+						Export expression: SUTRA Mesh.PMIN [G10]
+						Export expression: SUTRA Mesh.ANGLEX [G10]
+						Export expression: SUTRA Mesh.ALMAX [G10]
+						Export expression: SUTRA Mesh.ALMIN [G10]
+						Export expression: SUTRA Mesh.ATMAX [G10]
+						Export expression: SUTRA Mesh.ATMIN [G10]
+					End line
+				End if
+			End loop
+		End if
+		# 
+		# DATA SET #16 - DATA FOR PRINTER PLOT - OMITTED
+		If: ContinueSimulation
+			If: @KPLOTP@=1 | @KPLOTU@=1
+				Start a new line
+					Export expression: @IDIREC@ [I5]
+					Export expression: @NLINPI@ [I5]
+					Export expression: @NCHAPI@ [I5]
+					Export expression: @NCHAPL@ [I5]
+				End line
+				If: @KPLOTP@=1
+					Start a new line
+						Export expression: @PBASE@ [G13]
+					End line
+				End if
+				If: @KPLOTU@=1
+					Start a new line
+						Export expression: @UBASE@ [G13]
+					End line
+				End if
+			End if
+		End if
+		# 
+		# DATA SET #17 - DATA FOR FLUID SOURCES AND SINKS
+		If: ContinueSimulation
+			If: CountFluidSources!=0
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 17")
+				# RBW End New code1/24/99
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					If: ContinueSimulation
+						# RBW End New code1/24/99
+						If: IsNumber(SUTRA Mesh.QIN)
+							Start a new line
+								# if time-dependent, set node value to negative
+								If: SUTRA Mesh.time_dependent_fluid_sources
+									Export expression: -NodeNumber() [I10]
+								Else
+									Export expression: NodeNumber() [I10]
+								End if
+								Export expression: " " [G0]
+								Export expression: SUTRA Mesh.QIN [G14]
+								If: SUTRA Mesh.QIN>=0 & IsNumber(SUTRA Mesh.UIN)
+									Export expression: " " [G0]
+									Export expression: SUTRA Mesh.UIN [G14]
+								End if
+							End line
+						End if
+					End if
+				End loop
+				If: ContinueSimulation
+					Start a new line
+						Loop for: Variable i from: 1 to: 78 step: 1
+							Export expression: 0 [I1]
+						End loop
+						Export expression: 17 [I2]
+					End line
+				End if
+			End if
+		End if
+		# 
+		# DATA SET #18 DATA FOR ENERGY OR SOLUTE MASS SOURCES AND SINKS
+		If: ContinueSimulation
+			If: CountEnergySoluteSources!=0
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 18")
+				# RBW End New code1/24/99
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: ContinueSimulation
+						If: IsNumber(SUTRA Mesh.QUIN)
+							Start a new line
+								# if time-dependent, set node value to negative
+								If: SUTRA Mesh.time_dependent_energy_or_solute_sources
+									Export expression: -NodeNumber() [I10]
+								Else
+									Export expression: NodeNumber() [I10]
+								End if
+								Export expression: " " [G0]
+								Export expression: SUTRA Mesh.QUIN [G14]
+							End line
+						End if
+					End if
+				End loop
+				If: ContinueSimulation
+					Start a new line
+						Loop for: Variable i from: 1 to: 78 step: 1
+							Export expression: 0 [I1]
+						End loop
+						Export expression: 18 [I2]
+					End line
+				End if
+			End if
+		End if
+		# 
+		# DATA SET #19 - DATA FOR SPECIFIED PRESSURE NODES
+		If: ContinueSimulation
+			If: CountSpecifiedP!=0
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 19")
+				# RBW End New code1/24/99
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: ContinueSimulation
+						If: IsNumber(SUTRA Mesh.PBC)
+							Start a new line
+								# if time-dependent, set node value to negative
+								If: SUTRA Mesh.time_dependent_specified_head_or_pressure
+									Export expression: -NodeNumber() [I5]
+								Else
+									Export expression: NodeNumber() [I5]
+								End if
+								Export expression: " " [G0]
+								Export expression: SUTRA Mesh.PBC [G19]
+								Export expression: " " [G0]
+								Export expression: SUTRA Mesh.pUBC [G19]
+							End line
+						End if
+					End if
+				End loop
+				If: ContinueSimulation
+					Start a new line
+						Loop for: Variable i from: 1 to: 78 step: 1
+							Export expression: 0 [I1]
+						End loop
+						Export expression: 19 [I2]
+					End line
+				End if
+			End if
+		End if
+		# DATA SET #20 DATA FOR SPECIFIED CONCENTRATION OR TEMPERATURE NODES
+		If: ContinueSimulation
+			If: CountSpecifiedCorT!=0
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 20")
+				# RBW End New code1/24/99
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					If: ContinueSimulation
+						# RBW End New code1/24/99
+						If: IsNumber(SUTRA Mesh.UBC)
+							Start a new line
+								# if time-dependent, set node value to negative
+								If: SUTRA Mesh.time_dependent_specified_concentration_or_temperature
+									Export expression: -NodeNumber() [I5]
+								Else
+									Export expression: NodeNumber() [I5]
+								End if
+								Export expression: " " [G0]
+								Export expression: SUTRA Mesh.UBC [G19]
+							End line
+						End if
+					End if
+				End loop
+				If: ContinueSimulation
+					Start a new line
+						Loop for: Variable i from: 1 to: 78 step: 1
+							Export expression: 0 [I1]
+						End loop
+						Export expression: 20 [I2]
+					End line
+				End if
+			End if
+		End if
+		# 
+		# DATA SET #21 DATA FOR OBSERVATION NODES
+		If: ContinueSimulation
+			If: CountObservationNodes!=0
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 21")
+				# RBW End New code1/24/99
+				If: ContinueSimulation
+					Start a new line
+						# NOBCYC - number of time steps between making
+						# observations at specified nodes
+						Export expression: @NOBCYC@ [I10]
+					End line
+					Start a new line
+						Loop for: Nodes
+							# RBW Begin New code1/24/99
+							Set Variable: ContinueSimulation:= ProgressBarAdvance()
+							# RBW End New code1/24/99
+							If: ContinueSimulation
+								If: (SUTRA Mesh.INOB>0)
+									Export expression: SUTRA Mesh.INOB [16I5]
+								End if
+							End if
+						End loop
+						Export expression: 0 [16I5]
+					End line
+				End if
+			End if
+		End if
+		# 
+		# DATA SET #22 ELEMENT INDICES
+		# RBW Begin New code1/24/99
+		Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting Data Set 21")
+		# RBW End New code1/24/99
+		If: ContinueSimulation
+			Loop for: Elements
+				# RBW Begin New code1/24/99
+				Set Variable: ContinueSimulation:= ProgressBarAdvance()
+				# RBW End New code1/24/99
+				If: ContinueSimulation
+					Start a new line
+						Export expression: ElementNumber() [I6]
+						Export expression: NthNodeNum(1) [I6]
+						Export expression: NthNodeNum(2) [I6]
+						Export expression: NthNodeNum(3) [I6]
+						Export expression: NthNodeNum(4) [I6]
+					End line
+				End if
+			End loop
+		End if
+	End file
+	If: ContinueSimulation
+		Redirect output to: $BaseNameNoExt$.d55
+			Start a new line
+				# Starting time - TSTART
+				Set Variable: TSTART:= @TSTART@
+				# Alert: TSTART
+				Export expression: TSTART [G20]
+			End line
+			# Initial condition for pressure
+			Set Variable: TempOutputString:= ""
+			Set Variable: OutputString:= ""
+			Set Variable: OutputIndex:= 0
+			# RBW Begin New code1/24/99
+			Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting file *.d55")
+			# RBW End New code1/24/99
+			If: ContinueSimulation
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: ContinueSimulation
+						Set Variable: OutputIndex:= OutputIndex + 1
+						Set Variable: TempOutputString:= SUTRA Mesh.PVEC
+						Set Variable: TempOutputString:= Substring(TempOutputString, 1, 20)
+						Set Variable: StringLength:= Length(TempOutputString)
+						If: StringLength<20
+							Loop for: Variable CharIndex from: 1 to: 20-StringLength step: 1
+								Set Variable: TempOutputString:= " " + TempOutputString
+							End loop
+						End if
+						Set Variable: OutputString:= OutputString + TempOutputString
+						If: OutputIndex=4
+							Start a new line
+								Export expression: OutputString [G0]
+								Set Variable: OutputString:= ""
+								Set Variable: OutputIndex:= 0
+							End line
+						End if
+					End if
+				End loop
+			End if
+			If: ContinueSimulation
+				If: OutputIndex!=0
+					Start a new line
+						Export expression: OutputString [G0]
+					End line
+				End if
+				# Initial condition for temperature/concentration
+				Set Variable: TempOutputString:= ""
+				Set Variable: OutputString:= ""
+				Set Variable: OutputIndex:= 0
+			End if
+			If: ContinueSimulation
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: ContinueSimulation
+						Set Variable: OutputIndex:= OutputIndex + 1
+						Set Variable: TempOutputString:= SUTRA Mesh.UVEC
+						Set Variable: TempOutputString:= Substring(TempOutputString, 1, 20)
+						Set Variable: StringLength:= Length(TempOutputString)
+						If: StringLength<20
+							Loop for: Variable CharIndex from: 1 to: 20-StringLength step: 1
+								Set Variable: TempOutputString:= " " + TempOutputString
+							End loop
+						End if
+						Set Variable: OutputString:= OutputString + TempOutputString
+						If: OutputIndex=4
+							Start a new line
+								Export expression: OutputString [G0]
+								Set Variable: OutputString:= ""
+								Set Variable: OutputIndex:= 0
+							End line
+						End if
+					End if
+				End loop
+			End if
+			If: ContinueSimulation
+				If: OutputIndex!=0
+					Start a new line
+						Export expression: OutputString [G0]
+					End line
+				End if
+			End if
+			# Start a new line
+			# 	Loop for: Nodes
+			# 		Export expression: SUTRA Mesh.UVEC [4G20]
+			# 	End loop
+			# End line
+		End file
+	End if
+	# 
+	# File used be SUTRA to define filenames for input and output
+	If: ContinueSimulation
+		Redirect output to: SUTRA.FIL
+			Start a new line
+				Export expression: 5 [I5]
+			End line
+			Start a new line
+				Export expression: "$BaseNameNoExt$.d5" [G0]
+			End line
+			Start a new line
+				Export expression: 55 [I5]
+			End line
+			Start a new line
+				Export expression: "$BaseNameNoExt$.d55" [G0]
+			End line
+			Start a new line
+				Export expression: 6 [I5]
+			End line
+			Start a new line
+				Export expression: "$BaseNameNoExt$.d6" [G0]
+			End line
+			Start a new line
+				Export expression: 66 [I5]
+			End line
+			Start a new line
+				Export expression: "$BaseNameNoExt$.d66" [G0]
+			End line
+			Start a new line
+				Export expression: 3 [I5]
+			End line
+			Start a new line
+				Export expression: "$BaseNameNoExt$.d3" [G0]
+			End line
+			Start a new line
+				Export expression: 4 [I5]
+			End line
+			Start a new line
+				Export expression: "$BaseNameNoExt$.d4" [G0]
+			End line
+		End file
+		# 
+		# batch file to run SUTRA
+		Redirect output to: RUNSUTRA.BAT
+			Start a new line
+				# Export expression: SUTRA_GetDirectory() + "SUTRA"
+				Export expression: "echo on" [G0]
+			End line
+			Start a new line
+				# Export expression: SUTRA_GetDirectory() + "SUTRA"
+				Export expression: SutraPath [G0]
+				If: Calibrate
+					Export expression: " /wait" [G0]
+				End if
+			End line
+			If: Calibrate
+				Start a new line
+					Export expression: GetMyDirectory() [G0]
+					Export expression: "WaitForMe.exe" [G0]
+				End line
+				# Start a new line
+				# 	Export expression: GetMyDirectory() [G0]
+				# 	Export expression: "SelectChar.exe" [G0]
+				# End line
+			Else
+				Start a new line
+					Export expression: "Pause" [G0]
+				End line
+			End if
+		End file
+	End if
+	# 
+	# Write to log file
+	# RBW Begin New code1/24/99
+	Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting log file")
+	# RBW End New code1/24/99
+	Redirect output to: $BaseNameNoExt$.log
+		Start a new line
+			Export expression: "First file exported $BaseNameNoExt$.d5" [G0]
+		End line
+		Start a new line
+			Export expression: "Second file exported $BaseNameNoExt$.d55" [G0]
+		End line
+		Start a new line
+			Export expression: "Third file exported SUTRA.FIL" [G0]
+		End line
+		Start a new line
+			Export expression: "Fourth file exported RUNSUTRA.BAT" [G0]
+		End line
+		Start a new line
+			Export expression: "Created Log file $BaseNameNoExt$.log" [G0]
+		End line
+	End file
+	# 
+	# RBW Begin New code 3/11/99
+	If: !InvalidSourcesCount
+		Evaluate expression: Delete_File("InvalidSourcesLocations.txt")
+	End if
+	# RBW End New code 3/11/99
+	If: @RUNSUTRA@&ContinueSimulation
+		Execute external code: "RUNSUTRA.BAT"
+		# If: SUTRA_Run()
+		# End if
+	End if
+	# RBW Begin New code 3/16/99
+	If: !@RUNSUTRA@&Calibrate
+		Redirect output to: KillSUTRA.BAT
+				Start a new line
+					Export expression: GetMyDirectory() [G0]
+					Export expression: "WaitForMe.exe" [G0]
+				End line
+		End file
+		Execute external code: "KillSUTRA.BAT"
+		# If: SUTRA_Run()
+		# End if
+	End if
+	# RBW End New code 3/16/99
+Else
+	# ERRORs, nothing exported!!!
+	# 
+	# Write to log file
+	# RBW Begin New code1/24/99
+	Set Variable: ContinueSimulation:= ProgressBarSetMessage("Exporting log file")
+	# RBW End New code1/24/99
+	Redirect output to: $BaseNameNoExt$.log
+		If: CountInvalidPBCandQIN!=0
+			Start a new line
+				Export expression: "Both a specified pressure or head and a fluid Source are defined for" [G0]
+			End line
+			Start a new line
+				Export expression: CountInvalidPBCandQIN+" nodes.  Check for overlap in the layers 'Sources of Fluid' and" [G0]
+			End line
+			Start a new line
+				Export expression: "'Specified Pressure/Head'." [G0]
+			End line
+			Start a new line
+			End line
+			Start a new line
+				Export expression: "  check nodes:  " [G0]
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: if(isna(SUTRA Mesh.PBC),0,1)+if(isna(SUTRA Mesh.QIN),0,1)>1
+						Export expression: "$Node$, " [G0]
+					End if
+				End loop
+			End line
+			Start a new line
+			End line
+			Start a new line
+			End line
+		End if
+		If: CountInvalidUBCandQUIN!=0
+			Start a new line
+				Export expression: "Both a specified energy or concentration and a source of energy or solute" [G0]
+			End line
+			Start a new line
+				Export expression: "are defined for "+CountInvalidUBCandQUIN+" nodes.  Check for overlap in layers" [G0]
+			End line
+			Start a new line
+				Export expression: "'Specified Concentration/Temperature' and 'Sources of Solute/Energy'." [G0]
+			End line
+			Start a new line
+			End line
+			Start a new line
+				Export expression: "  check nodes:  " [G0]
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: if(isna(SUTRA Mesh.UBC),0,1)+if(isna(SUTRA Mesh.QUIN),0,1)>1
+						Export expression: "$Node$, " [G0]
+					End if
+				End loop
+			End line
+			Start a new line
+			End line
+			Start a new line
+			End line
+		End if
+		If: CountMissingSources!=0
+			Start a new line
+				Export expression: "In layer 'Sources of Fluid' no concentration or temperature is defined for" [G0]
+			End line
+			Start a new line
+				Export expression: "at least one object ("+CountMissingSources+" nodes).  All sources must have a concentration" [G0]
+			End line
+			Start a new line
+				Export expression: "or temperature." [G0]
+			End line
+			Start a new line
+			End line
+			Start a new line
+				Export expression: "  check for objects affecting nodes:  " [G0]
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: ((SUTRA Mesh.QIN) & isna(SUTRA Mesh.UIN))
+						Export expression: "$Node$, " [G0]
+					End if
+				End loop
+			End line
+			Start a new line
+			End line
+			Start a new line
+			End line
+		End if
+		If: CountMissingSources2!=0
+			Start a new line
+				Export expression: "In layer 'Specified Head' or 'Specified Pressure' no concentration or" [G0]
+			End line
+			Start a new line
+				Export expression: " temperature is defined for at least one object ("+CountMissingSources2+" nodes).  All sources" [G0]
+			End line
+			Start a new line
+				Export expression: "must have a concentration or temperature." [G0]
+			End line
+			Start a new line
+			End line
+			Start a new line
+				Export expression: "  check for objects affecting nodes:  " [G0]
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: (IsNumber(SUTRA Mesh.PBC) & isna(SUTRA Mesh.pUBC))
+						Export expression: "$Node$, " [G0]
+					End if
+				End loop
+			End line
+			Start a new line
+			End line
+			Start a new line
+			End line
+		End if
+		If: CountInvalidSources!=0
+			Start a new line
+				Export expression: "In layer 'Sources of Fluid' both specific AND total sources are defined" [G0]
+			End line
+			Start a new line
+				Export expression: "for at least one object ("+CountInvalidSources+" nodes).  Only one type of source at a time can" [G0]
+			End line
+			Start a new line
+				Export expression: "be used by SUTRA." [G0]
+			End line
+			Start a new line
+			End line
+			Start a new line
+				Export expression: "  check for objects affecting nodes:  " [G0]
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: if(isna(Sources of Fluid.specific_source),0,1) + if(isna(Sources of Fluid.total_source),0,1)>1
+						Export expression: "$Node$, " [G0]
+					End if
+				End loop
+			End line
+			Start a new line
+			End line
+			Start a new line
+			End line
+		End if
+		If: CountInvalidWellSources!=0
+			If: CountInvalidWellSources=1
+				Start a new line
+					Export expression: "In layer 'Sources of Fluid' a well (point object) has been set with a" [G0]
+				End line
+				Start a new line
+					Export expression: "value for 'specific_source'. This is not a valid type of source for wells." [G0]
+				End line
+			Else
+				Start a new line
+					Export expression: "In layer 'Sources of Fluid' "+CountInvalidWellSources+" wells (point objects) have been set with a value for 'specific_source'. " [G0]
+				End line
+				Start a new line
+					Export expression: "This is not a valid type of source for wells." [G0]
+				End line
+			End if
+			Start a new line
+			End line
+			Start a new line
+				Export expression: "  check nodes:  " [G0]
+				Loop for: Nodes
+					# RBW Begin New code1/24/99
+					Set Variable: ContinueSimulation:= ProgressBarAdvance()
+					# RBW End New code1/24/99
+					If: (Sources of Fluid.specific_source & (NodeAboveCntr(Sources of Fluid)=1))
+						Export expression: " $Node$," [G0]
+					End if
+				End loop
+			End line
+			Start a new line
+			End line
+			Start a new line
+			End line
+		End if
+		If: InValidOutput=7
+			Start a new line
+				Export expression: "One or more elements have angles greater than 180 degrees. SUTRA will not be able to run. You can locate the problem elements with the 'Edit|Select Acute Elements' menu item." [G0]
+			End line
+			Start a new line
+			End line
+		End if
+		If: LayerName()!="SUTRA Mesh"
+			Start a new line
+				Export expression: "Mesh layer name is '"+LayerName()+"' and not 'SUTRA Mesh'." [G0]
+			End line
+			Start a new line
+			End line
+		End if
+		# Start a new line
+		# 	Export expression: "Error Code: "+InValidOutput
+		# End line
+	End file
+	# RBW Begin New code 3/11/99
+	If: !InvalidSourcesCount
+		Evaluate expression: Delete_File("InvalidSourcesLocations.txt")
+	End if
+	# RBW End New code 3/11/99
+End if
+# RBW Begin New code1/12/99
+Evaluate expression: RF_Save_Files()
+# RBW End New code1/12/99
+# RBW Begin New code1/24/99
+Evaluate expression: ProgressBarFree()
+# RBW End New code1/24/99
+

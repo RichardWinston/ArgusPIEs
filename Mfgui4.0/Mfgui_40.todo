@@ -1,0 +1,9 @@
+{TODO 2 : For all parameters, include the name of the variable in the input file in the Units.}{TODO : make a post processing PIE for water tables}{TODO : It would be nice to be able to define transient conductance
+(per unit length) for drain, river, and stream arcs in  the 
+conceptual model package.}{TODO : Add ability to use binary or formatted concentration files in 
+MOC3D as initial concentrations.}{TODO : Use Wexler's analytic solution to specify boundary 
+conditions with FHB package}{TODO : Make a plot showing stream elevations in relation to grid cell elevations}{TODO : Run MODPATH Plot from Argus?}{TODO 5 : Automatically set Flow to -1 in the stream package if a 
+segment receives flow from another segment.}{TODO : Lock parameters that aren't in use. (Requires Argus 5)}
+
+
+ 
