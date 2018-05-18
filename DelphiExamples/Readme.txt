@@ -1,7 +1,8 @@
 Instructions on how to create PIE's using Borland Delphi
 
+0. Copy the ArgusPIE directory into the Argus Interware/DatFiles directory
 1. Start Delphi.
-2. From the File menu, select New and then select DLL.
+2. From the File menu, select New and then select DLL. Save the project into the copy of the ArgusPIE directory in the DatFiles directory.
 3. Include any neccessary support files in the "uses" statements of your project.
 4. Create any functions you need to call and use the cdecl calling convention with all functions whose addresses will be passed to Argus ONE.
 5. Create a function named Get ANEfunctions using the form illustrated in the examples. Be sure to use the cdecl calling convention with it.
